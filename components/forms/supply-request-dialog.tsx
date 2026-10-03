@@ -27,6 +27,7 @@ import { useCreateRequestMutation } from "@/hooks/use-request-queries";
 import { useFacilitiesQuery } from "@/hooks/use-organization-queries";
 import { useIngredientsQuery } from "@/hooks/use-catalog-queries";
 import { ClipboardPlus, Plus, Trash2, Loader2 } from "lucide-react";
+import { formatCurrency } from "@/lib/formatters";
 
 const requestItemSchema = z.object({
   ingredientId: z.string().min(1, "Vui lòng chọn nguyên liệu"),
@@ -239,11 +240,10 @@ export function SupplyRequestDialog({
                     {/* Subtotal preview */}
                     <div className="col-span-2 text-right">
                       <span className="text-xs font-mono font-medium text-foreground">
-                        {(
+                        {formatCurrency(
                           (matchedIng?.cost_price || 0) *
                           (watch(`items.${index}.quantity`) || 0)
-                        ).toLocaleString("vi-VN")}{" "}
-                        ₫
+                        )}
                       </span>
                     </div>
 
@@ -287,7 +287,7 @@ export function SupplyRequestDialog({
           <div className="flex items-center justify-between rounded-lg bg-muted/60 px-3.5 py-2.5 text-xs">
             <span className="text-muted-foreground font-medium">Tổng giá trị dự kiến:</span>
             <span className="font-heading font-bold text-sm text-foreground">
-              {totalEstimatedValue.toLocaleString("vi-VN")} ₫
+              {formatCurrency(totalEstimatedValue)}
             </span>
           </div>
 

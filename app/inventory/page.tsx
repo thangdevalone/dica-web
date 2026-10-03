@@ -41,6 +41,7 @@ import { StockAdjustmentDialog } from "@/components/forms";
 import { useStockBalancesQuery, useFacilitiesQuery } from "@/hooks";
 import { useAppStore } from "@/stores/use-app-store";
 import type { StockBalance } from "@/types";
+import { formatCurrency } from "@/lib/formatters";
 
 export default function InventoryPage() {
   const globalFacilityId = useAppStore((state) => state.selectedFacilityId);
@@ -111,7 +112,7 @@ export default function InventoryPage() {
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground font-medium">TỔNG GIÁ TRỊ TỒN KHO</p>
               <p className="text-xl font-bold font-mono text-foreground mt-1">
-                {totalValue.toLocaleString("vi-VN")} ₫
+                {formatCurrency(totalValue)}
               </p>
             </CardContent>
           </Card>
@@ -215,7 +216,7 @@ export default function InventoryPage() {
                           {sb.available_quantity} {sb.unit}
                         </TableCell>
                         <TableCell className="text-right font-mono text-xs font-semibold text-foreground">
-                          {sb.total_value.toLocaleString("vi-VN")} ₫
+                          {formatCurrency(sb.total_value)}
                         </TableCell>
                         <TableCell className="text-xs font-mono text-muted-foreground">
                           {sb.batch_number} (HSD: {sb.expiry_date})

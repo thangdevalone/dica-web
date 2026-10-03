@@ -46,6 +46,7 @@ import {
 } from "@/hooks";
 import { useAppStore } from "@/stores/use-app-store";
 import type { SupplyRequest } from "@/types";
+import { formatCurrency, formatDateTime } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 export default function SupplyRequestsPage() {
@@ -247,7 +248,7 @@ export default function SupplyRequestsPage() {
                       {req.total_items} SKU
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs font-semibold text-foreground">
-                      {req.total_value.toLocaleString("vi-VN")} ₫
+                      {formatCurrency(req.total_value)}
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge
@@ -348,7 +349,7 @@ export default function SupplyRequestsPage() {
                   <p>
                     <span className="text-muted-foreground">Thời gian: </span>
                     <span className="font-mono text-foreground">
-                      {new Date(selectedReq.created_at).toLocaleString("vi-VN")}
+                      {formatDateTime(selectedReq.created_at)}
                     </span>
                   </p>
                   <p>
@@ -358,7 +359,7 @@ export default function SupplyRequestsPage() {
                   <p>
                     <span className="text-muted-foreground">Tổng giá trị: </span>
                     <span className="font-bold text-foreground font-mono">
-                      {selectedReq.total_value.toLocaleString("vi-VN")} ₫
+                      {formatCurrency(selectedReq.total_value)}
                     </span>
                   </p>
                 </div>
@@ -386,7 +387,7 @@ export default function SupplyRequestsPage() {
                             {it.approved_quantity} {it.unit}
                           </TableCell>
                           <TableCell className="text-right font-mono text-xs text-foreground">
-                            {it.estimated_cost.toLocaleString("vi-VN")} ₫
+                            {formatCurrency(it.estimated_cost)}
                           </TableCell>
                         </TableRow>
                       ))}

@@ -5,16 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
-  LayoutDashboard,
-  Building2,
   Boxes,
-  ClipboardList,
-  ShoppingCart,
-  Truck,
-  Warehouse,
-  Utensils,
-  Users,
-  Sliders,
+  Building2,
   Search,
   Bell,
   Moon,
@@ -68,116 +60,7 @@ import { toast } from "sonner";
 import { dicaStore, type Notification } from "@/lib/dica-api";
 import { useAppStore } from "@/stores/use-app-store";
 import { cn } from "@/lib/utils";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
-  countKey?: string;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const NAV_SECTIONS: NavSection[] = [
-  {
-    title: "TỔNG QUAN",
-    items: [
-      {
-        href: "/",
-        label: "Bàn làm việc & KPI",
-        icon: LayoutDashboard,
-        badge: "Live",
-      },
-    ],
-  },
-  {
-    title: "CƠ CẤU & TỔ CHỨC",
-    items: [
-      {
-        href: "/organization",
-        label: "Cơ sở & Chi nhánh",
-        icon: Building2,
-      },
-    ],
-  },
-  {
-    title: "DANH MỤC & NHÀ CUNG CẤP",
-    items: [
-      {
-        href: "/catalog",
-        label: "Nguyên liệu & Đơn vị",
-        icon: Boxes,
-      },
-    ],
-  },
-  {
-    title: "YÊU CẦU & ĐƠN HÀNG",
-    items: [
-      {
-        href: "/requests",
-        label: "Yêu cầu cấp hàng",
-        icon: ClipboardList,
-        countKey: "pendingRequests",
-      },
-      {
-        href: "/orders",
-        label: "Đơn thực hiện (PO)",
-        icon: ShoppingCart,
-      },
-    ],
-  },
-  {
-    title: "GIAO NHẬN & VẬN CHUYỂN",
-    items: [
-      {
-        href: "/delivery",
-        label: "Xuất - Nhập & Sai lệch",
-        icon: Truck,
-        countKey: "discrepancies",
-      },
-    ],
-  },
-  {
-    title: "KHO & VẬN HÀNH TỒN KHO",
-    items: [
-      {
-        href: "/inventory",
-        label: "Tồn kho & Sổ cái",
-        icon: Warehouse,
-        countKey: "lowStock",
-      },
-    ],
-  },
-  {
-    title: "iPOS & ĐỊNH LƯỢNG",
-    items: [
-      {
-        href: "/operations",
-        label: "Công thức & Hao hụt",
-        icon: Utensils,
-      },
-    ],
-  },
-  {
-    title: "PHÂN QUYỀN & HỆ THỐNG",
-    items: [
-      {
-        href: "/users",
-        label: "Tài khoản & Phân quyền",
-        icon: Users,
-      },
-      {
-        href: "/system",
-        label: "Nhật ký & Cấu hình API",
-        icon: Sliders,
-      },
-    ],
-  },
-];
+import { NAV_SECTIONS, type NavItem, type NavSection } from "@/constants";
 
 interface NavigationListProps {
   pathname: string;
@@ -554,17 +437,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={cn(
-                    "h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium transition-colors",
-                    backendStatus === "live"
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
-                  )}
+                  className="h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium rounded-xl border-border bg-card/90 text-foreground hover:bg-accent transition-colors"
                 >
                   <span
                     className={cn(
-                      "size-2 rounded-full shrink-0 animate-pulse",
-                      backendStatus === "live" ? "bg-emerald-500" : "bg-blue-500"
+                      "size-2 rounded-full shrink-0",
+                      backendStatus === "live" ? "bg-foreground animate-pulse" : "bg-muted-foreground/60"
                     )}
                   />
                   <span className="hidden md:inline">
@@ -805,96 +683,21 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <CommandList>
           <CommandEmpty>Không tìm thấy kết quả phù hợp.</CommandEmpty>
           <CommandGroup heading="Điều hướng nhanh">
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/");
-              }}
-            >
-              <LayoutDashboard className="mr-2 size-4" />
-              <span>Bàn làm việc & KPI</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/organization");
-              }}
-            >
-              <Building2 className="mr-2 size-4" />
-              <span>Quản lý Cơ sở & Chi nhánh</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/catalog");
-              }}
-            >
-              <Boxes className="mr-2 size-4" />
-              <span>Danh mục Nguyên vật liệu & Đơn vị tính</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/requests");
-              }}
-            >
-              <ClipboardList className="mr-2 size-4" />
-              <span>Yêu cầu cấp hàng & Phê duyệt</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/orders");
-              }}
-            >
-              <ShoppingCart className="mr-2 size-4" />
-              <span>Đơn thực hiện Fulfillment & PO</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/delivery");
-              }}
-            >
-              <Truck className="mr-2 size-4" />
-              <span>Giao nhận & Xử lý sai lệch</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/inventory");
-              }}
-            >
-              <Warehouse className="mr-2 size-4" />
-              <span>Tồn kho tức thời & Sổ cái kho</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/operations");
-              }}
-            >
-              <Utensils className="mr-2 size-4" />
-              <span>Định lượng món ăn & Hao hụt iPOS</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/users");
-              }}
-            >
-              <Users className="mr-2 size-4" />
-              <span>Tài khoản & Phân quyền RBAC</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/system");
-              }}
-            >
-              <Sliders className="mr-2 size-4" />
-              <span>Nhật ký hệ thống & Cấu hình API</span>
-            </CommandItem>
+            {NAV_SECTIONS.flatMap((sec) => sec.items).map((item) => {
+              const Icon = item.icon;
+              return (
+                <CommandItem
+                  key={item.href}
+                  onSelect={() => {
+                    setOpenCommand(false);
+                    router.push(item.href);
+                  }}
+                >
+                  <Icon className="mr-2 size-4 text-foreground" />
+                  <span>{item.label}</span>
+                </CommandItem>
+              );
+            })}
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Thao tác nhanh">
@@ -904,7 +707,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 router.push("/requests?action=create");
               }}
             >
-              <Sparkles className="mr-2 size-4 text-amber-500" />
+              <Sparkles className="mr-2 size-4 text-foreground" />
               <span>Tạo yêu cầu cấp hàng mới</span>
             </CommandItem>
             <CommandItem
@@ -913,7 +716,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 router.push("/catalog?action=create-ingredient");
               }}
             >
-              <Boxes className="mr-2 size-4 text-emerald-500" />
+              <Sparkles className="mr-2 size-4 text-foreground" />
               <span>Thêm mới nguyên vật liệu SKU</span>
             </CommandItem>
             <CommandItem
@@ -924,7 +727,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 window.location.reload();
               }}
             >
-              <RefreshCw className="mr-2 size-4 text-blue-500" />
+              <RefreshCw className="mr-2 size-4 text-foreground" />
               <span>Nạp lại dữ liệu mẫu (Reset Data)</span>
             </CommandItem>
           </CommandGroup>

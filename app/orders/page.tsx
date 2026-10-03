@@ -39,6 +39,7 @@ import {
   useCloseOrderMutation,
   useCancelOrderMutation,
 } from "@/hooks";
+import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
 export default function OrdersPage() {
@@ -169,7 +170,7 @@ export default function OrdersPage() {
                       {ord.destination_name}
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs font-semibold text-foreground">
-                      {ord.total_amount.toLocaleString("vi-VN")} ₫
+                      {formatCurrency(ord.total_amount)}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground font-mono">
                       {ord.order_date.substring(0, 10)}

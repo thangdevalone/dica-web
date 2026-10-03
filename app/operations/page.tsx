@@ -47,6 +47,7 @@ import {
   useCreateAlertRuleMutation,
   useSyncIposMutation,
 } from "@/hooks";
+import { formatCurrency } from "@/lib/formatters";
 
 export default function OperationsPage() {
   const { data: mappings = [], refetch: refetchMappings } = useMenuItemsQuery();
@@ -190,7 +191,7 @@ export default function OperationsPage() {
                         {m.category}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs font-semibold text-foreground">
-                        {m.selling_price.toLocaleString("vi-VN")} ₫
+                        {formatCurrency(m.selling_price)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className="text-[10px] border-border text-foreground font-mono">

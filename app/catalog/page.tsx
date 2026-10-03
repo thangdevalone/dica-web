@@ -54,6 +54,7 @@ import {
   useConversionsQuery,
   useSuppliersQuery,
 } from "@/hooks";
+import { formatCurrency } from "@/lib/formatters";
 
 export default function CatalogPage() {
   // TanStack React Query Hooks
@@ -216,7 +217,7 @@ export default function CatalogPage() {
                         {ing.baseUnitSymbol || "kg"}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs font-semibold text-foreground">
-                        {ing.cost_price.toLocaleString("vi-VN")} ₫
+                        {formatCurrency(ing.cost_price)}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs text-muted-foreground">
                         Min: {ing.min_stock} / Max: {ing.max_stock}

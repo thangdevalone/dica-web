@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { formatCurrency } from "@/lib/formatters";
 
 const VIBRANT_CHART_COLORS = [
   "#3b82f6", // Blue
@@ -52,7 +53,7 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(val) => `${Number(val).toLocaleString("vi-VN")} ₫`}
+              formatter={(val) => formatCurrency(Number(val))}
               contentStyle={{
                 backgroundColor: "rgba(24, 24, 27, 0.95)",
                 borderRadius: "8px",

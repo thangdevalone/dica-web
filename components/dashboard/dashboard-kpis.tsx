@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ClipboardList, AlertTriangle, Truck, TrendingUp } from "lucide-react";
+import { formatCurrency } from "@/lib/formatters";
 
 interface DashboardKpisProps {
   totalInventoryValue: number;
@@ -33,10 +34,10 @@ export function DashboardKpis({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold tracking-tight text-foreground">
-            {totalInventoryValue.toLocaleString("vi-VN")} ₫
+            {formatCurrency(totalInventoryValue)}
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-            <TrendingUp className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+            <TrendingUp className="size-3.5 text-foreground" />
             <span>+12.4% so với kỳ trước</span>
           </div>
         </CardContent>

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Check } from "lucide-react";
 import type { SupplyRequest } from "@/types";
+import { formatCurrency } from "@/lib/formatters";
 
 interface PendingRequestsCardProps {
   requests: SupplyRequest[];
@@ -73,7 +74,7 @@ export function PendingRequestsCard({ requests, onApprove }: PendingRequestsCard
                   Đến: {req.destinationFacilityName}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  {req.total_items} mặt hàng • {req.total_value.toLocaleString("vi-VN")} ₫ •{" "}
+                  {req.total_items} mặt hàng • {formatCurrency(req.total_value)} •{" "}
                   {req.requested_by}
                 </p>
               </div>
