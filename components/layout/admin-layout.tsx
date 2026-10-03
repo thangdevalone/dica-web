@@ -583,7 +583,9 @@ export function AdminLayout({
     );
   }
 
-  const required = permission ? (Array.isArray(permission) ? permission : [permission]) : [];
+  const currentNavItem = NAV_SECTIONS.flatMap((s) => s.items).find((item) => item.href === pathname);
+  const routePermission = permission ?? currentNavItem?.permission;
+  const required = routePermission ? (Array.isArray(routePermission) ? routePermission : [routePermission]) : [];
   const allowed = required.length === 0 || required.some((code) => permissions.includes(code));
 
   return (
