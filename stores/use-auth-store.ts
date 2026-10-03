@@ -8,7 +8,7 @@ interface AuthState {
   isAuthenticated: boolean;
   activeFacilityId: string | null;
   permissions: string[];
-  login: (user: User, token: string) => void;
+  login: (user: User, token: string, permissions?: string[]) => void;
   logout: () => void;
   setActiveFacilityId: (facilityId: string | null) => void;
   hasPermission: (permissionCode: string) => boolean;
@@ -34,11 +34,12 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: true,
       activeFacilityId: null,
       permissions: ["*"], // Super admin has all permissions
-      login: (user, token) =>
+      login: (user, token, permissions = ["*"]) =>
         set({
           user,
           token,
           isAuthenticated: true,
+          permissions,
         }),
       logout: () =>
         set({

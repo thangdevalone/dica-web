@@ -59,6 +59,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { dicaStore, type Notification } from "@/lib/dica-api";
 import { useAppStore } from "@/stores/use-app-store";
+import { useAuthStore } from "@/stores/use-auth-store";
 import { cn } from "@/lib/utils";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "@/constants";
 
@@ -148,25 +149,41 @@ function NavigationList({ pathname, onNavigate }: NavigationListProps) {
   );
 }
 
-interface UserFooterProps {
-  onLogout?: () => void;
-}
+function UserFooter({ onLogout }: { onLogout?: () => void } = {}) {
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
 
-function UserFooter({ onLogout }: UserFooterProps) {
+  const displayName = user?.full_name || "Nguyễn Thế Thắng";
+  const displayRole = user?.role_name ? `${user.role_name} • DICA HQ` : "Super Admin • DICA HQ";
+  const initials =
+    displayName
+      .split(" ")
+      .filter(Boolean)
+      .slice(-2)
+      .map((w) => w[0].toUpperCase())
+      .join("") || "AD";
+
+  const handleLogout = () => {
+    logout();
+    onLogout?.();
+    toast.info("Đã đăng xuất phiên làm việc.");
+    router.push("/login");
+  };
+
   return (
     <div className="flex items-center justify-between gap-2 rounded-xl p-2 transition-colors hover:bg-muted/60">
       <div className="flex items-center gap-2.5 overflow-hidden">
         <Avatar className="size-8 border border-border">
           <AvatarFallback className="bg-muted font-bold text-foreground text-xs">
-            TT
+            {initials}
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col truncate">
           <span className="truncate text-xs font-semibold text-foreground">
-            Nguyễn Thế Thắng
+            {displayName}
           </span>
-          <span className="truncate text-[10px] text-muted-foreground">
-            Super Admin • DICA HQ
+          <span className="truncate text-[10px] text-muted-foreground font-mono">
+            {displayRole}
           </span>
         </div>
       </div>
@@ -174,10 +191,7 @@ function UserFooter({ onLogout }: UserFooterProps) {
         variant="ghost"
         size="icon"
         className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-        onClick={() => {
-          toast.info("Đã đăng xuất phiên làm việc hiện tại.");
-          onLogout?.();
-        }}
+        onClick={handleLogout}
         title="Đăng xuất"
       >
         <LogOut className="size-3.5" />
@@ -197,6 +211,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [openCommand, setOpenCommand] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+  const { isAuthenticated } = useAuthStore();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Redirect to /login if unauthenticated after mount
+  React.useEffect(() => {
+    if (mounted && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [mounted, isAuthenticated, router]);
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
   const [backendStatus, setBackendStatus] = React.useState<"live" | "demo" | "checking">("checking");
   const [facilitiesList, setFacilitiesList] = React.useState<{ id: string; name: string }[]>([]);

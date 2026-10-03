@@ -8,3 +8,4 @@ export * from "./operations.api";
 export * from "./users.api";
 export * from "./audit.api";
 export * from "./system.api";
+export * from "./auth.api";
