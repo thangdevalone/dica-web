@@ -137,24 +137,4 @@
         @apply bg-background text-foreground;
         font-feature-settings: "rlig" 1, "calt" 1;
     }
-    button,
-    [role="button"],
-    input[type="button"],
-    input[type="submit"],
-    input[type="reset"],
-    [data-slot="button"],
-    [data-slot="tabs-trigger"],
-    [data-slot="dropdown-menu-item"],
-    [data-slot="select-trigger"],
-    [data-slot="select-item"] {
-        cursor: pointer;
-    }
-    button:disabled,
-    [role="button"][aria-disabled="true"],
-    [data-disabled="true"],
-    input[type="button"]:disabled,
-    input[type="submit"]:disabled,
-    input[type="reset"]:disabled {
-        cursor: not-allowed;
-    }
 }
