@@ -28,6 +28,7 @@ import {
   Check,
   RefreshCw,
   Sparkles,
+  Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -233,9 +234,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="flex min-h-screen bg-background text-foreground">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-border/80 bg-card/95 backdrop-blur-md transition-all duration-300">
+      <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300">
         {/* Brand Header */}
         <div className="flex h-16 items-center gap-3 border-b border-border/70 px-5">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25">
@@ -574,17 +575,64 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </PopoverContent>
             </Popover>
 
-            {/* Dark / Light Mode Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title="Chuyển chế độ sáng / tối"
-            >
-              <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
+            {/* Theme Mode Configurator Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-muted-foreground hover:text-foreground"
+                  title="Tùy chỉnh giao diện: Sáng / Tối / Hệ thống"
+                >
+                  <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                  <span className="sr-only">Chuyển đổi giao diện</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 text-xs">
+                <DropdownMenuLabel>Chế độ hiển thị</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTheme("light");
+                    toast.info("Đã chuyển sang giao diện Sáng");
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sun className="size-3.5 text-amber-500" />
+                    <span>Sáng (Light)</span>
+                  </div>
+                  {theme === "light" && <Check className="size-3.5 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTheme("dark");
+                    toast.info("Đã chuyển sang giao diện Tối");
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Moon className="size-3.5 text-blue-400" />
+                    <span>Tối (Dark)</span>
+                  </div>
+                  {theme === "dark" && <Check className="size-3.5 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTheme("system");
+                    toast.info("Đã đặt theo giao diện Hệ thống");
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Monitor className="size-3.5 text-muted-foreground" />
+                    <span>Hệ thống (Auto)</span>
+                  </div>
+                  {theme === "system" && <Check className="size-3.5 text-primary" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

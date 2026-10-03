@@ -88,7 +88,7 @@ const WEEKLY_DATA = [
   { day: "Chủ nhật", xuat: 65, nhap: 40 },
 ];
 
-const CATEGORY_COLORS = ["#ea580c", "#f97316", "#fb923c", "#f59e0b", "#0284c7"];
+const CATEGORY_COLORS = ["#ea580c", "#71717a", "#a1a1aa", "#52525b", "#d4d4d8"];
 
 export default function DashboardPage() {
   const [facilities, setFacilities] = React.useState<Facility[]>([]);
@@ -348,7 +348,7 @@ export default function DashboardPage() {
               <CardTitle className="text-xs font-semibold text-muted-foreground">
                 TỔNG GIÁ TRỊ TỒN KHO
               </CardTitle>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
                 <DollarSign className="size-4" />
               </div>
             </CardHeader>
@@ -356,8 +356,8 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold tracking-tight text-foreground">
                 {totalInventoryValue.toLocaleString("vi-VN")} ₫
               </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                <TrendingUp className="size-3.5" />
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                <TrendingUp className="size-3.5 text-primary" />
                 <span>+12.4% so với kỳ trước</span>
               </div>
             </CardContent>
@@ -369,7 +369,7 @@ export default function DashboardPage() {
               <CardTitle className="text-xs font-semibold text-muted-foreground">
                 YÊU CẦU CẦN XỬ LÝ
               </CardTitle>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
                 <ClipboardList className="size-4" />
               </div>
             </CardHeader>
@@ -390,12 +390,12 @@ export default function DashboardPage() {
               <CardTitle className="text-xs font-semibold text-muted-foreground">
                 CẢNH BÁO TỒN THẤP
               </CardTitle>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-red-500/10 text-red-600 dark:text-red-400">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
                 <AlertTriangle className="size-4" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold tracking-tight text-red-600 dark:text-red-400">
+              <div className="text-2xl font-bold tracking-tight text-foreground">
                 {lowStockItems.length}{" "}
                 <span className="text-sm font-normal text-muted-foreground">mặt hàng</span>
               </div>
@@ -411,7 +411,7 @@ export default function DashboardPage() {
               <CardTitle className="text-xs font-semibold text-muted-foreground">
                 SAI LỆCH GIAO NHẬN
               </CardTitle>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-foreground">
                 <Truck className="size-4" />
               </div>
             </CardHeader>
@@ -471,7 +471,7 @@ export default function DashboardPage() {
                   <Bar
                     dataKey="nhap"
                     name="Nhập từ NCC (Lượt)"
-                    fill="#0284c7"
+                    fill="#71717a"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -557,18 +557,12 @@ export default function DashboardPage() {
                       <Badge
                         variant={
                           req.status === "APPROVED"
-                            ? "default"
+                            ? "outline"
                             : req.status === "SUBMITTED"
                             ? "secondary"
                             : "outline"
                         }
-                        className={
-                          req.status === "SUBMITTED"
-                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                            : req.status === "APPROVED"
-                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                            : ""
-                        }
+                        className="text-[11px]"
                       >
                         {req.status === "SUBMITTED"
                           ? "Chờ duyệt"
@@ -589,7 +583,7 @@ export default function DashboardPage() {
                     {req.status === "SUBMITTED" && (
                       <Button
                         size="sm"
-                        className="h-8 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                        className="h-8 gap-1 text-xs"
                         onClick={() => handleApproveRequest(req.id)}
                       >
                         <Check className="size-3.5" />
@@ -632,7 +626,7 @@ export default function DashboardPage() {
                 lowStockItems.map((sb) => (
                   <div
                     key={sb.id}
-                    className="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-500/5 p-3.5"
+                    className="flex items-center justify-between rounded-xl border border-border/70 bg-card/40 p-3.5 transition-colors hover:bg-muted/20"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -647,13 +641,13 @@ export default function DashboardPage() {
                         {sb.facility_name} • {sb.location_name}
                       </p>
                       <p className="text-[11px] font-mono text-muted-foreground">
-                        Khả dụng: <span className="font-bold text-red-600 dark:text-red-400">{sb.available_quantity} {sb.unit}</span> (Mức an toàn: {sb.min_stock} {sb.unit})
+                        Khả dụng: <span className="font-semibold text-foreground">{sb.available_quantity} {sb.unit}</span> (Mức an toàn: {sb.min_stock} {sb.unit})
                       </p>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs border-red-500/30 text-red-600 hover:bg-red-500/10"
+                      className="h-8 text-xs"
                       onClick={() => {
                         setSelectedIngredient(sb.ingredient_id);
                         setOpenNewReqDialog(true);
@@ -666,13 +660,13 @@ export default function DashboardPage() {
               )}
 
               {/* Near expiry sample */}
-              <div className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5">
+              <div className="flex items-center justify-between rounded-xl border border-border/70 bg-card/40 p-3.5 transition-colors hover:bg-muted/20">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-foreground">
                       Ba Chỉ Bò Cuộn Nấm Kim Châm
                     </span>
-                    <Badge variant="secondary" className="text-[10px] h-5 bg-amber-500/20 text-amber-700 dark:text-amber-400">
+                    <Badge variant="outline" className="text-[10px] h-5">
                       HSD: 15/10/2026
                     </Badge>
                   </div>
@@ -716,15 +710,8 @@ export default function DashboardPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[10px] font-semibold",
-                          fac.type === "CENTRAL_WAREHOUSE"
-                            ? "bg-purple-500/15 text-purple-700 dark:text-purple-400"
-                            : fac.type === "CENTRAL_KITCHEN"
-                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                            : "bg-blue-500/15 text-blue-700 dark:text-blue-400"
-                        )}
+                        variant="outline"
+                        className="text-[10px] font-medium border-border/80 text-muted-foreground"
                       >
                         {fac.type === "CENTRAL_WAREHOUSE"
                           ? "KHO TRUNG TÂM"
@@ -732,7 +719,7 @@ export default function DashboardPage() {
                           ? "BẾP TRUNG TÂM"
                           : "CHI NHÁNH NHÀ HÀNG"}
                       </Badge>
-                      <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                      <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span className="size-1.5 rounded-full bg-emerald-500" />
                         Online
                       </span>

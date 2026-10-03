@@ -1373,7 +1373,10 @@ class DicaDataStore {
 
   // Configuration
   getApiBaseUrl(): string {
-    return this.getItem("api_base_url", "http://localhost:3000/api/v1");
+    return this.getItem(
+      "api_base_url",
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1"
+    );
   }
 
   setApiBaseUrl(url: string): void {
