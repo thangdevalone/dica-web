@@ -48,28 +48,27 @@ import { toast } from "sonner";
 import { dicaStore, type AuditEvent } from "@/lib/dica-api";
 import { cn } from "@/lib/utils";
 
+import { systemApi } from "@/services/system.api";
+import { useAppStore } from "@/stores/use-app-store";
+import { useAuthStore } from "@/stores/use-auth-store";
+import { useAuditEventsQuery } from "@/hooks/use-audit-queries";
+
 export default function SystemPage() {
   const { theme, setTheme } = useTheme();
-  const [audits, setAudits] = React.useState<AuditEvent[]>([]);
+  const { data: audits = [] } = useAuditEventsQuery();
   const [searchAudit, setSearchAudit] = React.useState("");
+
+  const mockEngineEnabled = useAppStore((state) => state.mockEngineEnabled);
+  const setMockEngineEnabled = useAppStore((state) => state.setMockEngineEnabled);
+  const token = useAuthStore((state) => state.token);
 
   // API Config State
   const [apiUrl, setApiUrl] = React.useState(
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1"
   );
-  const [apiToken, setApiToken] = React.useState("");
+  const [apiToken, setApiToken] = React.useState(token || "");
   const [healthStatus, setHealthStatus] = React.useState<"idle" | "checking" | "ok" | "fail">("idle");
   const [healthMessage, setHealthMessage] = React.useState("");
-
-  const loadData = () => {
-    setAudits(dicaStore.getAudits());
-    setApiUrl(dicaStore.getApiBaseUrl());
-    setApiToken(dicaStore.getAuthToken());
-  };
-
-  React.useEffect(() => {
-    loadData();
-  }, []);
 
   const filteredAudits = audits.filter(
     (a) =>
@@ -87,26 +86,26 @@ export default function SystemPage() {
 
   const handleTestConnection = async () => {
     setHealthStatus("checking");
-    setHealthMessage("Đang gửi yêu cầu thăm dò tới API...");
+    setHealthMessage("Đang gửi yêu cầu thăm dò tới API qua Axios Client...");
 
     try {
-      const res = await fetch(`${apiUrl}/health/live`, { signal: AbortSignal.timeout(3000) });
-      if (res.ok) {
+      const res = await systemApi.pingBackend();
+      if (res.status === "online") {
         setHealthStatus("ok");
-        setHealthMessage("Kết nối thành công! NestJS Backend API đang hoạt động bình thường.");
+        setHealthMessage(`Kết nối thành công tới ${res.url} (Độ trễ: ${res.latencyMs}ms). Backend NestJS đang phản hồi.`);
         toast.success("Kết nối thành công tới Backend API!");
       } else {
         setHealthStatus("fail");
-        setHealthMessage(`Máy chủ phản hồi với mã lỗi HTTP: ${res.status}`);
-        toast.error(`Máy chủ phản hồi HTTP ${res.status}`);
+        setHealthMessage(
+          `Không thể kết nối tới ${res.url} (${res.latencyMs}ms). Backend có thể chưa khởi chạy hoặc bị chặn bởi CORS.`
+        );
+        toast.info("Backend chưa phản hồi. Hệ thống đang tự động fallback sang Mock Engine an toàn.");
       }
     } catch (err: unknown) {
       setHealthStatus("fail");
       const errStr = err instanceof Error ? err.message : String(err);
-      setHealthMessage(
-        `Không thể kết nối tới ${apiUrl}. Backend có thể chưa chạy hoặc bị chặn bởi CORS: ${errStr}`
-      );
-      toast.info("Backend chưa khởi chạy. Hệ thống đang hoạt động ở chế độ Demo độc lập an toàn.");
+      setHealthMessage(`Lỗi kiểm tra kết nối: ${errStr}`);
+      toast.info("Đang hoạt động ở chế độ Demo Mock Engine an toàn.");
     }
   };
 

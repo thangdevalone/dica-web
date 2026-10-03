@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { cn } from "@/lib/utils";
 
 const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" });
@@ -34,12 +35,14 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-        <ThemeProvider>
-          <TooltipProvider delayDuration={150}>
-            {children}
-            <Toaster richColors position="top-right" />
-          </TooltipProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <TooltipProvider delayDuration={150}>
+              {children}
+              <Toaster richColors position="top-right" />
+            </TooltipProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

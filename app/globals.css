@@ -12,8 +12,8 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.14 0 0);
 
-    /* Refined, Elegant DICA Warm Orange Accent */
-    --primary: oklch(0.58 0.19 42);
+    /* Pure Clean Zinc Basic Monochrome */
+    --primary: oklch(0.18 0 0);
     --primary-foreground: oklch(0.99 0 0);
 
     --secondary: oklch(0.96 0 0);
@@ -21,33 +21,34 @@
     --muted: oklch(0.96 0 0);
     --muted-foreground: oklch(0.50 0 0);
     --accent: oklch(0.96 0 0);
-    --accent-foreground: oklch(0.20 0 0);
+    --accent-foreground: oklch(0.18 0 0);
     --destructive: oklch(0.57 0.20 27);
     --border: oklch(0.91 0 0);
     --input: oklch(0.91 0 0);
-    --ring: oklch(0.58 0.19 42);
+    --ring: oklch(0.70 0 0);
 
-    --chart-1: oklch(0.58 0.19 42);
-    --chart-2: oklch(0.55 0.08 240);
-    --chart-3: oklch(0.65 0.10 150);
-    --chart-4: oklch(0.70 0.12 70);
-    --chart-5: oklch(0.50 0.12 25);
+    /* Vibrant Multi-Series Chart Colors for Data Visualizations */
+    --chart-1: #2563eb; /* Royal Blue */
+    --chart-2: #10b981; /* Emerald */
+    --chart-3: #f59e0b; /* Amber */
+    --chart-4: #8b5cf6; /* Violet */
+    --chart-5: #06b6d4; /* Cyan */
 
     --radius: 0.625rem;
 
-    /* Clean Neutral Sidebar */
+    /* Clean Neutral Zinc Sidebar */
     --sidebar: oklch(1 0 0);
     --sidebar-foreground: oklch(0.20 0 0);
-    --sidebar-primary: oklch(0.58 0.19 42);
+    --sidebar-primary: oklch(0.18 0 0);
     --sidebar-primary-foreground: oklch(0.99 0 0);
     --sidebar-accent: oklch(0.96 0 0);
     --sidebar-accent-foreground: oklch(0.14 0 0);
     --sidebar-border: oklch(0.92 0 0);
-    --sidebar-ring: oklch(0.58 0.19 42);
+    --sidebar-ring: oklch(0.70 0 0);
 }
 
 .dark {
-    /* Pure, Deep Neutral Charcoal & Obsidian Dark Mode — Zero Muddy Brown */
+    /* Pure Deep Neutral Charcoal & Obsidian Dark Mode — Zero Muddy Brown / Zero Orange */
     --background: oklch(0.12 0 0);
     --foreground: oklch(0.98 0 0);
     --card: oklch(0.16 0 0);
@@ -55,9 +56,9 @@
     --popover: oklch(0.16 0 0);
     --popover-foreground: oklch(0.98 0 0);
 
-    /* Soft, Sophisticated Warm Amber-Orange in Dark Mode */
-    --primary: oklch(0.66 0.18 42);
-    --primary-foreground: oklch(0.12 0 0);
+    /* Pure Zinc Basic Primary in Dark Mode */
+    --primary: oklch(0.98 0 0);
+    --primary-foreground: oklch(0.14 0 0);
 
     --secondary: oklch(0.20 0 0);
     --secondary-foreground: oklch(0.98 0 0);
@@ -68,22 +69,23 @@
     --destructive: oklch(0.65 0.18 22);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 12%);
-    --ring: oklch(0.66 0.18 42);
+    --ring: oklch(0.55 0 0);
 
-    --chart-1: oklch(0.66 0.18 42);
-    --chart-2: oklch(0.62 0.08 240);
-    --chart-3: oklch(0.70 0.10 150);
-    --chart-4: oklch(0.75 0.12 70);
-    --chart-5: oklch(0.55 0.12 25);
+    /* Vibrant Multi-Series Chart Colors in Dark Mode */
+    --chart-1: #3b82f6; /* Blue */
+    --chart-2: #10b981; /* Emerald */
+    --chart-3: #f59e0b; /* Amber */
+    --chart-4: #a855f7; /* Purple */
+    --chart-5: #06b6d4; /* Cyan */
 
     --sidebar: oklch(0.135 0 0);
     --sidebar-foreground: oklch(0.92 0 0);
-    --sidebar-primary: oklch(0.66 0.18 42);
-    --sidebar-primary-foreground: oklch(0.12 0 0);
+    --sidebar-primary: oklch(0.98 0 0);
+    --sidebar-primary-foreground: oklch(0.14 0 0);
     --sidebar-accent: oklch(0.20 0 0);
     --sidebar-accent-foreground: oklch(0.98 0 0);
     --sidebar-border: oklch(1 0 0 / 9%);
-    --sidebar-ring: oklch(0.66 0.18 42);
+    --sidebar-ring: oklch(0.55 0 0);
 }
 
 @theme inline {
@@ -120,23 +122,19 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
 }

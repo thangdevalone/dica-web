@@ -29,6 +29,8 @@ import {
   RefreshCw,
   Sparkles,
   Monitor,
+  Menu,
+  X as XIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,10 +57,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { dicaStore, type Notification } from "@/lib/dica-api";
+import { useAppStore } from "@/stores/use-app-store";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -171,19 +179,154 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+interface NavigationListProps {
+  pathname: string;
+  onNavigate?: () => void;
+}
+
+function NavigationList({ pathname, onNavigate }: NavigationListProps) {
+  return (
+    <nav className="space-y-6">
+      {NAV_SECTIONS.map((section) => (
+        <div key={section.title} className="space-y-1">
+          <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+            {section.title}
+          </p>
+          <div className="space-y-0.5 pt-1">
+            {section.items.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "group relative flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150",
+                    isActive
+                      ? "bg-foreground text-background font-semibold shadow-xs"
+                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      className={cn(
+                        "size-4 shrink-0 transition-colors",
+                        isActive
+                          ? "text-background"
+                          : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                        isActive
+                          ? "bg-background/20 text-background"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                  {item.countKey === "pendingRequests" && (
+                    <span
+                      className={cn(
+                        "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
+                        isActive
+                          ? "bg-background/20 text-background"
+                          : "bg-muted text-muted-foreground border border-border"
+                      )}
+                    >
+                      2
+                    </span>
+                  )}
+                  {item.countKey === "lowStock" && (
+                    <span
+                      className={cn(
+                        "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
+                        isActive
+                          ? "bg-background/20 text-background"
+                          : "bg-muted text-muted-foreground border border-border"
+                      )}
+                    >
+                      2
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+interface UserFooterProps {
+  onLogout?: () => void;
+}
+
+function UserFooter({ onLogout }: UserFooterProps) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-xl p-2 transition-colors hover:bg-muted/60">
+      <div className="flex items-center gap-2.5 overflow-hidden">
+        <Avatar className="size-8 border border-border">
+          <AvatarFallback className="bg-muted font-bold text-foreground text-xs">
+            TT
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col truncate">
+          <span className="truncate text-xs font-semibold text-foreground">
+            Nguyễn Thế Thắng
+          </span>
+          <span className="truncate text-[10px] text-muted-foreground">
+            Super Admin • DICA HQ
+          </span>
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+        onClick={() => {
+          toast.info("Đã đăng xuất phiên làm việc hiện tại.");
+          onLogout?.();
+        }}
+        title="Đăng xuất"
+      >
+        <LogOut className="size-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
+  // Zustand app store
+  const selectedFacilityId = useAppStore((state) => state.selectedFacilityId);
+  const setSelectedFacilityId = useAppStore((state) => state.setSelectedFacilityId);
+
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [openCommand, setOpenCommand] = React.useState(false);
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
   const [backendStatus, setBackendStatus] = React.useState<"live" | "demo" | "checking">("checking");
-  const [selectedFacility, setSelectedFacility] = React.useState<string>("Tất cả cơ sở");
+  const [facilitiesList, setFacilitiesList] = React.useState<{ id: string; name: string }[]>([]);
 
-  // Load notifications and status
+  // Load facilities, notifications, and health status
   React.useEffect(() => {
     setNotifications(dicaStore.getNotifications());
+    try {
+      const facs = dicaStore.getFacilities();
+      setFacilitiesList(facs.map((f) => ({ id: f.id, name: f.name })));
+    } catch {
+      // fallback
+    }
 
     // Check backend health
     const checkHealth = async () => {
@@ -233,184 +376,173 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     return "Quản trị hệ thống DICA";
   };
 
+  const currentFacilityLabel = React.useMemo(() => {
+    if (!selectedFacilityId || selectedFacilityId === "ALL") {
+      return "Tất cả cơ sở";
+    }
+    const found = facilitiesList.find((f) => f.id === selectedFacilityId);
+    return found ? found.name : "Tất cả cơ sở";
+  }, [selectedFacilityId, facilitiesList]);
+
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300">
-        {/* Brand Header */}
-        <div className="flex h-16 items-center gap-3 border-b border-border/70 px-5">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25">
-            <Boxes className="size-5" />
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+      {/* ============================================================ */}
+      {/* 1. Desktop Sidebar (Hidden on < lg, fixed h-full) */}
+      {/* ============================================================ */}
+      <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground h-full select-none">
+        {/* Sidebar Header: EXACTLY h-16 shrink-0 border-b border-border to align with top header */}
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-border px-5">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background shadow-xs">
+            <Boxes className="size-4.5" />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-heading text-lg font-bold tracking-tight text-foreground">
+              <span className="font-heading text-base font-bold tracking-tight text-foreground">
                 DICA
               </span>
-              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                PRO SCM
+              <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                SCM
               </span>
             </div>
-            <span className="text-xs text-muted-foreground">Chuỗi Cung Ứng F&B</span>
+            <span className="text-[11px] text-muted-foreground truncate">
+              Chuỗi Cung Ứng F&B
+            </span>
           </div>
         </div>
 
-        {/* Navigation list */}
+        {/* Sidebar Nav Items with smooth scroll */}
         <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-6">
-            {NAV_SECTIONS.map((section) => (
-              <div key={section.title} className="space-y-1">
-                <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                  {section.title}
-                </p>
-                <div className="space-y-0.5 pt-1">
-                  {section.items.map((item) => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "group relative flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
-                          isActive
-                            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 font-semibold"
-                            : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon
-                            className={cn(
-                              "size-4 shrink-0 transition-colors",
-                              isActive
-                                ? "text-primary-foreground"
-                                : "text-muted-foreground group-hover:text-primary"
-                            )}
-                          />
-                          <span>{item.label}</span>
-                        </div>
-                        {item.badge && (
-                          <span
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                              isActive
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-primary/15 text-primary"
-                            )}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                        {item.countKey === "pendingRequests" && (
-                          <span
-                            className={cn(
-                              "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
-                              isActive
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-primary/15 text-primary"
-                            )}
-                          >
-                            2
-                          </span>
-                        )}
-                        {item.countKey === "lowStock" && (
-                          <span
-                            className={cn(
-                              "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
-                              isActive
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-destructive/15 text-destructive"
-                            )}
-                          >
-                            2
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
+          <NavigationList pathname={pathname} />
         </ScrollArea>
 
-        {/* User Card & Tenant Footer */}
-        <div className="border-t border-border/80 p-3 bg-muted/30">
-          <div className="flex items-center justify-between gap-2 rounded-xl p-2 transition-colors hover:bg-muted/60">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <Avatar className="size-8 border border-border">
-                <AvatarFallback className="bg-primary/10 font-bold text-primary text-xs">
-                  TT
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col truncate">
-                <span className="truncate text-xs font-semibold text-foreground">
-                  Nguyễn Thế Thắng
-                </span>
-                <span className="truncate text-[10px] text-muted-foreground">
-                  Super Admin • DICA HQ
-                </span>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                toast.info("Đã đăng xuất phiên làm việc hiện tại.");
-              }}
-              title="Đăng xuất"
-            >
-              <LogOut className="size-3.5" />
-            </Button>
-          </div>
+        {/* Sidebar Footer with current user */}
+        <div className="shrink-0 border-t border-border p-3 bg-muted/20">
+          <UserFooter />
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col pl-72">
-        {/* Top Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/80 bg-background/80 px-6 backdrop-blur-md">
-          {/* Left: Breadcrumbs & Page title */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Hệ thống</span>
-            <ChevronRight className="size-3.5 text-muted-foreground" />
-            <span className="font-heading text-sm font-bold text-foreground">
+      {/* ============================================================ */}
+      {/* 2. Mobile / Tablet Drawer (Sheet) for < lg screens */}
+      {/* ============================================================ */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent
+          side="left"
+          className="w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-r border-border"
+          showCloseButton={false}
+        >
+          {/* Mobile Header: EXACTLY h-16 shrink-0 border-b border-border */}
+          <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-5">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background shadow-xs">
+                <Boxes className="size-4.5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-heading text-base font-bold tracking-tight text-foreground">
+                    DICA
+                  </span>
+                  <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                    SCM
+                  </span>
+                </div>
+                <span className="text-[11px] text-muted-foreground truncate">
+                  Chuỗi Cung Ứng F&B
+                </span>
+              </div>
+            </div>
+            <SheetClose asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted-foreground hover:text-foreground"
+                aria-label="Đóng menu"
+              >
+                <XIcon className="size-4" />
+              </Button>
+            </SheetClose>
+          </div>
+
+          <ScrollArea className="flex-1 px-3 py-4">
+            <NavigationList
+              pathname={pathname}
+              onNavigate={() => setMobileMenuOpen(false)}
+            />
+          </ScrollArea>
+
+          <div className="shrink-0 border-t border-border p-3 bg-muted/20">
+            <UserFooter onLogout={() => setMobileMenuOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ============================================================ */}
+      {/* 3. Main Column (Top Header + Scrollable Content Container) */}
+      {/* ============================================================ */}
+      <div className="flex flex-1 flex-col h-full min-w-0 overflow-hidden">
+        {/* Dashboard Top Header: EXACTLY h-16 shrink-0 border-b border-border matching sidebar */}
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-background px-4 sm:px-6">
+          {/* Left: Hamburger menu on mobile/tablet + Clear Breadcrumb navigation */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden size-9 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Mở menu điều hướng"
+            >
+              <Menu className="size-5" />
+            </Button>
+            <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-muted-foreground shrink-0">
+              <span>Hệ thống</span>
+              <ChevronRight className="size-3.5 text-muted-foreground/60" />
+            </div>
+            <span className="font-heading text-sm sm:text-base font-bold text-foreground truncate">
               {getPageTitle()}
             </span>
           </div>
 
-          {/* Right: Quick actions, Status, Search, Notifications, Theme */}
-          <div className="flex items-center gap-3">
-            {/* Facility selector dropdown */}
+          {/* Right: Facility selector, Health status, Search, Notifications, Theme */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Facility Selector Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-2 text-xs font-medium">
-                  <Building2 className="size-3.5 text-muted-foreground" />
-                  <span className="max-w-[140px] truncate">{selectedFacility}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2 px-2.5 sm:px-3 text-xs font-medium max-w-[130px] sm:max-w-[190px]"
+                >
+                  <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{currentFacilityLabel}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 text-xs">
                 <DropdownMenuLabel>Chọn phạm vi cơ sở</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {[
-                  "Tất cả cơ sở",
-                  "Kho Tổng Bình Tân",
-                  "Bếp Trung Tâm Tân Bình",
-                  "DICA BBQ Q1",
-                  "DICA Hotpot Q7",
-                  "DICA Grill Thảo Điền",
-                ].map((fac) => (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedFacilityId("ALL");
+                    toast.success("Đã lọc: Tất cả cơ sở");
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <span>Tất cả cơ sở</span>
+                  {selectedFacilityId === "ALL" && (
+                    <Check className="size-3.5 text-foreground" />
+                  )}
+                </DropdownMenuItem>
+                {facilitiesList.map((fac) => (
                   <DropdownMenuItem
-                    key={fac}
+                    key={fac.id}
                     onClick={() => {
-                      setSelectedFacility(fac);
-                      toast.success(`Đã lọc phạm vi: ${fac}`);
+                      setSelectedFacilityId(fac.id);
+                      toast.success(`Đã lọc phạm vi: ${fac.name}`);
                     }}
-                    className="flex items-center justify-between"
+                    className="flex items-center justify-between cursor-pointer"
                   >
-                    <span>{fac}</span>
-                    {selectedFacility === fac && <Check className="size-3.5 text-primary" />}
+                    <span className="truncate">{fac.name}</span>
+                    {selectedFacilityId === fac.id && (
+                      <Check className="size-3.5 text-foreground" />
+                    )}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -423,27 +555,32 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-8 gap-1.5 px-2.5 text-xs font-medium transition-colors",
+                    "h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium transition-colors",
                     backendStatus === "live"
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
                   )}
                 >
                   <span
                     className={cn(
-                      "size-2 rounded-full animate-pulse",
+                      "size-2 rounded-full shrink-0 animate-pulse",
                       backendStatus === "live" ? "bg-emerald-500" : "bg-blue-500"
                     )}
                   />
-                  <span>
+                  <span className="hidden md:inline">
                     {backendStatus === "live" ? "API Live: 3000" : "Mock Engine (Demo)"}
+                  </span>
+                  <span className="md:hidden">
+                    {backendStatus === "live" ? "Live" : "Demo"}
                   </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-80 p-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-heading text-sm font-semibold">Trạng thái kết nối API</h4>
+                    <h4 className="font-heading text-sm font-semibold">
+                      Trạng thái kết nối API
+                    </h4>
                     <Badge variant={backendStatus === "live" ? "default" : "secondary"}>
                       {backendStatus === "live" ? "Đã kết nối" : "Nội bộ độc lập"}
                     </Badge>
@@ -465,9 +602,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                       onClick={async () => {
                         toast.loading("Đang kiểm tra kết nối...");
                         try {
-                          const res = await fetch(`${dicaStore.getApiBaseUrl()}/health/live`, {
-                            signal: AbortSignal.timeout(2000),
-                          });
+                          const res = await fetch(
+                            `${dicaStore.getApiBaseUrl()}/health/live`,
+                            { signal: AbortSignal.timeout(2000) }
+                          );
                           if (res.ok) {
                             setBackendStatus("live");
                             toast.success("Kết nối Backend NestJS thành công!");
@@ -477,7 +615,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           }
                         } catch {
                           setBackendStatus("demo");
-                          toast.info("Backend chưa khởi chạy, đang chạy chế độ Mock hoàn chỉnh.");
+                          toast.info(
+                            "Backend chưa khởi chạy, đang chạy chế độ Mock hoàn chỉnh."
+                          );
                         }
                       }}
                     >
@@ -494,7 +634,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               variant="outline"
               size="sm"
               onClick={() => setOpenCommand(true)}
-              className="h-8 w-44 justify-between bg-muted/40 px-2.5 text-xs text-muted-foreground hover:bg-muted"
+              className="hidden xl:flex h-9 w-44 justify-between bg-muted/30 px-3 text-xs text-muted-foreground hover:bg-muted/60"
             >
               <span className="flex items-center gap-1.5">
                 <Search className="size-3.5" />
@@ -504,26 +644,41 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 ⌘K
               </kbd>
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpenCommand(true)}
+              className="xl:hidden size-9 text-muted-foreground hover:text-foreground"
+              title="Tìm kiếm nhanh (⌘K)"
+            >
+              <Search className="size-4" />
+            </Button>
 
             {/* Notifications Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative size-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative size-9 text-muted-foreground hover:text-foreground"
+                >
                   <Bell className="size-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm shadow-primary/25">
+                    <span className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background shadow-xs">
                       {unreadCount}
                     </span>
                   )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-80 p-0">
-                <div className="flex items-center justify-between border-b border-border/80 px-4 py-3">
-                  <span className="font-heading text-sm font-semibold">Thông báo hệ thống</span>
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                  <span className="font-heading text-sm font-semibold">
+                    Thông báo hệ thống
+                  </span>
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllRead}
-                      className="text-xs text-primary hover:underline font-medium"
+                      className="text-xs text-foreground hover:underline font-medium"
                     >
                       Đọc tất cả
                     </button>
@@ -541,7 +696,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           key={n.id}
                           className={cn(
                             "flex items-start gap-3 p-3 transition-colors hover:bg-muted/50 cursor-pointer",
-                            !n.is_read && "bg-primary/5"
+                            !n.is_read && "bg-muted/50 font-medium"
                           )}
                           onClick={() => {
                             if (n.link) router.push(n.link);
@@ -581,7 +736,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-8 text-muted-foreground hover:text-foreground"
+                  className="size-9 text-muted-foreground hover:text-foreground"
                   title="Tùy chỉnh giao diện: Sáng / Tối / Hệ thống"
                 >
                   <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -603,7 +758,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <Sun className="size-3.5 text-amber-500" />
                     <span>Sáng (Light)</span>
                   </div>
-                  {theme === "light" && <Check className="size-3.5 text-primary" />}
+                  {theme === "light" && <Check className="size-3.5 text-foreground" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -616,7 +771,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <Moon className="size-3.5 text-blue-400" />
                     <span>Tối (Dark)</span>
                   </div>
-                  {theme === "dark" && <Check className="size-3.5 text-primary" />}
+                  {theme === "dark" && <Check className="size-3.5 text-foreground" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -629,18 +784,22 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <Monitor className="size-3.5 text-muted-foreground" />
                     <span>Hệ thống (Auto)</span>
                   </div>
-                  {theme === "system" && <Check className="size-3.5 text-primary" />}
+                  {theme === "system" && <Check className="size-3.5 text-foreground" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
 
-        {/* Page Content Viewport */}
-        <main className="flex-1 p-6 md:p-8">{children}</main>
+        {/* Page Content Viewport with independent scroll */}
+        <main className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl space-y-6">
+            {children}
+          </div>
+        </main>
       </div>
 
-      {/* Command Palette (Dialog) */}
+      {/* Global Command Palette Dialog */}
       <CommandDialog open={openCommand} onOpenChange={setOpenCommand}>
         <CommandInput placeholder="Gõ lệnh hoặc tìm trang (ví dụ: kho, nguyên liệu, yêu cầu)..." />
         <CommandList>
