@@ -268,7 +268,7 @@ export default function SupplyRequestsPage() {
           <div className="flex items-center gap-2">
             <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
               <DialogTrigger asChild>
-                <Button className="h-9 gap-1.5 shadow-sm bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white">
+                <Button className="h-9 gap-1.5 shadow-sm shadow-primary/20">
                   <Plus className="size-4" />
                   <span>Tạo phiếu yêu cầu mới</span>
                 </Button>

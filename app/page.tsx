@@ -88,7 +88,7 @@ const WEEKLY_DATA = [
   { day: "Chủ nhật", xuat: 65, nhap: 40 },
 ];
 
-const CATEGORY_COLORS = ["#f97316", "#06b6d4", "#10b981", "#8b5cf6", "#f43f5e"];
+const CATEGORY_COLORS = ["#ea580c", "#f97316", "#fb923c", "#f59e0b", "#0284c7"];
 
 export default function DashboardPage() {
   const [facilities, setFacilities] = React.useState<Facility[]>([]);
@@ -236,7 +236,7 @@ export default function DashboardPage() {
             {/* Quick Action Button: New Request */}
             <Dialog open={openNewReqDialog} onOpenChange={setOpenNewReqDialog}>
               <DialogTrigger asChild>
-                <Button className="h-9 gap-1.5 shadow-sm bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white">
+                <Button className="h-9 gap-1.5 shadow-sm shadow-primary/20">
                   <Plus className="size-4" />
                   <span>Tạo yêu cầu cấp hàng</span>
                 </Button>
@@ -465,13 +465,13 @@ export default function DashboardPage() {
                   <Bar
                     dataKey="xuat"
                     name="Xuất cho Chi Nhánh (Lượt)"
-                    fill="#f97316"
+                    fill="#ea580c"
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar
                     dataKey="nhap"
                     name="Nhập từ NCC (Lượt)"
-                    fill="#06b6d4"
+                    fill="#0284c7"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>

@@ -238,7 +238,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-border/80 bg-card/95 backdrop-blur-md transition-all duration-300">
         {/* Brand Header */}
         <div className="flex h-16 items-center gap-3 border-b border-border/70 px-5">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-600 to-red-600 text-white shadow-md shadow-orange-500/20">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25">
             <Boxes className="size-5" />
           </div>
           <div className="flex flex-col">
@@ -273,8 +273,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                         className={cn(
                           "group relative flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                           isActive
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 font-semibold"
+                            : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                         )}
                       >
                         <div className="flex items-center gap-3">
@@ -283,7 +283,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                               "size-4 shrink-0 transition-colors",
                               isActive
                                 ? "text-primary-foreground"
-                                : "text-muted-foreground group-hover:text-foreground"
+                                : "text-muted-foreground group-hover:text-primary"
                             )}
                           />
                           <span>{item.label}</span>
@@ -294,19 +294,33 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                               "rounded-full px-2 py-0.5 text-[10px] font-semibold",
                               isActive
                                 ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                : "bg-primary/15 text-primary"
                             )}
                           >
                             {item.badge}
                           </span>
                         )}
                         {item.countKey === "pendingRequests" && (
-                          <span className="flex size-5 items-center justify-center rounded-full bg-amber-500/20 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                          <span
+                            className={cn(
+                              "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
+                              isActive
+                                ? "bg-primary-foreground/20 text-primary-foreground"
+                                : "bg-primary/15 text-primary"
+                            )}
+                          >
                             2
                           </span>
                         )}
                         {item.countKey === "lowStock" && (
-                          <span className="flex size-5 items-center justify-center rounded-full bg-red-500/20 text-[11px] font-bold text-red-600 dark:text-red-400">
+                          <span
+                            className={cn(
+                              "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
+                              isActive
+                                ? "bg-primary-foreground/20 text-primary-foreground"
+                                : "bg-destructive/15 text-destructive"
+                            )}
+                          >
                             2
                           </span>
                         )}
@@ -496,7 +510,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <Button variant="ghost" size="icon" className="relative size-8">
                   <Bell className="size-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                    <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-sm shadow-primary/25">
                       {unreadCount}
                     </span>
                   )}
