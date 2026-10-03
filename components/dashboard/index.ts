@@ -1,3 +1,7 @@
+export * from "./kpi-widgets-row";
+export * from "./overview-composite-widget";
+export * from "./sales-breakdown-widget";
+export * from "./bottom-widgets-row";
 export * from "./dashboard-kpis";
 export * from "./transfer-flow-chart";
 export * from "./category-donut-chart";

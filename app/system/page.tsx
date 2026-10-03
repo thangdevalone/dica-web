@@ -134,28 +134,28 @@ export default function SystemPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="appearance" className="space-y-6">
-          <TabsList className="bg-muted/70 p-1">
-            <TabsTrigger value="appearance" className="gap-2 text-xs">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 rounded-xl border border-border bg-muted/40 p-1">
+            <TabsTrigger value="appearance" className="gap-2 text-xs rounded-lg">
               <Sparkles className="size-4" />
-              <span>Giao Diện (Sáng / Tối)</span>
+              <span>Giao Diện</span>
             </TabsTrigger>
-            <TabsTrigger value="api" className="gap-2 text-xs">
+            <TabsTrigger value="api" className="gap-2 text-xs rounded-lg">
               <Server className="size-4" />
-              <span>Kết Nối API & Môi Trường (.env)</span>
+              <span>Kết Nối API (.env)</span>
             </TabsTrigger>
-            <TabsTrigger value="audit" className="gap-2 text-xs">
+            <TabsTrigger value="audit" className="gap-2 text-xs rounded-lg">
               <History className="size-4" />
-              <span>Nhật Ký Thao Tác (Audit Log)</span>
+              <span>Nhật Ký Kiểm Toán</span>
             </TabsTrigger>
-            <TabsTrigger value="maintenance" className="gap-2 text-xs">
+            <TabsTrigger value="maintenance" className="gap-2 text-xs rounded-lg">
               <Database className="size-4" />
-              <span>Bảo Trì & Dữ Liệu Mẫu</span>
+              <span>Bảo Trì & Dữ Liệu</span>
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: THEME & APPEARANCE */}
           <TabsContent value="appearance" className="space-y-6">
-            <Card className="border-border max-w-3xl">
+            <Card className="rounded-2xl border-border bg-card/90 shadow-xs max-w-3xl">
               <CardHeader>
                 <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
                   <Sparkles className="size-4 text-primary" />
@@ -277,7 +277,7 @@ export default function SystemPage() {
 
           {/* TAB 2: API CONFIG & ENVIRONMENT VARIABLES */}
           <TabsContent value="api" className="space-y-6">
-            <Card className="border-border max-w-3xl">
+            <Card className="rounded-2xl border-border bg-card/90 shadow-xs max-w-3xl">
               <CardHeader>
                 <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
                   <FileCode className="size-4 text-primary" />
@@ -385,10 +385,10 @@ export default function SystemPage() {
               </div>
             </div>
 
-            <Card className="border-border">
+            <Card className="rounded-2xl border-border bg-card/90 overflow-hidden shadow-xs">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="border-border">
                     <TableHead className="w-[170px]">Thời Gian</TableHead>
                     <TableHead>Hành Động</TableHead>
                     <TableHead>Thực Thể</TableHead>
@@ -399,12 +399,12 @@ export default function SystemPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredAudits.map((aud) => (
-                    <TableRow key={aud.id}>
+                    <TableRow key={aud.id} className="border-border">
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {aud.timestamp}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="font-mono text-[10px]">
+                        <Badge variant="outline" className="font-mono text-[10px] border-border text-foreground">
                           {aud.action}
                         </Badge>
                       </TableCell>
@@ -435,7 +435,7 @@ export default function SystemPage() {
 
           {/* TAB 4: MAINTENANCE */}
           <TabsContent value="maintenance" className="space-y-6">
-            <Card className="border-border max-w-2xl">
+            <Card className="rounded-2xl border-border bg-card/90 shadow-xs max-w-2xl">
               <CardHeader>
                 <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
                   <Database className="size-4 text-primary" />
@@ -450,17 +450,17 @@ export default function SystemPage() {
                   Bao gồm: 5 Cơ sở chi nhánh, 7 SKU thịt bò & hải sản, 4 nhà cung cấp lớn, các phiếu xin hàng, đơn PO, thẻ kho và biên bản sai lệch.
                 </p>
                 <Button
-                  variant="destructive"
+                  variant="outline"
                   onClick={handleResetData}
-                  className="gap-1.5"
+                  className="gap-1.5 rounded-xl border-border hover:bg-muted"
                 >
-                  <Trash2 className="size-4" />
+                  <Trash2 className="size-4 text-muted-foreground" />
                   <span>Khôi phục về dữ liệu mặc định ban đầu</span>
                 </Button>
               </CardContent>
             </Card>
 
-            <Card className="border-border max-w-2xl">
+            <Card className="rounded-2xl border-border bg-card/90 shadow-xs max-w-2xl">
               <CardHeader>
                 <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
                   <Code className="size-4 text-primary" />

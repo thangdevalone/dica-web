@@ -5,12 +5,10 @@ import Link from "next/link";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import {
-  DashboardKpis,
-  TransferFlowChart,
-  CategoryDonutChart,
-  PendingRequestsCard,
-  LowStockCard,
-  FacilitiesGrid,
+  KpiWidgetsRow,
+  OverviewCompositeWidget,
+  SalesBreakdownWidget,
+  BottomWidgetsRow,
 } from "@/components/dashboard";
 import { SupplyRequestDialog } from "@/components/forms/supply-request-dialog";
 import {
@@ -64,21 +62,6 @@ export default function DashboardPage() {
     () => requests.filter((r) => r.status === "SUBMITTED" || r.status === "DRAFT"),
     [requests]
   );
-  const openDiscrepancies = React.useMemo(
-    () => discrepancies.filter((d) => d.status === "OPEN"),
-    [discrepancies]
-  );
-
-  // Chart data for stock allocation
-  const categoryData = React.useMemo(() => {
-    const map = new Map<string, number>();
-    for (const b of balances) {
-      const ing = ingredients.find((i) => i.id === b.ingredient_id);
-      const grp = ing?.groupName || "Khác";
-      map.set(grp, (map.get(grp) || 0) + b.total_value);
-    }
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [balances, ingredients]);
 
   return (
     <AdminLayout>
@@ -98,7 +81,7 @@ export default function DashboardPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 gap-1.5 text-xs"
+              className="h-9 gap-1.5 text-xs rounded-xl"
               onClick={handleRefresh}
             >
               <RefreshCw className="size-3.5" />
@@ -106,7 +89,7 @@ export default function DashboardPage() {
             </Button>
 
             <Link href="/catalog">
-              <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
+              <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs rounded-xl">
                 <Database className="size-3.5" />
                 <span>Danh mục SKU</span>
               </Button>
@@ -114,7 +97,7 @@ export default function DashboardPage() {
 
             <Button
               size="sm"
-              className="h-9 gap-1.5 text-xs shadow-sm"
+              className="h-9 gap-1.5 text-xs rounded-xl shadow-xs"
               onClick={() => {
                 setSelectedIngredient(undefined);
                 setOpenNewReqDialog(true);
@@ -126,44 +109,41 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Modular Top KPI Cards */}
-        <DashboardKpis
+        {/* ============================================================ */}
+        {/* 1. Top Row: 6 KPI & Metric Widgets (Matching Screenshot)     */}
+        {/* ============================================================ */}
+        <KpiWidgetsRow
           totalInventoryValue={totalInventoryValue}
           pendingRequestsCount={pendingRequests.length}
-          unapprovedRequestsCount={
-            requests.filter((r) => r.status === "SUBMITTED").length
-          }
           lowStockItemsCount={lowStockItems.length}
-          discrepanciesCount={openDiscrepancies.length}
+          discrepanciesCount={discrepancies.length}
         />
 
-        {/* Charts Row: Bar Chart & Donut Chart */}
-        <div className="grid gap-6 lg:grid-cols-7">
+        {/* ============================================================ */}
+        {/* 2. Middle Row: Composite Chart + Sales Breakdown Widget     */}
+        {/* ============================================================ */}
+        <div className="grid gap-6 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <OverviewCompositeWidget />
+          </div>
           <div className="lg:col-span-4">
-            <TransferFlowChart />
-          </div>
-          <div className="lg:col-span-3">
-            <CategoryDonutChart data={categoryData} />
+            <SalesBreakdownWidget />
           </div>
         </div>
 
-        {/* Detailed Sections: Pending Requests & Low Stock Alerts */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <PendingRequestsCard
-            requests={pendingRequests}
-            onApprove={(id) => approveRequest(id)}
-          />
-          <LowStockCard
-            lowStockItems={lowStockItems}
-            onReplenish={(ingId) => {
-              setSelectedIngredient(ingId);
-              setOpenNewReqDialog(true);
-            }}
-          />
-        </div>
-
-        {/* Facilities Status Overview Grid */}
-        <FacilitiesGrid facilities={facilities} />
+        {/* ============================================================ */}
+        {/* 3. Bottom Row: Actionable Cards (Matching Screenshot)       */}
+        {/* ============================================================ */}
+        <BottomWidgetsRow
+          lowStockItems={lowStockItems}
+          pendingRequests={pendingRequests}
+          facilities={facilities}
+          onReplenish={(ingId) => {
+            setSelectedIngredient(ingId);
+            setOpenNewReqDialog(true);
+          }}
+          onApproveRequest={(id) => approveRequest(id)}
+        />
 
         {/* Reusable Supply Request Form Dialog (react-hook-form + zod) */}
         <SupplyRequestDialog
