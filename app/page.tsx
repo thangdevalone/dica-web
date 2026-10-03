@@ -2,155 +2,137 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Plus, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/shared/page-header";
+import { KpiCards } from "@/components/dashboard/kpi-cards";
+import { ActivityChart, InventoryBreakdown } from "@/components/dashboard/charts";
 import {
-  KpiWidgetsRow,
-  OverviewCompositeWidget,
-  SalesBreakdownWidget,
-  BottomWidgetsRow,
-} from "@/components/dashboard";
-import { SupplyRequestDialog } from "@/components/forms/supply-request-dialog";
-import {
-  useFacilitiesQuery,
-  useIngredientsQuery,
-  useSupplyRequestsQuery,
-  useStockBalancesQuery,
-  useDiscrepanciesQuery,
-  useApproveRequestMutation,
-} from "@/hooks";
-import { useAppStore } from "@/stores/use-app-store";
-import { Plus, Database, RefreshCw } from "lucide-react";
+  ActivityPanel,
+  FacilitiesPanel,
+  LowStockPanel,
+  OperationsPanel,
+  PendingRequestsPanel,
+  RecentOrdersPanel,
+} from "@/components/dashboard/panels";
+import { useDashboardSummary } from "@/hooks/use-system";
+import { useCan } from "@/stores/use-auth-store";
+import { errorMessage } from "@/lib/api/client";
+import { formatDateTime } from "@/lib/formatters";
+
+const PERIODS = [7, 14, 30, 90] as const;
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 rounded-2xl" />
+        ))}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-12">
+        <Skeleton className="h-80 rounded-2xl lg:col-span-8" />
+        <Skeleton className="h-80 rounded-2xl lg:col-span-4" />
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
-  const selectedFacilityId = useAppStore((state) => state.selectedFacilityId);
-
-  // TanStack React Query Hooks with caching and automated synchronization
-  const { data: facilities = [], refetch: refetchFacilities } = useFacilitiesQuery();
-  const { data: ingredients = [], refetch: refetchIngredients } = useIngredientsQuery();
-  const { data: requests = [], refetch: refetchRequests } = useSupplyRequestsQuery(
-    selectedFacilityId !== "ALL" ? selectedFacilityId : undefined
-  );
-  const { data: balances = [], refetch: refetchBalances } = useStockBalancesQuery(
-    selectedFacilityId !== "ALL" ? selectedFacilityId : undefined
-  );
-  const { data: discrepancies = [], refetch: refetchDiscrepancies } = useDiscrepanciesQuery();
-  const { mutate: approveRequest } = useApproveRequestMutation();
-
-  // Dialog state
-  const [openNewReqDialog, setOpenNewReqDialog] = React.useState(false);
-  const [selectedIngredient, setSelectedIngredient] = React.useState<string | undefined>();
-
-  const handleRefresh = () => {
-    refetchFacilities();
-    refetchIngredients();
-    refetchRequests();
-    refetchBalances();
-    refetchDiscrepancies();
-  };
-
-  // KPI Calculations
-  const totalInventoryValue = React.useMemo(
-    () => balances.reduce((sum, item) => sum + item.total_value, 0),
-    [balances]
-  );
-  const lowStockItems = React.useMemo(
-    () => balances.filter((item) => item.is_low_stock),
-    [balances]
-  );
-  const pendingRequests = React.useMemo(
-    () => requests.filter((r) => r.status === "SUBMITTED" || r.status === "DRAFT"),
-    [requests]
-  );
+  const [days, setDays] = React.useState<number>(14);
+  const { data: summary, isLoading, error, refetch, isFetching } = useDashboardSummary(days);
+  const canCreateRequest = useCan("request.create");
 
   return (
-    <AdminLayout>
+    <AdminLayout permission="dashboard.read">
       <div className="space-y-6">
-        {/* Header with Title and Quick Actions */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Trung Tâm Điều Hành Cung Ứng & Tồn Kho
-            </h1>
-            <p className="text-xs text-muted-foreground sm:text-sm">
-              Giám sát đa cơ sở, điều phối đơn cấp hàng và định mức hao hụt hệ thống DICA.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 gap-1.5 text-xs rounded-xl"
-              onClick={handleRefresh}
-            >
-              <RefreshCw className="size-3.5" />
-              <span className="hidden sm:inline">Làm mới</span>
-            </Button>
-
-            <Link href="/catalog">
-              <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs rounded-xl">
-                <Database className="size-3.5" />
-                <span>Danh mục SKU</span>
+        <PageHeader
+          title="Trung Tâm Điều Hành Cung Ứng & Tồn Kho"
+          description={
+            summary
+              ? `Số liệu trực tiếp từ hệ thống · cập nhật ${formatDateTime(summary.generated_at)}`
+              : "Giám sát đa cơ sở, điều phối đơn cấp hàng và tồn kho hệ thống DICA."
+          }
+          actions={
+            <>
+              <Tabs value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+                <TabsList className="bg-muted/70 p-1">
+                  {PERIODS.map((p) => (
+                    <TabsTrigger key={p} value={String(p)} className="text-xs">
+                      {p} ngày
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs rounded-xl"
+                onClick={() => refetch()}
+                disabled={isFetching}
+              >
+                {isFetching ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+                <span className="hidden sm:inline">Làm mới</span>
               </Button>
-            </Link>
+              {canCreateRequest && (
+                <Button asChild size="sm" className="h-9 gap-1.5 text-xs rounded-xl shadow-xs">
+                  <Link href="/requests?action=create">
+                    <Plus className="size-3.5" />
+                    <span>Tạo yêu cầu cấp hàng</span>
+                  </Link>
+                </Button>
+              )}
+            </>
+          }
+        />
 
-            <Button
-              size="sm"
-              className="h-9 gap-1.5 text-xs rounded-xl shadow-xs"
-              onClick={() => {
-                setSelectedIngredient(undefined);
-                setOpenNewReqDialog(true);
-              }}
-            >
-              <Plus className="size-3.5" />
-              <span>Tạo yêu cầu cấp hàng</span>
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : error ? (
+          <Card className="items-center gap-3 rounded-2xl p-8 text-center">
+            <AlertTriangle className="size-6 text-destructive" />
+            <p className="text-sm font-semibold">Không tải được số liệu tổng quan</p>
+            <p className="text-xs text-muted-foreground">{errorMessage(error)}</p>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => refetch()}>
+              Thử lại
             </Button>
-          </div>
-        </div>
+          </Card>
+        ) : summary ? (
+          <>
+            <KpiCards summary={summary} />
 
-        {/* ============================================================ */}
-        {/* 1. Top Row: 6 KPI & Metric Widgets (Matching Screenshot)     */}
-        {/* ============================================================ */}
-        <KpiWidgetsRow
-          totalInventoryValue={totalInventoryValue}
-          pendingRequestsCount={pendingRequests.length}
-          lowStockItemsCount={lowStockItems.length}
-          discrepanciesCount={discrepancies.length}
-        />
+            <div className="grid gap-6 lg:grid-cols-12">
+              <div className={summary.inventory ? "lg:col-span-8" : "lg:col-span-12"}>
+                {(summary.movements || summary.requests) && <ActivityChart summary={summary} />}
+              </div>
+              {summary.inventory && (
+                <div className="lg:col-span-4">
+                  <InventoryBreakdown summary={summary} />
+                </div>
+              )}
+            </div>
 
-        {/* ============================================================ */}
-        {/* 2. Middle Row: Composite Chart + Sales Breakdown Widget     */}
-        {/* ============================================================ */}
-        <div className="grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-8">
-            <OverviewCompositeWidget />
-          </div>
-          <div className="lg:col-span-4">
-            <SalesBreakdownWidget />
-          </div>
-        </div>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              <PendingRequestsPanel summary={summary} />
+              <RecentOrdersPanel summary={summary} />
+              <OperationsPanel summary={summary} />
+            </div>
 
-        {/* ============================================================ */}
-        {/* 3. Bottom Row: Actionable Cards (Matching Screenshot)       */}
-        {/* ============================================================ */}
-        <BottomWidgetsRow
-          lowStockItems={lowStockItems}
-          pendingRequests={pendingRequests}
-          facilities={facilities}
-          onReplenish={(ingId) => {
-            setSelectedIngredient(ingId);
-            setOpenNewReqDialog(true);
-          }}
-          onApproveRequest={(id) => approveRequest(id)}
-        />
-
-        {/* Reusable Supply Request Form Dialog (react-hook-form + zod) */}
-        <SupplyRequestDialog
-          open={openNewReqDialog}
-          onOpenChange={setOpenNewReqDialog}
-          preselectedIngredientId={selectedIngredient}
-        />
+            <div className="grid gap-6 lg:grid-cols-12">
+              <div className="lg:col-span-8">
+                <FacilitiesPanel summary={summary} />
+              </div>
+              <div className="space-y-6 lg:col-span-4">
+                <LowStockPanel summary={summary} />
+                <ActivityPanel summary={summary} />
+              </div>
+            </div>
+          </>
+        ) : null}
       </div>
     </AdminLayout>
   );

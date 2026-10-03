@@ -1,63 +1,83 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { User } from "@/types";
+import type { MeProfile, PermissionGrant } from "@/lib/api/types";
 
 interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  activeFacilityId: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  organizationCode: string | null;
+  user: MeProfile | null;
   permissions: string[];
-  login: (user: User, token: string, permissions?: string[]) => void;
-  logout: () => void;
-  setActiveFacilityId: (facilityId: string | null) => void;
-  hasPermission: (permissionCode: string) => boolean;
+  grants: PermissionGrant[];
+  hasHydrated: boolean;
+  setSession: (session: {
+    accessToken: string;
+    refreshToken: string;
+    organizationCode?: string;
+  }) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
+  setProfile: (user: MeProfile, permissions: string[], grants: PermissionGrant[]) => void;
+  clear: () => void;
+  setHasHydrated: (value: boolean) => void;
 }
-
-const DEFAULT_ADMIN_USER: User = {
-  id: "usr-admin-01",
-  username: "admin_thang",
-  full_name: "Nguyễn Thế Thắng",
-  email: "admin@dica.vn",
-  kind: "INTERNAL",
-  role_name: "SUPER_ADMIN",
-  facility_assigned: "WH-BINTAN",
-  active: true,
-  created_at: "2026-01-01T00:00:00Z",
-};
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
-      user: DEFAULT_ADMIN_USER,
-      token: "demo_mock_jwt_token_dica_2026",
-      isAuthenticated: true,
-      activeFacilityId: null,
-      permissions: ["*"], // Super admin has all permissions
-      login: (user, token, permissions = ["*"]) =>
+    (set) => ({
+      accessToken: null,
+      refreshToken: null,
+      organizationCode: null,
+      user: null,
+      permissions: [],
+      grants: [],
+      hasHydrated: false,
+      setSession: ({ accessToken, refreshToken, organizationCode }) =>
+        set((state) => ({
+          accessToken,
+          refreshToken,
+          organizationCode: organizationCode ?? state.organizationCode,
+        })),
+      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+      setProfile: (user, permissions, grants) => set({ user, permissions, grants }),
+      clear: () =>
         set({
-          user,
-          token,
-          isAuthenticated: true,
-          permissions,
-        }),
-      logout: () =>
-        set({
+          accessToken: null,
+          refreshToken: null,
           user: null,
-          token: null,
-          isAuthenticated: false,
-          activeFacilityId: null,
           permissions: [],
+          grants: [],
         }),
-      setActiveFacilityId: (activeFacilityId) => set({ activeFacilityId }),
-      hasPermission: (permissionCode) => {
-        const { permissions } = get();
-        if (permissions.includes("*")) return true;
-        return permissions.includes(permissionCode);
-      },
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
     }),
     {
-      name: "dica_auth_storage",
+      name: "dica_auth",
+      partialize: (state) => ({
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        organizationCode: state.organizationCode,
+        user: state.user,
+        permissions: state.permissions,
+        grants: state.grants,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
+
+/** True when the current session holds the given permission code. */
+export function useCan(permission: string | string[] | undefined): boolean {
+  const permissions = useAuthStore((state) => state.permissions);
+  if (!permission) return true;
+  const required = Array.isArray(permission) ? permission : [permission];
+  return required.some((code) => permissions.includes(code));
+}
+
+export function useUser() {
+  return useAuthStore((state) => state.user);
+}
+
+export function hasPermission(permission: string): boolean {
+  return useAuthStore.getState().permissions.includes(permission);
+}

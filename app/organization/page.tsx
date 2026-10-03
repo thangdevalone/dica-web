@@ -1,346 +1,579 @@
 "use client";
 
 import * as React from "react";
+import { Building2, Flame, Pencil, Plus, Power, RefreshCw, Warehouse } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
-import {
-  Building2,
-  Plus,
-  Search,
-  Warehouse,
-  Flame,
-  MapPin,
-  RefreshCw,
-} from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/shared/page-header";
+import { ActiveBadge } from "@/components/shared/status-badge";
+import { Code, DataTable, type Column } from "@/components/shared/data-table";
+import { Field, FormDialog, OptionSelect, SearchInput } from "@/components/shared/form";
+import { FacilitySelect, LocationSelect } from "@/components/shared/entity-select";
+import { useApiMutation, usePagedQuery } from "@/hooks/use-api";
+import { useFacilities } from "@/hooks/use-lookups";
+import { useDashboardSummary } from "@/hooks/use-system";
+import { api } from "@/lib/api/client";
+import type { Department, Facility, StockLocation } from "@/lib/api/types";
+import { useFacilityFilter } from "@/stores/use-app-store";
+import { useCan } from "@/stores/use-auth-store";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  FacilityFormDialog,
-  LocationFormDialog,
-  DepartmentFormDialog,
-} from "@/components/forms";
-import {
-  useFacilitiesQuery,
-  useLocationsQuery,
-  useDepartmentsQuery,
-} from "@/hooks";
+  DEPARTMENT_TYPE_LABELS,
+  FACILITY_TYPE_LABELS,
+  LOCATION_TYPE_LABELS,
+} from "@/constants/labels";
+import { formatCompact } from "@/lib/num";
+import { cn } from "@/lib/utils";
 
-export default function OrganizationPage() {
-  // TanStack Query Hooks
-  const {
-    data: facilities = [],
-    refetch: refetchFacilities,
-    isLoading: isLoadingFac,
-  } = useFacilitiesQuery();
-  const { data: locations = [], refetch: refetchLocations } = useLocationsQuery();
-  const { data: departments = [], refetch: refetchDepartments } = useDepartmentsQuery();
+const toOptions = (map: Record<string, string>) =>
+  Object.entries(map).map(([value, label]) => ({ value, label }));
 
-  // Search & Filters
-  const [searchFacility, setSearchFacility] = React.useState("");
-  const [filterType, setFilterType] = React.useState<string>("ALL");
+// ---------------------------------------------------------------------------
+// Facilities
+// ---------------------------------------------------------------------------
 
-  // Form Dialog States
-  const [openFacDialog, setOpenFacDialog] = React.useState(false);
-  const [openLocDialog, setOpenLocDialog] = React.useState(false);
-  const [openDepDialog, setOpenDepDialog] = React.useState(false);
+function FacilityDialog({
+  open,
+  onOpenChange,
+  facility,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  facility: Facility | null;
+}) {
+  const [form, setForm] = React.useState({ code: "", name: "", type: "BRANCH" });
+  React.useEffect(() => {
+    if (open) setForm({ code: facility?.code ?? "", name: facility?.name ?? "", type: facility?.type ?? "BRANCH" });
+  }, [open, facility]);
+  const save = useApiMutation({
+    mutationFn: () =>
+      facility
+        ? api.patch(`/facilities/${facility.id}`, { name: form.name.trim(), type: form.type })
+        : api.post("/facilities", { code: form.code.trim().toUpperCase(), name: form.name.trim(), type: form.type }),
+    invalidate: ["/facilities"],
+    onSuccess: () => onOpenChange(false),
+  });
+  return (
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={facility ? `Sửa cơ sở ${facility.code}` : "Thêm cơ sở mới"}
+      description="Mã cơ sở là duy nhất trong tổ chức và không thể đổi sau khi tạo."
+      onSubmit={() => save.mutate()}
+      submitting={save.isPending}
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Mã cơ sở" required>
+          <Input
+            value={form.code}
+            disabled={Boolean(facility)}
+            onChange={(e) => setForm({ ...form, code: e.target.value })}
+            placeholder="VD: BR01"
+            className="h-9 text-xs uppercase"
+          />
+        </Field>
+        <Field label="Loại hình" required>
+          <OptionSelect value={form.type} onChange={(type) => setForm({ ...form, type })} options={toOptions(FACILITY_TYPE_LABELS)} />
+        </Field>
+      </div>
+      <Field label="Tên cơ sở" required>
+        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-9 text-xs" />
+      </Field>
+    </FormDialog>
+  );
+}
 
-  const handleRefresh = () => {
-    refetchFacilities();
-    refetchLocations();
-    refetchDepartments();
-  };
+function FacilitiesTab() {
+  const { data: facilities = [], isLoading, refetch } = useFacilities();
+  const { data: summary } = useDashboardSummary();
+  const canManage = useCan("facility.manage");
+  const [search, setSearch] = React.useState("");
+  const [type, setType] = React.useState("");
+  const [editing, setEditing] = React.useState<Facility | null>(null);
+  const [open, setOpen] = React.useState(false);
 
-  // Filter facilities
-  const filteredFacilities = React.useMemo(() => {
-    return facilities.filter((f) => {
-      const matchSearch =
-        f.name.toLowerCase().includes(searchFacility.toLowerCase()) ||
-        f.code.toLowerCase().includes(searchFacility.toLowerCase()) ||
-        (f.address && f.address.toLowerCase().includes(searchFacility.toLowerCase()));
-      const matchType = filterType === "ALL" || f.type === filterType;
-      return matchSearch && matchType;
-    });
-  }, [facilities, searchFacility, filterType]);
+  const toggle = useApiMutation<Facility>({
+    mutationFn: (f) => api.patch(`/facilities/${f.id}`, { active: !f.active }),
+    invalidate: ["/facilities"],
+  });
+
+  const stats = new Map(summary?.facilities.map((f) => [f.id, f]) ?? []);
+  const q = search.trim().toLowerCase();
+  const filtered = facilities.filter(
+    (f) =>
+      (!q || f.name.toLowerCase().includes(q) || f.code.toLowerCase().includes(q)) &&
+      (!type || f.type === type)
+  );
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Header banner */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Cơ Cấu Tổ Chức & Chi Nhánh
-            </h1>
-            <p className="text-xs text-muted-foreground sm:text-sm">
-              Thiết lập mạng lưới kho tổng, bếp trung tâm, nhà hàng chi nhánh và phân khu lưu trữ.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+          <SearchInput value={search} onChange={setSearch} placeholder="Tìm cơ sở theo tên hoặc mã..." delay={0} />
+          <OptionSelect value={type} onChange={setType} options={toOptions(FACILITY_TYPE_LABELS)} allLabel="Tất cả loại hình" className="sm:w-48" />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs" onClick={() => refetch()}>
+            <RefreshCw className="size-3.5" /> Làm mới
+          </Button>
+          {canManage && (
             <Button
-              variant="outline"
               size="sm"
               className="h-9 gap-1.5 text-xs"
-              onClick={handleRefresh}
+              onClick={() => {
+                setEditing(null);
+                setOpen(true);
+              }}
             >
-              <RefreshCw className="size-3.5" />
-              <span>Làm mới</span>
+              <Plus className="size-3.5" /> Thêm cơ sở
             </Button>
-            <Button
-              size="sm"
-              className="h-9 gap-1.5 text-xs shadow-sm"
-              onClick={() => setOpenFacDialog(true)}
-            >
-              <Plus className="size-3.5" />
-              <span>Thêm cơ sở mới</span>
+          )}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-40 rounded-xl" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <Card className="p-8 text-center text-xs text-muted-foreground">Không có cơ sở phù hợp.</Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((fac) => {
+            const s = stats.get(fac.id);
+            return (
+              <Card
+                key={fac.id}
+                className={cn(
+                  "gap-3 overflow-hidden border-border/80 transition-all hover:border-foreground/30 hover:shadow-sm",
+                  !fac.active && "opacity-70"
+                )}
+              >
+                <CardHeader className="pb-0">
+                  <div className="flex items-start justify-between">
+                    <Badge variant="outline" className="text-[10px] font-medium uppercase text-muted-foreground">
+                      {FACILITY_TYPE_LABELS[fac.type] ?? fac.type}
+                    </Badge>
+                    <ActiveBadge active={fac.active} />
+                  </div>
+                  <CardTitle className="font-heading text-base font-bold pt-1">{fac.name}</CardTitle>
+                  <CardDescription className="font-mono text-xs">Mã: {fac.code}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-xs text-muted-foreground">
+                  <div className="grid grid-cols-3 gap-2 border-t border-border/60 pt-3 text-center">
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{s?.stock_locations ?? "—"}</p>
+                      <p className="text-[10px]">Kho</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{s ? `${formatCompact(s.stock_value)} ₫` : "—"}</p>
+                      <p className="text-[10px]">Giá trị tồn</p>
+                    </div>
+                    <div>
+                      <p className={cn("text-sm font-bold", s && s.low_stock > 0 ? "text-destructive" : "text-foreground")}>
+                        {s?.low_stock ?? "—"}
+                      </p>
+                      <p className="text-[10px]">Dưới ngưỡng</p>
+                    </div>
+                  </div>
+                  {canManage && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        className="flex-1 text-[11px]"
+                        onClick={() => {
+                          setEditing(fac);
+                          setOpen(true);
+                        }}
+                      >
+                        <Pencil /> Sửa
+                      </Button>
+                      <Button
+                        variant={fac.active ? "destructive" : "outline"}
+                        size="xs"
+                        className="flex-1 text-[11px]"
+                        disabled={toggle.isPending}
+                        onClick={() => toggle.mutate(fac)}
+                      >
+                        <Power /> {fac.active ? "Ngừng hoạt động" : "Kích hoạt"}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+      <FacilityDialog open={open} onOpenChange={setOpen} facility={editing} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Stock locations
+// ---------------------------------------------------------------------------
+
+function LocationDialog({
+  open,
+  onOpenChange,
+  location,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  location: StockLocation | null;
+}) {
+  const facilityFilter = useFacilityFilter();
+  const [form, setForm] = React.useState({ facility_id: "", code: "", name: "", type: "PHYSICAL" });
+  React.useEffect(() => {
+    if (open)
+      setForm({
+        facility_id: location?.facilityId ?? facilityFilter ?? "",
+        code: location?.code ?? "",
+        name: location?.name ?? "",
+        type: location?.type ?? "PHYSICAL",
+      });
+  }, [open, location, facilityFilter]);
+  const save = useApiMutation({
+    mutationFn: () =>
+      location
+        ? api.patch(`/stock-locations/${location.id}`, { name: form.name.trim() })
+        : api.post("/stock-locations", {
+            facility_id: form.facility_id,
+            code: form.code.trim().toUpperCase(),
+            name: form.name.trim(),
+            type: form.type,
+          }),
+    invalidate: ["/stock-locations"],
+    onSuccess: () => onOpenChange(false),
+  });
+  return (
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={location ? `Sửa kho ${location.code}` : "Thêm điểm lưu kho"}
+      description="Kho trung chuyển (IN_TRANSIT) dùng cho hàng đang vận chuyển giữa các cơ sở."
+      onSubmit={() => save.mutate()}
+      submitting={save.isPending}
+      submitDisabled={!location && !form.facility_id}
+    >
+      <Field label="Cơ sở" required>
+        <FacilitySelect value={form.facility_id} onChange={(facility_id) => setForm({ ...form, facility_id })} disabled={Boolean(location)} activeOnly />
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Mã kho" required>
+          <Input value={form.code} disabled={Boolean(location)} onChange={(e) => setForm({ ...form, code: e.target.value })} className="h-9 text-xs uppercase" />
+        </Field>
+        <Field label="Loại kho">
+          <OptionSelect value={form.type} onChange={(type) => setForm({ ...form, type })} options={toOptions(LOCATION_TYPE_LABELS)} disabled={Boolean(location)} />
+        </Field>
+      </div>
+      <Field label="Tên kho" required>
+        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-9 text-xs" />
+      </Field>
+    </FormDialog>
+  );
+}
+
+function LocationsTab() {
+  const facilityId = useFacilityFilter();
+  const canManage = useCan("stock_location.manage");
+  const [page, setPage] = React.useState(1);
+  const [search, setSearch] = React.useState("");
+  const [editing, setEditing] = React.useState<StockLocation | null>(null);
+  const [open, setOpen] = React.useState(false);
+  React.useEffect(() => setPage(1), [search, facilityId]);
+  const query = usePagedQuery<StockLocation>("/stock-locations", { page, page_size: 20, search, facility_id: facilityId });
+  const toggle = useApiMutation<StockLocation>({
+    mutationFn: (l) => api.patch(`/stock-locations/${l.id}`, { active: !l.active }),
+    invalidate: ["/stock-locations"],
+  });
+
+  const columns: Column<StockLocation>[] = [
+    { key: "code", header: "Mã kho", cell: (l) => <Code>{l.code}</Code>, className: "w-32" },
+    { key: "name", header: "Tên kho", cell: (l) => <span className="font-medium">{l.name}</span> },
+    { key: "facility", header: "Cơ sở", cell: (l) => <span className="text-muted-foreground">{l.facility?.name ?? "—"}</span> },
+    {
+      key: "type",
+      header: "Loại",
+      cell: (l) => (
+        <Badge variant="outline" className="text-[10px]">
+          {LOCATION_TYPE_LABELS[l.type] ?? l.type}
+        </Badge>
+      ),
+    },
+    { key: "active", header: "Trạng thái", cell: (l) => <ActiveBadge active={l.active} /> },
+    {
+      key: "actions",
+      header: "",
+      headClassName: "w-24",
+      className: "text-right",
+      cell: (l) =>
+        canManage && (
+          <div className="flex justify-end gap-1">
+            <Button variant="ghost" size="icon-xs" title="Sửa" onClick={() => { setEditing(l); setOpen(true); }}>
+              <Pencil />
+            </Button>
+            <Button variant="ghost" size="icon-xs" title={l.active ? "Ngừng" : "Kích hoạt"} onClick={() => toggle.mutate(l)}>
+              <Power className={l.active ? "text-destructive" : ""} />
             </Button>
           </div>
-        </div>
+        ),
+    },
+  ];
 
-        {/* Multi-tier Navigation Tabs */}
-        <Tabs defaultValue="facilities" className="space-y-6">
+  return (
+    <DataTable
+      columns={columns}
+      rows={query.data?.items}
+      rowKey={(l) => l.id}
+      loading={query.isLoading}
+      fetching={query.isFetching}
+      error={query.error}
+      meta={query.data?.meta}
+      onPageChange={setPage}
+      toolbar={
+        <>
+          <SearchInput value={search} onChange={setSearch} placeholder="Tìm kho theo mã hoặc tên..." />
+          {canManage && (
+            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+              <Plus className="size-3.5" /> Thêm kho
+            </Button>
+          )}
+          <LocationDialog open={open} onOpenChange={setOpen} location={editing} />
+        </>
+      }
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Departments
+// ---------------------------------------------------------------------------
+
+function DepartmentDialog({
+  open,
+  onOpenChange,
+  department,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  department: Department | null;
+}) {
+  const facilityFilter = useFacilityFilter();
+  const [form, setForm] = React.useState({ facility_id: "", stock_location_id: "", code: "", name: "", type: "KITCHEN" });
+  React.useEffect(() => {
+    if (open)
+      setForm({
+        facility_id: department?.facilityId ?? facilityFilter ?? "",
+        stock_location_id: department?.stockLocationId ?? "",
+        code: department?.code ?? "",
+        name: department?.name ?? "",
+        type: department?.type ?? "KITCHEN",
+      });
+  }, [open, department, facilityFilter]);
+  const save = useApiMutation({
+    mutationFn: () =>
+      department
+        ? api.patch(`/departments/${department.id}`, {
+            name: form.name.trim(),
+            type: form.type,
+            stock_location_id: form.stock_location_id || null,
+          })
+        : api.post("/departments", {
+            facility_id: form.facility_id,
+            code: form.code.trim().toUpperCase(),
+            name: form.name.trim(),
+            type: form.type,
+            ...(form.stock_location_id ? { stock_location_id: form.stock_location_id } : {}),
+          }),
+    invalidate: ["/departments"],
+    onSuccess: () => onOpenChange(false),
+  });
+  return (
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={department ? `Sửa bộ phận ${department.code}` : "Thêm bộ phận"}
+      description="Bộ phận cần gắn kho nhận hàng để có thể tạo yêu cầu cấp hàng."
+      onSubmit={() => save.mutate()}
+      submitting={save.isPending}
+      submitDisabled={!department && !form.facility_id}
+    >
+      <Field label="Cơ sở" required>
+        <FacilitySelect
+          value={form.facility_id}
+          onChange={(facility_id) => setForm({ ...form, facility_id, stock_location_id: "" })}
+          disabled={Boolean(department)}
+          activeOnly
+        />
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Mã bộ phận" required>
+          <Input value={form.code} disabled={Boolean(department)} onChange={(e) => setForm({ ...form, code: e.target.value })} className="h-9 text-xs uppercase" />
+        </Field>
+        <Field label="Phân loại" required>
+          <OptionSelect value={form.type} onChange={(type) => setForm({ ...form, type })} options={toOptions(DEPARTMENT_TYPE_LABELS)} />
+        </Field>
+      </div>
+      <Field label="Tên bộ phận" required>
+        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-9 text-xs" />
+      </Field>
+      <Field label="Kho nhận hàng" hint="Kho vật lý thuộc cùng cơ sở.">
+        <LocationSelect
+          value={form.stock_location_id}
+          onChange={(stock_location_id) => setForm({ ...form, stock_location_id })}
+          facilityId={form.facility_id || undefined}
+          physicalOnly
+          activeOnly
+          allLabel="Không gắn kho"
+          disabled={!form.facility_id}
+        />
+      </Field>
+    </FormDialog>
+  );
+}
+
+function DepartmentsTab() {
+  const facilityId = useFacilityFilter();
+  const canManage = useCan("department.manage");
+  const [page, setPage] = React.useState(1);
+  const [search, setSearch] = React.useState("");
+  const [editing, setEditing] = React.useState<Department | null>(null);
+  const [open, setOpen] = React.useState(false);
+  React.useEffect(() => setPage(1), [search, facilityId]);
+  const query = usePagedQuery<Department>("/departments", { page, page_size: 20, search, facility_id: facilityId });
+  const toggle = useApiMutation<Department>({
+    mutationFn: (d) => api.patch(`/departments/${d.id}`, { active: !d.active }),
+    invalidate: ["/departments"],
+  });
+
+  const columns: Column<Department>[] = [
+    { key: "code", header: "Mã", cell: (d) => <Code>{d.code}</Code>, className: "w-28" },
+    { key: "name", header: "Tên bộ phận", cell: (d) => <span className="font-medium">{d.name}</span> },
+    { key: "facility", header: "Cơ sở", cell: (d) => <span className="text-muted-foreground">{d.facility?.name ?? "—"}</span> },
+    {
+      key: "location",
+      header: "Kho nhận hàng",
+      cell: (d) =>
+        d.stockLocation ? (
+          <span>
+            {d.stockLocation.name} <span className="font-mono text-[10px] text-muted-foreground">{d.stockLocation.code}</span>
+          </span>
+        ) : (
+          <span className="text-destructive">Chưa gắn kho</span>
+        ),
+    },
+    {
+      key: "type",
+      header: "Phân loại",
+      cell: (d) => (
+        <Badge variant="outline" className="text-[10px]">
+          {DEPARTMENT_TYPE_LABELS[d.type] ?? d.type}
+        </Badge>
+      ),
+    },
+    { key: "active", header: "Trạng thái", cell: (d) => <ActiveBadge active={d.active} /> },
+    {
+      key: "actions",
+      header: "",
+      headClassName: "w-24",
+      className: "text-right",
+      cell: (d) =>
+        canManage && (
+          <div className="flex justify-end gap-1">
+            <Button variant="ghost" size="icon-xs" title="Sửa" onClick={() => { setEditing(d); setOpen(true); }}>
+              <Pencil />
+            </Button>
+            <Button variant="ghost" size="icon-xs" title={d.active ? "Ngừng" : "Kích hoạt"} onClick={() => toggle.mutate(d)}>
+              <Power className={d.active ? "text-destructive" : ""} />
+            </Button>
+          </div>
+        ),
+    },
+  ];
+
+  return (
+    <DataTable
+      columns={columns}
+      rows={query.data?.items}
+      rowKey={(d) => d.id}
+      loading={query.isLoading}
+      fetching={query.isFetching}
+      error={query.error}
+      meta={query.data?.meta}
+      onPageChange={setPage}
+      toolbar={
+        <>
+          <SearchInput value={search} onChange={setSearch} placeholder="Tìm bộ phận theo mã hoặc tên..." />
+          {canManage && (
+            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+              <Plus className="size-3.5" /> Thêm bộ phận
+            </Button>
+          )}
+          <DepartmentDialog open={open} onOpenChange={setOpen} department={editing} />
+        </>
+      }
+    />
+  );
+}
+
+export default function OrganizationPage() {
+  const canFacility = useCan("facility.read");
+  const canLocation = useCan("stock_location.read");
+  const canDepartment = useCan("department.read");
+  const { data: summary } = useDashboardSummary();
+  const defaultTab = canFacility ? "facilities" : canLocation ? "locations" : "departments";
+
+  return (
+    <AdminLayout permission={["facility.read", "stock_location.read", "department.read"]}>
+      <div className="space-y-6">
+        <PageHeader
+          title="Cơ Cấu Tổ Chức & Chi Nhánh"
+          description="Thiết lập mạng lưới kho tổng, bếp trung tâm, chi nhánh, điểm lưu kho và bộ phận vận hành."
+        />
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className="bg-muted/70 p-1">
-            <TabsTrigger value="facilities" className="gap-2 text-xs">
-              <Building2 className="size-4" />
-              <span>Cơ sở & Chi nhánh ({facilities.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="locations" className="gap-2 text-xs">
-              <Warehouse className="size-4" />
-              <span>Điểm lưu kho ({locations.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="departments" className="gap-2 text-xs">
-              <Flame className="size-4" />
-              <span>Bộ phận nội bộ ({departments.length})</span>
-            </TabsTrigger>
+            {canFacility && (
+              <TabsTrigger value="facilities" className="gap-2 text-xs">
+                <Building2 className="size-4" /> Cơ sở{summary?.counts.facilities != null && ` (${summary.counts.facilities})`}
+              </TabsTrigger>
+            )}
+            {canLocation && (
+              <TabsTrigger value="locations" className="gap-2 text-xs">
+                <Warehouse className="size-4" /> Điểm lưu kho
+                {summary?.counts.stock_locations != null && ` (${summary.counts.stock_locations})`}
+              </TabsTrigger>
+            )}
+            {canDepartment && (
+              <TabsTrigger value="departments" className="gap-2 text-xs">
+                <Flame className="size-4" /> Bộ phận{summary?.counts.departments != null && ` (${summary.counts.departments})`}
+              </TabsTrigger>
+            )}
           </TabsList>
-
-          {/* TAB 1: FACILITIES */}
-          <TabsContent value="facilities" className="space-y-4">
-            {/* Search and filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm cơ sở theo tên, mã hoặc địa chỉ..."
-                  className="pl-9 h-9 text-xs"
-                  value={searchFacility}
-                  onChange={(e) => setSearchFacility(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="h-9 w-44 text-xs">
-                    <SelectValue placeholder="Tất cả loại hình" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Tất cả loại hình</SelectItem>
-                    <SelectItem value="CENTRAL_WAREHOUSE">Kho Trung Tâm</SelectItem>
-                    <SelectItem value="CENTRAL_KITCHEN">Bếp Trung Tâm</SelectItem>
-                    <SelectItem value="BRANCH">Chi Nhánh</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Facilities Cards Grid */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredFacilities.map((fac) => {
-                const facLocations = locations.filter((l) => l.facility_id === fac.id);
-                const facDepts = departments.filter((d) => d.facility_id === fac.id);
-
-                return (
-                  <Card
-                    key={fac.id}
-                    className="overflow-hidden border-border/80 transition-all hover:border-primary/50 hover:shadow-sm"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-medium border-border/80 text-muted-foreground"
-                        >
-                          {fac.type === "CENTRAL_WAREHOUSE"
-                            ? "KHO TRUNG TÂM"
-                            : fac.type === "CENTRAL_KITCHEN"
-                            ? "BẾP TRUNG TÂM"
-                            : "CHI NHÁNH NHÀ HÀNG"}
-                        </Badge>
-                        <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <span className="size-1.5 rounded-full bg-emerald-500" />
-                          Hoạt động
-                        </span>
-                      </div>
-                      <CardTitle className="font-heading text-base font-bold pt-1">
-                        {fac.name}
-                      </CardTitle>
-                      <CardDescription className="font-mono text-xs text-primary">
-                        Mã: {fac.code}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3 text-xs text-muted-foreground pb-4">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-                        <span className="leading-relaxed line-clamp-2">{fac.address}</span>
-                      </div>
-                      <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px]">
-                        <span>{facLocations.length} Điểm lưu kho</span>
-                        <span>{facDepts.length} Bộ phận vận hành</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </TabsContent>
-
-          {/* TAB 2: LOCATIONS */}
-          <TabsContent value="locations" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                Quản lý các phân khu vật lý (Kho lạnh, kho mát, kho khô) hoặc khu trung chuyển.
-              </p>
-              <Button
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => setOpenLocDialog(true)}
-              >
-                <Plus className="size-3.5" />
-                <span>Thêm điểm lưu kho</span>
-              </Button>
-            </div>
-
-            <Card className="border-border/80">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[140px] text-xs">Mã Điểm</TableHead>
-                    <TableHead className="text-xs">Tên Điểm Lưu Kho</TableHead>
-                    <TableHead className="text-xs">Cơ Sở Trực Thuộc</TableHead>
-                    <TableHead className="text-xs">Loại Điểm Kho</TableHead>
-                    <TableHead className="text-right text-xs">Trạng Thái</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {locations.map((loc) => (
-                    <TableRow key={loc.id}>
-                      <TableCell className="font-mono text-xs font-bold text-foreground">
-                        {loc.code}
-                      </TableCell>
-                      <TableCell className="text-xs font-medium">{loc.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {loc.facilityName}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px]">
-                          {loc.type === "PHYSICAL" ? "Lưu Trữ Vật Lý" : "Trung Chuyển"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                          Khả dụng
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          {/* TAB 3: DEPARTMENTS */}
-          <TabsContent value="departments" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                Định nghĩa các điểm phục vụ (Bếp, Quầy Bar, Bàn ăn) tiếp nhận và xuất tiêu hao nguyên liệu.
-              </p>
-              <Button
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => setOpenDepDialog(true)}
-              >
-                <Plus className="size-3.5" />
-                <span>Thêm bộ phận</span>
-              </Button>
-            </div>
-
-            <Card className="border-border/80">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[140px] text-xs">Mã Bộ Phận</TableHead>
-                    <TableHead className="text-xs">Tên Bộ Phận</TableHead>
-                    <TableHead className="text-xs">Cơ Sở Trực Thuộc</TableHead>
-                    <TableHead className="text-xs">Phân Loại</TableHead>
-                    <TableHead className="text-right text-xs">Trạng Thái</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {departments.map((dep) => (
-                    <TableRow key={dep.id}>
-                      <TableCell className="font-mono text-xs font-bold text-foreground">
-                        {dep.code}
-                      </TableCell>
-                      <TableCell className="text-xs font-medium">{dep.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {dep.facilityName}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px]">
-                          {dep.type === "KITCHEN"
-                            ? "Bếp Chế Biến"
-                            : dep.type === "WAREHOUSE"
-                            ? "Kho Phụ"
-                            : "Quầy Bar / Khác"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                          Đang vận hành
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
+          {canFacility && (
+            <TabsContent value="facilities">
+              <FacilitiesTab />
+            </TabsContent>
+          )}
+          {canLocation && (
+            <TabsContent value="locations">
+              <LocationsTab />
+            </TabsContent>
+          )}
+          {canDepartment && (
+            <TabsContent value="departments">
+              <DepartmentsTab />
+            </TabsContent>
+          )}
         </Tabs>
-
-        {/* Modular Form Dialogs (react-hook-form + zod) */}
-        <FacilityFormDialog
-          open={openFacDialog}
-          onOpenChange={setOpenFacDialog}
-        />
-        <LocationFormDialog
-          open={openLocDialog}
-          onOpenChange={setOpenLocDialog}
-        />
-        <DepartmentFormDialog
-          open={openDepDialog}
-          onOpenChange={setOpenDepDialog}
-        />
       </div>
     </AdminLayout>
   );

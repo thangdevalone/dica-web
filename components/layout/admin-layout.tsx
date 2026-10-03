@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Boxes,
   Building2,
@@ -11,22 +12,22 @@ import {
   Bell,
   Moon,
   Sun,
-  Activity,
-  CheckCircle2,
-  AlertTriangle,
   ChevronRight,
   LogOut,
-  Command as CommandIcon,
   Check,
   RefreshCw,
   Sparkles,
   Monitor,
   Menu,
   X as XIcon,
+  Loader2,
+  ShieldX,
+  BellRing,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,24 +45,39 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Sheet,
-  SheetContent,
-  SheetClose,
-} from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { dicaStore, type Notification } from "@/lib/dica-api";
 import { useAppStore } from "@/stores/use-app-store";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { cn } from "@/lib/utils";
-import { NAV_SECTIONS, type NavItem, type NavSection } from "@/constants";
+import { NAV_SECTIONS, type NavCountKey, type NavItem } from "@/constants";
+import { API_BASE_URL, api, errorMessage } from "@/lib/api/client";
+import { loadProfile, logout } from "@/lib/api/auth";
+import type { DashboardSummary, Notification } from "@/lib/api/types";
+import { useApiMutation, usePagedQuery } from "@/hooks/use-api";
+import { useFacilities } from "@/hooks/use-lookups";
+import { useDashboardSummary, useHealth } from "@/hooks/use-system";
+import { formatDateTime } from "@/lib/formatters";
+
+function canSee(item: NavItem, permissions: string[]) {
+  if (!item.permission) return true;
+  const required = Array.isArray(item.permission) ? item.permission : [item.permission];
+  return required.some((code) => permissions.includes(code));
+}
+
+function navCounts(summary: DashboardSummary | undefined): Partial<Record<NavCountKey, number>> {
+  if (!summary) return {};
+  return {
+    pendingRequests: summary.requests?.by_status.SUBMITTED ?? 0,
+    openOrders: summary.orders?.open ?? 0,
+    pendingTransfers: summary.transfers?.by_status.SUBMITTED ?? 0,
+    openDiscrepancies: summary.delivery?.open_discrepancies ?? 0,
+    lowStock: summary.inventory?.low_stock_total ?? 0,
+  };
+}
 
 interface NavigationListProps {
   pathname: string;
@@ -69,105 +85,109 @@ interface NavigationListProps {
 }
 
 function NavigationList({ pathname, onNavigate }: NavigationListProps) {
+  const permissions = useAuthStore((state) => state.permissions);
+  const { data: summary } = useDashboardSummary();
+  const counts = navCounts(summary);
+
   return (
     <nav className="space-y-6">
-      {NAV_SECTIONS.map((section) => (
-        <div key={section.title} className="space-y-1">
-          <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-            {section.title}
-          </p>
-          <div className="space-y-0.5 pt-1">
-            {section.items.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  className={cn(
-                    "group relative flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150",
-                    isActive
-                      ? "bg-foreground text-background font-semibold shadow-xs"
-                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon
-                      className={cn(
-                        "size-4 shrink-0 transition-colors",
-                        isActive
-                          ? "text-background"
-                          : "text-muted-foreground group-hover:text-foreground"
-                      )}
-                    />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                        isActive
-                          ? "bg-background/20 text-background"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.countKey === "pendingRequests" && (
-                    <span
-                      className={cn(
-                        "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
-                        isActive
-                          ? "bg-background/20 text-background"
-                          : "bg-muted text-muted-foreground border border-border"
-                      )}
-                    >
-                      2
-                    </span>
-                  )}
-                  {item.countKey === "lowStock" && (
-                    <span
-                      className={cn(
-                        "flex size-5 items-center justify-center rounded-full text-[11px] font-bold",
-                        isActive
-                          ? "bg-background/20 text-background"
-                          : "bg-muted text-muted-foreground border border-border"
-                      )}
-                    >
-                      2
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+      {NAV_SECTIONS.map((section) => {
+        const items = section.items.filter((item) => canSee(item, permissions));
+        if (items.length === 0) return null;
+        return (
+          <div key={section.title} className="space-y-1">
+            <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+              {section.title}
+            </p>
+            <div className="space-y-0.5 pt-1">
+              {items.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                const count = item.countKey ? counts[item.countKey] : undefined;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "group relative flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150",
+                      isActive
+                        ? "bg-foreground text-background font-semibold shadow-xs"
+                        : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        className={cn(
+                          "size-4 shrink-0 transition-colors",
+                          isActive
+                            ? "text-background"
+                            : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                          isActive
+                            ? "bg-background/20 text-background"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                    {count !== undefined && count > 0 && (
+                      <span
+                        className={cn(
+                          "flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold",
+                          isActive
+                            ? "bg-background/20 text-background"
+                            : "bg-muted text-muted-foreground border border-border"
+                        )}
+                      >
+                        {count > 99 ? "99+" : count}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </nav>
   );
 }
 
 function UserFooter({ onLogout }: { onLogout?: () => void } = {}) {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  const grants = useAuthStore((state) => state.grants);
+  const organizationCode = useAuthStore((state) => state.organizationCode);
 
-  const displayName = user?.full_name || "Nguyễn Thế Thắng";
-  const displayRole = user?.role_name ? `${user.role_name} • DICA HQ` : "Super Admin • DICA HQ";
+  const displayName = user?.display_name || user?.username || "—";
+  const roles = [...new Set(grants.map((g) => g.roleCode))].join(", ");
+  const displayRole = `${roles || (user?.kind === "SUPPLIER" ? "Nhà cung cấp" : "Nội bộ")}${
+    organizationCode ? ` • ${organizationCode}` : ""
+  }`;
   const initials =
     displayName
       .split(" ")
       .filter(Boolean)
       .slice(-2)
-      .map((w) => w[0].toUpperCase())
-      .join("") || "AD";
+      .map((w) => w[0]?.toUpperCase() ?? "")
+      .join("") || "U";
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
+    queryClient.clear();
     onLogout?.();
     toast.info("Đã đăng xuất phiên làm việc.");
-    router.push("/login");
+    router.replace("/login");
   };
 
   return (
@@ -179,10 +199,8 @@ function UserFooter({ onLogout }: { onLogout?: () => void } = {}) {
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col truncate">
-          <span className="truncate text-xs font-semibold text-foreground">
-            {displayName}
-          </span>
-          <span className="truncate text-[10px] text-muted-foreground font-mono">
+          <span className="truncate text-xs font-semibold text-foreground">{displayName}</span>
+          <span className="truncate text-[10px] text-muted-foreground font-mono" title={displayRole}>
             {displayRole}
           </span>
         </div>
@@ -200,63 +218,321 @@ function UserFooter({ onLogout }: { onLogout?: () => void } = {}) {
   );
 }
 
-export function AdminLayout({ children }: { children: React.ReactNode }) {
+const NOTIFICATION_ROUTES: Record<string, string> = {
+  SupplyRequest: "/requests",
+  FulfillmentOrder: "/orders",
+  Transfer: "/transfers",
+  DamageReport: "/inventory?tab=damage",
+};
+
+function NotificationsPopover() {
+  const router = useRouter();
+  const canRead = useAuthStore((state) => state.permissions.includes("notification.read_own"));
+  const canMark = useAuthStore((state) => state.permissions.includes("notification.mark_own"));
+  const latest = usePagedQuery<Notification>(
+    "/notifications",
+    { page_size: 8 },
+    { enabled: canRead, refetchInterval: 60_000 }
+  );
+  const unread = usePagedQuery<Notification>(
+    "/notifications",
+    { status: "UNREAD", page_size: 1 },
+    { enabled: canRead, refetchInterval: 60_000 }
+  );
+  const unreadCount = unread.data?.meta?.total ?? 0;
+
+  const markAll = useApiMutation({
+    mutationFn: () => api.post("/notifications/read-all"),
+  });
+  const markOne = useApiMutation<string>({
+    mutationFn: (id) => api.post(`/notifications/${id}/read`),
+    successMessage: false,
+  });
+
+  if (!canRead) return null;
+
+  const open = (n: Notification) => {
+    if (n.status === "UNREAD" && canMark) markOne.mutate(n.id);
+    const base = NOTIFICATION_ROUTES[n.resourceType];
+    if (base) {
+      const sep = base.includes("?") ? "&" : "?";
+      router.push(`${base}${sep}id=${n.resourceId}`);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative size-9 text-muted-foreground hover:text-foreground"
+          aria-label="Thông báo"
+        >
+          <Bell className="size-4" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-bold text-background shadow-xs">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <span className="font-heading text-sm font-semibold">Thông báo</span>
+          {unreadCount > 0 && canMark && (
+            <button
+              onClick={() => markAll.mutate()}
+              disabled={markAll.isPending}
+              className="text-xs text-foreground hover:underline font-medium disabled:opacity-50"
+            >
+              Đọc tất cả
+            </button>
+          )}
+        </div>
+        <ScrollArea className="max-h-80">
+          <div className="divide-y divide-border/60">
+            {latest.isLoading ? (
+              <div className="flex items-center justify-center gap-2 p-4 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" /> Đang tải...
+              </div>
+            ) : latest.error ? (
+              <div className="p-4 text-center text-xs text-destructive">{errorMessage(latest.error)}</div>
+            ) : (latest.data?.items.length ?? 0) === 0 ? (
+              <div className="p-4 text-center text-xs text-muted-foreground">Không có thông báo.</div>
+            ) : (
+              latest.data?.items.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  className={cn(
+                    "flex w-full items-start gap-3 p-3 text-left transition-colors hover:bg-muted/50",
+                    n.status === "UNREAD" && "bg-muted/50"
+                  )}
+                  onClick={() => open(n)}
+                >
+                  <BellRing
+                    className={cn(
+                      "mt-0.5 size-4 shrink-0",
+                      n.status === "UNREAD" ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  />
+                  <div className="flex-1 space-y-1">
+                    <p className={cn("text-xs leading-tight text-foreground", n.status === "UNREAD" && "font-semibold")}>
+                      {n.title}
+                    </p>
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">{n.message}</p>
+                    <p className="text-[10px] text-muted-foreground/80 font-mono">{formatDateTime(n.createdAt)}</p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function HealthPopover() {
+  const { data: health, refetch, isFetching } = useHealth();
+  const status = health?.status ?? "checking";
+  const label =
+    status === "ready" ? "API sẵn sàng" : status === "degraded" ? "API lỗi CSDL" : status === "down" ? "Mất kết nối" : "Đang kiểm tra";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium rounded-xl border-border bg-card/90 text-foreground hover:bg-accent transition-colors"
+        >
+          <span
+            className={cn(
+              "size-2 rounded-full shrink-0",
+              status === "ready"
+                ? "bg-emerald-500 animate-pulse"
+                : status === "checking"
+                  ? "bg-muted-foreground/60"
+                  : "bg-destructive"
+            )}
+          />
+          <span className="hidden md:inline">{label}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-4">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="font-heading text-sm font-semibold">Trạng thái kết nối API</h4>
+            <Badge variant={status === "ready" ? "default" : "destructive"}>{label}</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">{health?.message ?? "Đang kiểm tra kết nối..."}</p>
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="rounded-lg border border-border/70 p-2">
+              <p className="text-muted-foreground">Độ trễ</p>
+              <p className="font-semibold text-foreground">
+                {health?.latencyMs != null ? `${health.latencyMs} ms` : "—"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border/70 p-2">
+              <p className="text-muted-foreground">Kiểm tra lúc</p>
+              <p className="font-semibold text-foreground">
+                {health ? new Date(health.checkedAt).toLocaleTimeString("vi-VN") : "—"}
+              </p>
+            </div>
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="truncate text-[11px] text-muted-foreground font-mono" title={API_BASE_URL}>
+              {API_BASE_URL}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 shrink-0 text-xs gap-1"
+              disabled={isFetching}
+              onClick={() => refetch()}
+            >
+              <RefreshCw className={cn("size-3", isFetching && "animate-spin")} />
+              Kiểm tra
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FacilityScopeMenu() {
+  const selectedFacilityId = useAppStore((state) => state.selectedFacilityId);
+  const setSelectedFacilityId = useAppStore((state) => state.setSelectedFacilityId);
+  const { data: facilities = [] } = useFacilities();
+
+  React.useEffect(() => {
+    if (
+      selectedFacilityId !== "ALL" &&
+      facilities.length > 0 &&
+      !facilities.some((f) => f.id === selectedFacilityId)
+    ) {
+      setSelectedFacilityId("ALL");
+    }
+  }, [facilities, selectedFacilityId, setSelectedFacilityId]);
+
+  const current =
+    selectedFacilityId === "ALL"
+      ? "Tất cả cơ sở"
+      : (facilities.find((f) => f.id === selectedFacilityId)?.name ?? "Tất cả cơ sở");
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 gap-2 px-2.5 sm:px-3 text-xs font-medium max-w-[130px] sm:max-w-[190px]"
+        >
+          <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate">{current}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60 text-xs">
+        <DropdownMenuLabel>Phạm vi cơ sở</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => setSelectedFacilityId("ALL")}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <span>Tất cả cơ sở</span>
+          {selectedFacilityId === "ALL" && <Check className="size-3.5 text-foreground" />}
+        </DropdownMenuItem>
+        {facilities.map((fac) => (
+          <DropdownMenuItem
+            key={fac.id}
+            onClick={() => setSelectedFacilityId(fac.id)}
+            className="flex items-center justify-between cursor-pointer"
+          >
+            <span className="truncate">
+              {fac.name} <span className="font-mono text-[10px] text-muted-foreground">{fac.code}</span>
+            </span>
+            {selectedFacilityId === fac.id && <Check className="size-3.5 text-foreground" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function BrandBlock() {
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background shadow-xs">
+        <Boxes className="size-4.5" />
+      </div>
+      <div className="flex flex-col min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="font-heading text-base font-bold tracking-tight text-foreground">DICA</span>
+          <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            SCM
+          </span>
+        </div>
+        <span className="text-[11px] text-muted-foreground truncate">Chuỗi Cung Ứng F&B</span>
+      </div>
+    </div>
+  );
+}
+
+function FullScreenState({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-background text-xs text-muted-foreground">
+      {children}
+    </div>
+  );
+}
+
+export function AdminLayout({
+  children,
+  permission,
+}: {
+  children: React.ReactNode;
+  /** Quyền tối thiểu để xem trang (một trong các quyền). */
+  permission?: string | string[];
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
-  // Zustand app store
-  const selectedFacilityId = useAppStore((state) => state.selectedFacilityId);
-  const setSelectedFacilityId = useAppStore((state) => state.setSelectedFacilityId);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const user = useAuthStore((state) => state.user);
+  const permissions = useAuthStore((state) => state.permissions);
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [openCommand, setOpenCommand] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
-  const { isAuthenticated } = useAuthStore();
+  const [profileError, setProfileError] = React.useState<string | null>(null);
 
+  // Bảo vệ route: chưa đăng nhập thì chuyển về /login
   React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Redirect to /login if unauthenticated after mount
-  React.useEffect(() => {
-    if (mounted && !isAuthenticated) {
-      router.push("/login");
+    if (!hasHydrated) return;
+    if (!accessToken) {
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      router.replace(`/login?next=${next}`);
     }
-  }, [mounted, isAuthenticated, router]);
-  const [notifications, setNotifications] = React.useState<Notification[]>([]);
-  const [backendStatus, setBackendStatus] = React.useState<"live" | "demo" | "checking">("checking");
-  const [facilitiesList, setFacilitiesList] = React.useState<{ id: string; name: string }[]>([]);
+  }, [hasHydrated, accessToken, router]);
 
-  // Load facilities, notifications, and health status
+  // Làm mới hồ sơ & quyền mỗi lần vào ứng dụng
   React.useEffect(() => {
-    setNotifications(dicaStore.getNotifications());
-    try {
-      const facs = dicaStore.getFacilities();
-      setFacilitiesList(facs.map((f) => ({ id: f.id, name: f.name })));
-    } catch {
-      // fallback
-    }
-
-    // Check backend health
-    const checkHealth = async () => {
-      try {
-        const baseUrl = dicaStore.getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/health/live`, { signal: AbortSignal.timeout(2000) });
-        if (res.ok) {
-          setBackendStatus("live");
-        } else {
-          setBackendStatus("demo");
-        }
-      } catch {
-        setBackendStatus("demo");
-      }
+    if (!hasHydrated || !accessToken) return;
+    let cancelled = false;
+    loadProfile()
+      .then(() => !cancelled && setProfileError(null))
+      .catch((error) => !cancelled && setProfileError(errorMessage(error)));
+    return () => {
+      cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasHydrated, Boolean(accessToken)]);
 
-    checkHealth();
-  }, []);
-
-  // Keyboard shortcut for command palette (Ctrl+K or Cmd+K)
+  // Phím tắt command palette (Ctrl+K hoặc Cmd+K)
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -268,98 +544,72 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const visibleItems = React.useMemo(
+    () => NAV_SECTIONS.flatMap((sec) => sec.items).filter((item) => canSee(item, permissions)),
+    [permissions]
+  );
 
-  const markAllRead = () => {
-    const updated = notifications.map((n) => ({ ...n, is_read: true }));
-    setNotifications(updated);
-    dicaStore.saveNotifications(updated);
-    toast.success("Đã đánh dấu đọc tất cả thông báo.");
-  };
+  const pageTitle =
+    NAV_SECTIONS.flatMap((s) => s.items).find((item) => item.href === pathname)?.label ??
+    "Quản trị hệ thống DICA";
 
-  const getPageTitle = () => {
-    for (const sec of NAV_SECTIONS) {
-      for (const item of sec.items) {
-        if (item.href === pathname) return item.label;
-      }
-    }
-    return "Quản trị hệ thống DICA";
-  };
+  if (!hasHydrated || !accessToken || (!user && !profileError)) {
+    return (
+      <FullScreenState>
+        <Loader2 className="mr-2 size-4 animate-spin" /> Đang xác thực phiên làm việc...
+      </FullScreenState>
+    );
+  }
 
-  const currentFacilityLabel = React.useMemo(() => {
-    if (!selectedFacilityId || selectedFacilityId === "ALL") {
-      return "Tất cả cơ sở";
-    }
-    const found = facilitiesList.find((f) => f.id === selectedFacilityId);
-    return found ? found.name : "Tất cả cơ sở";
-  }, [selectedFacilityId, facilitiesList]);
+  if (!user && profileError) {
+    return (
+      <FullScreenState>
+        <Card className="max-w-sm gap-3 p-6 text-center">
+          <ShieldX className="mx-auto size-6 text-destructive" />
+          <p className="text-sm font-semibold text-foreground">Không tải được hồ sơ người dùng</p>
+          <p className="text-xs text-muted-foreground">{profileError}</p>
+          <Button
+            size="sm"
+            className="text-xs"
+            onClick={async () => {
+              await logout();
+              router.replace("/login");
+            }}
+          >
+            Đăng nhập lại
+          </Button>
+        </Card>
+      </FullScreenState>
+    );
+  }
+
+  const required = permission ? (Array.isArray(permission) ? permission : [permission]) : [];
+  const allowed = required.length === 0 || required.some((code) => permissions.includes(code));
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
-      {/* ============================================================ */}
-      {/* 1. Desktop Sidebar (Hidden on < lg, fixed h-full) */}
-      {/* ============================================================ */}
+      {/* 1. Desktop Sidebar */}
       <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground h-full select-none">
-        {/* Sidebar Header: EXACTLY h-16 shrink-0 border-b border-border to align with top header */}
         <div className="flex h-16 shrink-0 items-center gap-3 border-b border-border px-5">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background shadow-xs">
-            <Boxes className="size-4.5" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-heading text-base font-bold tracking-tight text-foreground">
-                DICA
-              </span>
-              <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                SCM
-              </span>
-            </div>
-            <span className="text-[11px] text-muted-foreground truncate">
-              Chuỗi Cung Ứng F&B
-            </span>
-          </div>
+          <BrandBlock />
         </div>
-
-        {/* Sidebar Nav Items with smooth scroll */}
-        <ScrollArea className="flex-1 px-3 py-4">
+        <ScrollArea className="flex-1 min-h-0 px-3 py-4">
           <NavigationList pathname={pathname} />
         </ScrollArea>
-
-        {/* Sidebar Footer with current user */}
         <div className="shrink-0 border-t border-border p-3 bg-muted/20">
           <UserFooter />
         </div>
       </aside>
 
-      {/* ============================================================ */}
-      {/* 2. Mobile / Tablet Drawer (Sheet) for < lg screens */}
-      {/* ============================================================ */}
+      {/* 2. Mobile / Tablet Drawer */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent
           side="left"
           className="w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-r border-border"
           showCloseButton={false}
         >
-          {/* Mobile Header: EXACTLY h-16 shrink-0 border-b border-border */}
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-5">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background shadow-xs">
-                <Boxes className="size-4.5" />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-heading text-base font-bold tracking-tight text-foreground">
-                    DICA
-                  </span>
-                  <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                    SCM
-                  </span>
-                </div>
-                <span className="text-[11px] text-muted-foreground truncate">
-                  Chuỗi Cung Ứng F&B
-                </span>
-              </div>
-            </div>
+            <BrandBlock />
             <SheetClose asChild>
               <Button
                 variant="ghost"
@@ -371,27 +621,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetClose>
           </div>
-
-          <ScrollArea className="flex-1 px-3 py-4">
-            <NavigationList
-              pathname={pathname}
-              onNavigate={() => setMobileMenuOpen(false)}
-            />
+          <ScrollArea className="flex-1 min-h-0 px-3 py-4">
+            <NavigationList pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
           </ScrollArea>
-
           <div className="shrink-0 border-t border-border p-3 bg-muted/20">
             <UserFooter onLogout={() => setMobileMenuOpen(false)} />
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* ============================================================ */}
-      {/* 3. Main Column (Top Header + Scrollable Content Container) */}
-      {/* ============================================================ */}
+      {/* 3. Main Column */}
       <div className="flex flex-1 flex-col h-full min-w-0 overflow-hidden">
-        {/* Dashboard Top Header: EXACTLY h-16 shrink-0 border-b border-border matching sidebar */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-background px-4 sm:px-6">
-          {/* Left: Hamburger menu on mobile/tablet + Clear Breadcrumb navigation */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Button
               variant="ghost"
@@ -407,134 +648,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <ChevronRight className="size-3.5 text-muted-foreground/60" />
             </div>
             <span className="font-heading text-sm sm:text-base font-bold text-foreground truncate">
-              {getPageTitle()}
+              {pageTitle}
             </span>
           </div>
 
-          {/* Right: Facility selector, Health status, Search, Notifications, Theme */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Facility Selector Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-2 px-2.5 sm:px-3 text-xs font-medium max-w-[130px] sm:max-w-[190px]"
-                >
-                  <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{currentFacilityLabel}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 text-xs">
-                <DropdownMenuLabel>Chọn phạm vi cơ sở</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedFacilityId("ALL");
-                    toast.success("Đã lọc: Tất cả cơ sở");
-                  }}
-                  className="flex items-center justify-between cursor-pointer"
-                >
-                  <span>Tất cả cơ sở</span>
-                  {selectedFacilityId === "ALL" && (
-                    <Check className="size-3.5 text-foreground" />
-                  )}
-                </DropdownMenuItem>
-                {facilitiesList.map((fac) => (
-                  <DropdownMenuItem
-                    key={fac.id}
-                    onClick={() => {
-                      setSelectedFacilityId(fac.id);
-                      toast.success(`Đã lọc phạm vi: ${fac.name}`);
-                    }}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <span className="truncate">{fac.name}</span>
-                    {selectedFacilityId === fac.id && (
-                      <Check className="size-3.5 text-foreground" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {permissions.includes("facility.read") && <FacilityScopeMenu />}
+            <HealthPopover />
 
-            {/* Backend Health Status Badge */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium rounded-xl border-border bg-card/90 text-foreground hover:bg-accent transition-colors"
-                >
-                  <span
-                    className={cn(
-                      "size-2 rounded-full shrink-0",
-                      backendStatus === "live" ? "bg-foreground animate-pulse" : "bg-muted-foreground/60"
-                    )}
-                  />
-                  <span className="hidden md:inline">
-                    {backendStatus === "live" ? "API Live: 3000" : "Mock Engine (Demo)"}
-                  </span>
-                  <span className="md:hidden">
-                    {backendStatus === "live" ? "Live" : "Demo"}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-80 p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-heading text-sm font-semibold">
-                      Trạng thái kết nối API
-                    </h4>
-                    <Badge variant={backendStatus === "live" ? "default" : "secondary"}>
-                      {backendStatus === "live" ? "Đã kết nối" : "Nội bộ độc lập"}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {backendStatus === "live"
-                      ? "Kết nối trực tiếp tới DICA NestJS Backend API tại http://localhost:3000/api/v1. Toàn bộ dữ liệu được xác thực bằng JWT."
-                      : "Backend đang ở chế độ dự phòng thông minh (Offline Mock Engine). Bạn có thể thao tác đầy đủ CRUD, dữ liệu lưu trữ tức thời trong local database."}
-                  </p>
-                  <Separator />
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] text-muted-foreground font-mono">
-                      URL: {dicaStore.getApiBaseUrl()}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs gap-1"
-                      onClick={async () => {
-                        toast.loading("Đang kiểm tra kết nối...");
-                        try {
-                          const res = await fetch(
-                            `${dicaStore.getApiBaseUrl()}/health/live`,
-                            { signal: AbortSignal.timeout(2000) }
-                          );
-                          if (res.ok) {
-                            setBackendStatus("live");
-                            toast.success("Kết nối Backend NestJS thành công!");
-                          } else {
-                            setBackendStatus("demo");
-                            toast.info("Không nhận được phản hồi, giữ chế độ Demo.");
-                          }
-                        } catch {
-                          setBackendStatus("demo");
-                          toast.info(
-                            "Backend chưa khởi chạy, đang chạy chế độ Mock hoàn chỉnh."
-                          );
-                        }
-                      }}
-                    >
-                      <RefreshCw className="size-3" />
-                      Kiểm tra
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Global Search / Command Bar Trigger */}
             <Button
               variant="outline"
               size="sm"
@@ -559,83 +680,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <Search className="size-4" />
             </Button>
 
-            {/* Notifications Popover */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative size-9 text-muted-foreground hover:text-foreground"
-                >
-                  <Bell className="size-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background shadow-xs">
-                      {unreadCount}
-                    </span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-80 p-0">
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                  <span className="font-heading text-sm font-semibold">
-                    Thông báo hệ thống
-                  </span>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllRead}
-                      className="text-xs text-foreground hover:underline font-medium"
-                    >
-                      Đọc tất cả
-                    </button>
-                  )}
-                </div>
-                <ScrollArea className="max-h-72">
-                  <div className="divide-y divide-border/60">
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-muted-foreground">
-                        Không có thông báo mới.
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          className={cn(
-                            "flex items-start gap-3 p-3 transition-colors hover:bg-muted/50 cursor-pointer",
-                            !n.is_read && "bg-muted/50 font-medium"
-                          )}
-                          onClick={() => {
-                            if (n.link) router.push(n.link);
-                          }}
-                        >
-                          <div className="mt-0.5 shrink-0">
-                            {n.type === "ALERT" ? (
-                              <AlertTriangle className="size-4 text-red-500" />
-                            ) : n.type === "WARNING" ? (
-                              <Activity className="size-4 text-amber-500" />
-                            ) : (
-                              <CheckCircle2 className="size-4 text-emerald-500" />
-                            )}
-                          </div>
-                          <div className="flex-1 space-y-1">
-                            <p className="text-xs font-semibold leading-tight text-foreground">
-                              {n.title}
-                            </p>
-                            <p className="text-[11px] leading-relaxed text-muted-foreground">
-                              {n.message}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground/80 font-mono">
-                              {n.created_at}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-              </PopoverContent>
-            </Popover>
+            <NotificationsPopover />
 
-            {/* Theme Mode Configurator Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -652,65 +698,52 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent align="end" className="w-40 text-xs">
                 <DropdownMenuLabel>Chế độ hiển thị</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTheme("light");
-                    toast.info("Đã chuyển sang giao diện Sáng");
-                  }}
-                  className="flex items-center justify-between cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <Sun className="size-3.5 text-amber-500" />
-                    <span>Sáng (Light)</span>
-                  </div>
-                  {theme === "light" && <Check className="size-3.5 text-foreground" />}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTheme("dark");
-                    toast.info("Đã chuyển sang giao diện Tối");
-                  }}
-                  className="flex items-center justify-between cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <Moon className="size-3.5 text-blue-400" />
-                    <span>Tối (Dark)</span>
-                  </div>
-                  {theme === "dark" && <Check className="size-3.5 text-foreground" />}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTheme("system");
-                    toast.info("Đã đặt theo giao diện Hệ thống");
-                  }}
-                  className="flex items-center justify-between cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <Monitor className="size-3.5 text-muted-foreground" />
-                    <span>Hệ thống (Auto)</span>
-                  </div>
-                  {theme === "system" && <Check className="size-3.5 text-foreground" />}
-                </DropdownMenuItem>
+                {[
+                  { key: "light", label: "Sáng (Light)", icon: Sun },
+                  { key: "dark", label: "Tối (Dark)", icon: Moon },
+                  { key: "system", label: "Hệ thống (Auto)", icon: Monitor },
+                ].map((opt) => (
+                  <DropdownMenuItem
+                    key={opt.key}
+                    onClick={() => setTheme(opt.key)}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <opt.icon className="size-3.5 text-muted-foreground" />
+                      <span>{opt.label}</span>
+                    </div>
+                    {theme === opt.key && <Check className="size-3.5 text-foreground" />}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
 
-        {/* Page Content Viewport with independent scroll */}
         <main className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl space-y-6">
-            {children}
+            {allowed ? (
+              children
+            ) : (
+              <Card className="mx-auto mt-10 max-w-md gap-3 p-8 text-center">
+                <ShieldX className="mx-auto size-7 text-muted-foreground" />
+                <p className="font-heading text-base font-bold text-foreground">Không có quyền truy cập</p>
+                <p className="text-xs text-muted-foreground">
+                  Tài khoản của bạn chưa được cấp quyền cho trang này. Liên hệ quản trị viên để được phân quyền.
+                </p>
+              </Card>
+            )}
           </div>
         </main>
       </div>
 
-      {/* Global Command Palette Dialog */}
+      {/* Command Palette */}
       <CommandDialog open={openCommand} onOpenChange={setOpenCommand}>
-        <CommandInput placeholder="Gõ lệnh hoặc tìm trang (ví dụ: kho, nguyên liệu, yêu cầu)..." />
+        <CommandInput placeholder="Gõ để tìm trang (ví dụ: kho, nguyên liệu, yêu cầu)..." />
         <CommandList>
           <CommandEmpty>Không tìm thấy kết quả phù hợp.</CommandEmpty>
           <CommandGroup heading="Điều hướng nhanh">
-            {NAV_SECTIONS.flatMap((sec) => sec.items).map((item) => {
+            {visibleItems.map((item) => {
               const Icon = item.icon;
               return (
                 <CommandItem
@@ -728,35 +761,28 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Thao tác nhanh">
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/requests?action=create");
-              }}
-            >
-              <Sparkles className="mr-2 size-4 text-foreground" />
-              <span>Tạo yêu cầu cấp hàng mới</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                router.push("/catalog?action=create-ingredient");
-              }}
-            >
-              <Sparkles className="mr-2 size-4 text-foreground" />
-              <span>Thêm mới nguyên vật liệu SKU</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpenCommand(false);
-                dicaStore.resetAll();
-                toast.success("Đã nạp lại bộ dữ liệu mẫu chuẩn DICA.");
-                window.location.reload();
-              }}
-            >
-              <RefreshCw className="mr-2 size-4 text-foreground" />
-              <span>Nạp lại dữ liệu mẫu (Reset Data)</span>
-            </CommandItem>
+            {permissions.includes("request.create") && (
+              <CommandItem
+                onSelect={() => {
+                  setOpenCommand(false);
+                  router.push("/requests?action=create");
+                }}
+              >
+                <Sparkles className="mr-2 size-4 text-foreground" />
+                <span>Tạo yêu cầu cấp hàng mới</span>
+              </CommandItem>
+            )}
+            {permissions.includes("ingredient.manage") && (
+              <CommandItem
+                onSelect={() => {
+                  setOpenCommand(false);
+                  router.push("/catalog?action=create-ingredient");
+                }}
+              >
+                <Sparkles className="mr-2 size-4 text-foreground" />
+                <span>Thêm nguyên liệu mới</span>
+              </CommandItem>
+            )}
           </CommandGroup>
         </CommandList>
       </CommandDialog>

@@ -10,15 +10,22 @@ import {
   Utensils,
   Users,
   Sliders,
+  GitBranch,
+  ArrowLeftRight,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
+
+export type NavCountKey = "pendingRequests" | "openDiscrepancies" | "lowStock" | "openOrders" | "pendingTransfers";
 
 export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon | React.ComponentType<{ className?: string }>;
   badge?: string;
-  countKey?: string;
+  countKey?: NavCountKey;
+  /** Hiển thị khi người dùng có ít nhất một quyền trong danh sách. */
+  permission?: string | string[];
 }
 
 export interface NavSection {
@@ -35,6 +42,13 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Bàn làm việc & KPI",
         icon: LayoutDashboard,
         badge: "Live",
+        permission: "dashboard.read",
+      },
+      {
+        href: "/reports",
+        label: "Báo cáo",
+        icon: BarChart3,
+        permission: ["report.stock", "report.fulfillment", "report.damage", "report.variance", "report.payment"],
       },
     ],
   },
@@ -45,6 +59,7 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/organization",
         label: "Cơ sở & Chi nhánh",
         icon: Building2,
+        permission: ["facility.read", "stock_location.read", "department.read"],
       },
     ],
   },
@@ -55,6 +70,13 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/catalog",
         label: "Nguyên liệu & Đơn vị",
         icon: Boxes,
+        permission: ["ingredient.read", "unit.read", "supplier.read", "conversion.read"],
+      },
+      {
+        href: "/sourcing",
+        label: "Định tuyến nguồn hàng",
+        icon: GitBranch,
+        permission: ["eligibility.read", "source_rule.read"],
       },
     ],
   },
@@ -66,11 +88,21 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Yêu cầu cấp hàng",
         icon: ClipboardList,
         countKey: "pendingRequests",
+        permission: "request.read",
       },
       {
         href: "/orders",
-        label: "Đơn thực hiện (PO)",
+        label: "Đơn thực hiện",
         icon: ShoppingCart,
+        countKey: "openOrders",
+        permission: "order.read",
+      },
+      {
+        href: "/transfers",
+        label: "Điều chuyển kho",
+        icon: ArrowLeftRight,
+        countKey: "pendingTransfers",
+        permission: "transfer.read",
       },
     ],
   },
@@ -81,7 +113,8 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/delivery",
         label: "Xuất - Nhập & Sai lệch",
         icon: Truck,
-        countKey: "discrepancies",
+        countKey: "openDiscrepancies",
+        permission: ["dispatch.read", "receipt.read", "discrepancy.read"],
       },
     ],
   },
@@ -93,6 +126,7 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Tồn kho & Sổ cái",
         icon: Warehouse,
         countKey: "lowStock",
+        permission: ["stock.read", "stock_ledger.read", "adjustment.read", "stocktake.read", "damage.read"],
       },
     ],
   },
@@ -103,6 +137,7 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/operations",
         label: "Công thức & Hao hụt",
         icon: Utensils,
+        permission: ["ipos_mapping.read", "recipe.read", "sales_import.read", "variance.read", "alert_rule.manage"],
       },
     ],
   },
@@ -113,10 +148,11 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/users",
         label: "Tài khoản & Phân quyền",
         icon: Users,
+        permission: ["user.read", "role.read", "grant.read"],
       },
       {
         href: "/system",
-        label: "Nhật ký & Cấu hình API",
+        label: "Nhật ký & Trạng thái API",
         icon: Sliders,
       },
     ],
