@@ -8,7 +8,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { cn } from "@/lib/utils";
 
 const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-sans" });
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
