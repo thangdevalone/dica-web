@@ -1,32 +1,46 @@
-import { Geist, Geist_Mono, Inter } from "next/font/google"
-
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import type { Metadata } from "next";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
-const geistHeading = Geist({subsets:['latin'],variable:'--font-heading'});
+const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'})
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
+export const metadata: Metadata = {
+  title: "DICA Admin — Hệ Thống Quản Trị Chuỗi Cung Ứng & Tồn Kho F&B",
+  description:
+    "Cổng điều hành trung tâm quản lý cung ứng, kho vận đa chi nhánh, định mức công thức món ăn và đối soát iPOS chuyên sâu.",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html
-      lang="en"
+      lang="vi"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", inter.variable, geistHeading.variable)}
+      className={cn(
+        "antialiased",
+        fontMono.variable,
+        "font-sans",
+        inter.variable,
+        geistHeading.variable
+      )}
     >
-      <body>
-        <ThemeProvider>{children}</ThemeProvider>
+      <body className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+        <ThemeProvider>
+          <TooltipProvider delayDuration={150}>
+            {children}
+            <Toaster richColors position="top-right" />
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
