@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Boxes,
   Building2,
   Search,
   Bell,
@@ -61,6 +60,7 @@ import { useApiMutation, usePagedQuery } from "@/hooks/use-api";
 import { useFacilities } from "@/hooks/use-lookups";
 import { useDashboardSummary, useHealth } from "@/hooks/use-system";
 import { formatDateTime } from "@/lib/formatters";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 function canSee(item: NavItem, permissions: string[]) {
   if (!item.permission) return true;
@@ -465,9 +465,7 @@ function FacilityScopeMenu() {
 function BrandBlock() {
   return (
     <div className="flex items-center gap-3 min-w-0">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground text-background shadow-xs">
-        <Boxes className="size-4.5" />
-      </div>
+      <BrandLogo size={36} priority className="size-9 border border-border bg-white shadow-xs" />
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="font-heading text-base font-bold tracking-tight text-foreground">DICA</span>

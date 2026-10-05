@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  Boxes,
   Lock,
   User as UserIcon,
   Building,
@@ -26,6 +25,7 @@ import { login } from "@/lib/api/auth";
 import { DEFAULT_ORGANIZATION_CODE, errorMessage } from "@/lib/api/client";
 import { useHealth } from "@/hooks/use-system";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/shared/brand-logo";
 
 const loginSchema = z.object({
   organization_code: z
@@ -107,9 +107,11 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center size-12 rounded-2xl bg-foreground text-background shadow-sm">
-            <Boxes className="size-6" />
-          </div>
+          <BrandLogo
+            size={72}
+            priority
+            className="mx-auto size-18 border border-border bg-white shadow-sm"
+          />
           <div>
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               DICA SCM
