@@ -1,169 +1,113 @@
-# Deploy DICA Web lên VPS cùng DICA Backend
+# Hướng Dẫn Triển Khai DICA Web (VPS & CI/CD)
 
-Tài liệu này hướng dẫn chi tiết cách triển khai frontend **DICA Web (Next.js)** trên VPS cùng với **DICA Backend (NestJS)**, thông qua **GitHub Actions CI/CD** và **Nginx Reverse Proxy**.
-
----
-
-## 1. Kiến Trúc Triển Khai Production
-
-```
-                      INTERNET / TRÌNH DUYỆT
-                               │
-                       HTTPS (Cổng 443)
-                               ▼
-               ┌───────────────────────────────┐
-               │    Nginx Reverse Proxy (VPS)  │
-               └───────────────┬───────────────┘
-                               │
-            ┌──────────────────┴──────────────────┐
-            │ /api/*                              │ / (tất cả trang web)
-            ▼                                     ▼
- ┌─────────────────────┐               ┌─────────────────────┐
- │    DICA Backend     │               │      DICA Web       │
- │   (NestJS Docker)   │               │  (Next.js Standalone│
- │   127.0.0.1:3000    │               │       Docker)       │
- └──────────┬──────────┘               │   127.0.0.1:3001    │
-            │                          └─────────────────────┘
-            ▼
- ┌─────────────────────┐
- │     PostgreSQL      │
- │  (Mạng Docker riêng)│
- └─────────────────────┘
-```
-
-- **dica-backend**: Chạy tại `/opt/dica-backend`, API bind cổng `127.0.0.1:3000`.
-- **dica-web**: Chạy tại `/opt/dica-web`, Web bind cổng `127.0.0.1:3001`.
-- **Nginx**: Phục vụ cổng 80/443, SSL tự động qua Let's Encrypt / Certbot, điều phối traffic và cache file tĩnh Next.js.
-- Cả 2 service đều không mở port 3000 / 3001 ra ngoài Internet, đảm bảo an toàn tối đa.
+Tài liệu triển khai frontend **DICA Web (Next.js)** trên VPS cùng với **DICA Backend (NestJS)** qua **GitHub Actions** và **Nginx**.
 
 ---
 
-## 2. Chuẩn Bị VPS
+## 1. Kiến Trúc Hệ Thống
 
-### Bước 2.1: Tạo thư mục deploy cho Web
-Nếu đã có user `deploy` từ quá trình cài đặt backend:
+Domain: **`https://uat.lauechdica.vn`**
+
+- **Nginx (Host VPS, cổng 80/443)**: Cửa ngõ duy nhất ra Internet, tự động HTTPS qua Certbot.
+  - `/api/*` ➔ Backend NestJS (`127.0.0.1:3000`)
+  - `/_next/static/*` ➔ Cache tài nguyên tĩnh Next.js
+  - `/*` ➔ Web Next.js (`127.0.0.1:3001`)
+- **DICA Backend**: Chạy Docker tại `/opt/dica-backend`, API bind `127.0.0.1:3000`.
+- **DICA Web**: Chạy Docker tại `/opt/dica-web`, Web bind `127.0.0.1:3001`.
+- Cổng 3000 và 3001 chỉ mở nội bộ trên VPS, không mở ra Internet.
+
+---
+
+## 2. Chuẩn Bị Trên VPS
+
+### Bước 2.1: Tạo thư mục deploy
 ```bash
-sudo install -d -o deploy -g deploy -m 750 /opt/dica-web
+sudo install -d -o txssltmv -g txssltmv -m 750 /opt/dica-web
 ```
 
-### Bước 2.2: Tạo file cấu hình môi trường Production
-Tạo file `/opt/dica-web/.env.production`:
+### Bước 2.2: Tạo file `/opt/dica-web/.env.production`
 ```bash
-sudo cp .env.production.example /opt/dica-web/.env.production
-sudo chown deploy:deploy /opt/dica-web/.env.production
-sudo chmod 600 /opt/dica-web/.env.production
-```
-
-Nội dung file `/opt/dica-web/.env.production`:
-```ini
+sudo tee /opt/dica-web/.env.production << 'EOF'
 WEB_PORT=3001
 NEXT_PUBLIC_API_URL=/api/v1
 NEXT_PUBLIC_DEFAULT_ORGANIZATION_CODE=DICA
 NEXT_PUBLIC_APP_NAME="DICA Admin"
 NEXT_PUBLIC_APP_DESCRIPTION="Hệ Thống Quản Trị Chuỗi Cung Ứng & Tồn Kho F&B"
 NEXT_PUBLIC_DEFAULT_THEME=system
+EOF
+
+sudo chown txssltmv:txssltmv /opt/dica-web/.env.production
+sudo chmod 600 /opt/dica-web/.env.production
 ```
 
-> **Lưu ý**: Khi dùng `NEXT_PUBLIC_API_URL=/api/v1`, trình duyệt gọi API tương đối đến cùng domain với web thông qua Nginx, loại bỏ hoàn toàn lỗi CORS và không cần build lại image khi đổi IP/domain!
+> **Ghi chú CORS**: Backend tại `/opt/dica-backend/.env.production` đã đặt `CORS_ORIGINS=*`, Web gọi API tương đối qua `/api/v1` không bị lỗi CORS.
 
 ---
 
-## 3. Cấu Hình Nginx
+## 3. Cấu Hình Nginx & SSL
 
-Xem hướng dẫn chi tiết tại thư mục [nginx/README.md](../nginx/README.md).
-File cấu hình khuyên dùng:
-- Copy `nginx/conf.d/dica-unified.conf` vào `/etc/nginx/conf.d/dica.conf`.
-- Chạy Certbot để cấp chứng chỉ SSL:
-  ```bash
-  sudo certbot --nginx -d your-real-domain.com
-  sudo systemctl reload nginx
-  ```
+1. Cài đặt Nginx & Certbot:
+```bash
+sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+2. Áp dụng cấu hình từ file [nginx/uat.lauechdica.vn.conf](../nginx/uat.lauechdica.vn.conf):
+```bash
+sudo cp /path/to/dica-web/nginx/uat.lauechdica.vn.conf /etc/nginx/sites-available/uat.lauechdica.vn
+sudo ln -sf /etc/nginx/sites-available/uat.lauechdica.vn /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+```
+
+3. Cấp chứng chỉ SSL miễn phí (Let's Encrypt):
+```bash
+sudo certbot --nginx -d uat.lauechdica.vn
+sudo nginx -t && sudo systemctl reload nginx
+```
 
 ---
 
-## 4. Cấu Hình GitHub Secrets & Variables (Repository `dica-web`)
+## 4. Cấu Hình GitHub Secrets (CI/CD Tự Động)
 
-Vào GitHub Repository `thangdevalone/dica-web` > **Settings** > **Environments** > Tạo Environment tên `production`.
+Tại GitHub repo `thangdevalone/dica-web` > **Settings** > **Environments** > Tạo Environment tên `production`:
 
-### Secrets (Bắt buộc)
-Khai báo giống như ở `dica-backend`:
+### Secrets (Bắt buộc):
+| Tên Secret | Giá trị |
+| :--- | :--- |
+| `VPS_HOST` | `103.56.164.155` |
+| `VPS_USER` | `txssltmv` |
+| `VPS_SSH_PRIVATE_KEY` | Nội dung file `dica_vps.pem` (`C:\Users\thang\.ssh\dica_vps.pem`) |
+| `VPS_SSH_KNOWN_HOSTS` | Chuỗi lấy từ lệnh `ssh-keyscan -p 22 -H 103.56.164.155` |
 
-| Tên Secret            | Ý nghĩa                                         |
-| --------------------- | ----------------------------------------------- |
-| `VPS_HOST`            | IP hoặc hostname của VPS                        |
-| `VPS_USER`            | User deploy trên VPS (ví dụ: `deploy`)          |
-| `VPS_SSH_PRIVATE_KEY` | Private SSH key tương ứng để kết nối vào VPS    |
-| `VPS_SSH_KNOWN_HOSTS` | Host key của VPS (lấy qua `ssh-keyscan -p 22 -H VPS_HOST`) |
-
-### Variables (Tùy chọn)
-
-| Tên Variable          | Mặc định         | Ghi chú                                           |
-| --------------------- | ---------------- | ------------------------------------------------- |
-| `VPS_PORT`            | `22`             | Cổng SSH của VPS                                  |
-| `VPS_DEPLOY_PATH_WEB` | `/opt/dica-web`  | Đường dẫn triển khai trên VPS                     |
-| `NEXT_PUBLIC_API_URL` | `/api/v1`        | URL API backend (nếu dùng subdomain: `https://api.domain.com/api/v1`) |
+### Variables (Tùy chọn):
+| Tên Variable | Mặc định | Ghi chú |
+| :--- | :--- | :--- |
+| `VPS_PORT` | `22` | Cổng SSH |
+| `VPS_DEPLOY_PATH_WEB` | `/opt/dica-web` | Thư mục web trên VPS |
+| `NEXT_PUBLIC_API_URL` | `/api/v1` | URL gọi API |
 
 ---
 
 ## 5. Quy Trình CI/CD Tự Động
 
-Mỗi khi push hoặc merge vào branch `main`:
-1. **Verify**:
-   - Cài đặt dependency sạch với `npm ci`.
-   - Quét lỗ hổng bảo mật với `npm audit --omit=dev --audit-level=high`.
-   - Kiểm tra kiểu dữ liệu với `npm run typecheck`.
-   - Kiểm tra đóng gói build với `npm run build`.
-2. **Image**:
-   - Đóng gói Docker image Next.js standalone đa tầng tối ưu (~150MB).
-   - Đẩy lên GitHub Container Registry (`ghcr.io/thangdevalone/dica-web`).
-   - Ghim image digest SHA256 bất biến.
-3. **Deploy**:
-   - Kết nối SSH vào VPS.
-   - Upload file `docker-compose.yml`.
-   - Tải image mới từ GHCR.
-   - Khởi động lại container với zero downtime, kiểm tra healthcheck hoàn tất mới đánh dấu thành công.
-   - Ghi lại `.deployed-image` và `.previous-image` để sẵn sàng rollback nếu cần.
+Mỗi khi push code lên nhánh `main`:
+1. **Verify**: Chạy `npm ci`, `npm audit`, `npm run typecheck`, `npm run build`.
+2. **Image**: Đóng gói Docker Next.js standalone (~150MB), push lên GHCR và ghim digest bất biến.
+3. **Deploy**: SSH vào VPS, cập nhật `docker-compose.yml`, pull image mới, restart container với zero-downtime, kiểm tra healthcheck và lưu lịch sử image phục vụ rollback.
 
 ---
 
-## 6. Triển Khai Thủ Công Lần Đầu (Tùy chọn)
+## 6. Lệnh Vận Hành & Rollback Trên VPS
 
-Nếu muốn khởi chạy nhanh trước khi kích hoạt GitHub Actions:
 ```bash
 cd /opt/dica-web
 
-# Đăng nhập GHCR (nếu package private)
-# echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin
-
-# Copy docker-compose.yml vào thư mục
-# Đặt APP_IMAGE và khởi chạy:
-export APP_IMAGE=ghcr.io/thangdevalone/dica-web:latest
-docker compose --env-file .env.production pull
-docker compose --env-file .env.production up -d --wait
+# Xem trạng thái container
 docker compose --env-file .env.production ps
-curl -I http://127.0.0.1:3001/
-```
 
----
-
-## 7. Rollback Nhanh
-
-Khi phiên bản mới gặp sự cố, rollback về phiên bản trước đó chỉ với 2 lệnh trên VPS:
-```bash
-cd /opt/dica-web
-export APP_IMAGE="$(cat .previous-image)"
-docker compose --env-file .env.production up -d --remove-orphans --wait
-```
-
----
-
-## 8. Xem Log Vận Hành
-
-```bash
-# Xem log trực tiếp của web:
-cd /opt/dica-web
+# Xem log trực tiếp
 docker compose --env-file .env.production logs -f --tail=100 web
 
-# Xem trạng thái container:
-docker compose --env-file .env.production ps
+# Rollback về phiên bản trước (nếu release mới có lỗi)
+export APP_IMAGE="$(cat .previous-image)"
+docker compose --env-file .env.production up -d --remove-orphans --wait
 ```

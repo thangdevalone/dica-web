@@ -90,11 +90,11 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || '/api/v1' }}
-            NEXT_PUBLIC_DEFAULT_ORGANIZATION_CODE=${{ vars.NEXT_PUBLIC_DEFAULT_ORGANIZATION_CODE || 'DICA' }}
-            NEXT_PUBLIC_APP_NAME=${{ vars.NEXT_PUBLIC_APP_NAME || 'DICA Admin' }}
-            NEXT_PUBLIC_APP_DESCRIPTION=${{ vars.NEXT_PUBLIC_APP_DESCRIPTION || 'Hệ Thống Quản Trị Chuỗi Cung Ứng & Tồn Kho F&B' }}
-            NEXT_PUBLIC_DEFAULT_THEME=${{ vars.NEXT_PUBLIC_DEFAULT_THEME || 'system' }}
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL || '/api/v1' }}
+            NEXT_PUBLIC_DEFAULT_ORGANIZATION_CODE=${{ secrets.NEXT_PUBLIC_DEFAULT_ORGANIZATION_CODE || vars.NEXT_PUBLIC_DEFAULT_ORGANIZATION_CODE || 'DICA' }}
+            NEXT_PUBLIC_APP_NAME=${{ secrets.NEXT_PUBLIC_APP_NAME || vars.NEXT_PUBLIC_APP_NAME || 'DICA Admin' }}
+            NEXT_PUBLIC_APP_DESCRIPTION=${{ secrets.NEXT_PUBLIC_APP_DESCRIPTION || vars.NEXT_PUBLIC_APP_DESCRIPTION || 'Hệ Thống Quản Trị Chuỗi Cung Ứng & Tồn Kho F&B' }}
+            NEXT_PUBLIC_DEFAULT_THEME=${{ secrets.NEXT_PUBLIC_DEFAULT_THEME || vars.NEXT_PUBLIC_DEFAULT_THEME || 'system' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: mode=max
@@ -127,8 +127,8 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
-          VPS_PORT: ${{ vars.VPS_PORT || '22' }}
-          VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH_WEB || vars.VPS_DEPLOY_PATH || '/opt/dica-web' }}
+          VPS_PORT: ${{ secrets.VPS_PORT || vars.VPS_PORT || '22' }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH_WEB || vars.VPS_DEPLOY_PATH_WEB || secrets.VPS_DEPLOY_PATH || vars.VPS_DEPLOY_PATH || '/opt/dica-web' }}
         shell: bash
         run: |
           set -Eeuo pipefail
