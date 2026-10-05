@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -13,6 +13,7 @@ const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "DICA Admin — Hệ Thống Quản Trị Chuỗi Cung Ứng & Tồn Kho F&B",
+  applicationName: "DICA Admin",
   description:
     "Cổng điều hành trung tâm quản lý cung ứng, kho vận đa chi nhánh, định mức công thức món ăn và đối soát iPOS chuyên sâu.",
   icons: {
@@ -26,6 +27,15 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/site.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DICA Admin",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#70b843",
 };
 
 export default function RootLayout({

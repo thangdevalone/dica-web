@@ -12,7 +12,7 @@ export function BrandLogo({
 }) {
   return (
     <Image
-      src="/logo.png"
+      src="/android-chrome-512x512.png"
       alt="Logo DICA"
       width={size}
       height={size}

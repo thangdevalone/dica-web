@@ -1,6 +1,10 @@
 {
   "name": "DICA Admin",
   "short_name": "DICA",
+  "description": "Hệ thống Quản trị Chuỗi Cung Ứng & Tồn Kho F&B",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -13,7 +17,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#18181b",
-  "background_color": "#09090b",
+  "theme_color": "#70b843",
+  "background_color": "#ffffff",
   "display": "standalone"
 }
