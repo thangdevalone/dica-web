@@ -9,6 +9,7 @@ import {
   Warehouse,
   Utensils,
   Users,
+  UserCircle,
   Sliders,
   GitBranch,
   ArrowLeftRight,
@@ -144,6 +145,11 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: "PHÂN QUYỀN & HỆ THỐNG",
     items: [
+      {
+        href: "/profile",
+        label: "Hồ sơ của tôi",
+        icon: UserCircle,
+      },
       {
         href: "/users",
         label: "Tài khoản & Phân quyền",

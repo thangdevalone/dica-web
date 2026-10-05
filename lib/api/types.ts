@@ -99,6 +99,11 @@ export interface MeProfile {
   kind: UserKind;
   organization_id: string;
   supplier_id: string | null;
+  identity_number: string | null;
+  date_of_birth: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
 }
 
 export interface PermissionGrant {
@@ -674,6 +679,7 @@ export interface User {
   lastLoginAt: ISODate | null;
   createdAt: ISODate;
   supplier?: Supplier | null;
+  grants?: RoleGrant[];
 }
 
 export interface Permission {

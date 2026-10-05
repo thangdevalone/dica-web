@@ -67,6 +67,16 @@ function CreateUserDialog({
   const [password, setPassword] = React.useState("");
   const [kind, setKind] = React.useState<UserKind>("INTERNAL");
   const [supplierId, setSupplierId] = React.useState("");
+  const [roleId, setRoleId] = React.useState("");
+  const [scopeType, setScopeType] = React.useState<ScopeType>("ORGANIZATION");
+  const [facilityId, setFacilityId] = React.useState("");
+  const [stockLocationId, setStockLocationId] = React.useState("");
+  const [departmentId, setDepartmentId] = React.useState("");
+
+  const rolesQuery = usePagedQuery<Role>("/roles", { page: 1, page_size: 50 }, { enabled: open });
+  const roleOptions = (rolesQuery.data?.items ?? [])
+    .filter((role) => (kind === "SUPPLIER" ? role.code === "SUPPLIER" : role.code !== "SUPPLIER"))
+    .map((role) => ({ value: role.id, label: `${role.name} (${role.code})` }));
 
   const create = useApiMutation<void, User>({
     mutationFn: () =>
@@ -75,7 +85,12 @@ function CreateUserDialog({
         display_name: displayName.trim(),
         password: password.trim(),
         kind,
+        role_id: roleId,
+        scope_type: kind === "SUPPLIER" ? "SUPPLIER" : scopeType,
         ...(kind === "SUPPLIER" && supplierId ? { supplier_id: supplierId } : {}),
+        ...(facilityId ? { facility_id: facilityId } : {}),
+        ...(stockLocationId ? { stock_location_id: stockLocationId } : {}),
+        ...(departmentId ? { department_id: departmentId } : {}),
       }),
     invalidate: INVALIDATE,
     successMessage: "Đã tạo tài khoản người dùng.",
@@ -86,15 +101,26 @@ function CreateUserDialog({
       setPassword("");
       setKind("INTERNAL");
       setSupplierId("");
+      setRoleId("");
+      setScopeType("ORGANIZATION");
+      setFacilityId("");
+      setStockLocationId("");
+      setDepartmentId("");
       onCreated();
     },
   });
 
   const isValid =
     username.trim().length >= 3 &&
-    displayName.trim().length >= 2 &&
     password.trim().length >= 8 &&
-    (kind === "INTERNAL" || Boolean(supplierId));
+    Boolean(roleId) &&
+    (kind === "INTERNAL" || Boolean(supplierId)) &&
+    (kind === "SUPPLIER" ||
+      scopeType === "ORGANIZATION" ||
+      scopeType === "OWN" ||
+      (scopeType === "FACILITY" && Boolean(facilityId)) ||
+      (scopeType === "STOCK_LOCATION" && Boolean(facilityId) && Boolean(stockLocationId)) ||
+      (scopeType === "DEPARTMENT" && Boolean(facilityId) && Boolean(departmentId)));
 
   return (
     <FormDialog
@@ -111,7 +137,15 @@ function CreateUserDialog({
         <Field label="Loại tài khoản" required>
           <OptionSelect
             value={kind}
-            onChange={(v) => setKind(v as UserKind)}
+            onChange={(v) => {
+              const nextKind = v as UserKind;
+              setKind(nextKind);
+              setRoleId("");
+              setScopeType(nextKind === "SUPPLIER" ? "SUPPLIER" : "ORGANIZATION");
+              setFacilityId("");
+              setStockLocationId("");
+              setDepartmentId("");
+            }}
             options={[
               { value: "INTERNAL", label: "Nhân viên nội bộ F&B" },
               { value: "SUPPLIER", label: "Tài khoản Nhà cung cấp" },
@@ -133,7 +167,7 @@ function CreateUserDialog({
           />
         </Field>
 
-        <Field label="Họ tên hiển thị" required>
+        <Field label="Họ tên hiển thị" hint="Không bắt buộc, nhân viên có thể cập nhật sau">
           <Input
             placeholder="VD: Nguyễn Văn An"
             value={displayName}
@@ -149,6 +183,65 @@ function CreateUserDialog({
             onChange={(e) => setPassword(e.target.value)}
           />
         </Field>
+
+        <Field label="Vai trò" required>
+          <OptionSelect
+            value={roleId}
+            onChange={setRoleId}
+            options={roleOptions}
+            placeholder="Chọn vai trò..."
+          />
+        </Field>
+
+        {kind === "INTERNAL" && (
+          <Field label="Phạm vi truy cập" required>
+            <OptionSelect
+              value={scopeType}
+              onChange={(value) => {
+                setScopeType(value as ScopeType);
+                setFacilityId("");
+                setStockLocationId("");
+                setDepartmentId("");
+              }}
+              options={Object.entries(SCOPE_TYPE_LABELS)
+                .filter(([value]) => value !== "SUPPLIER")
+                .map(([value, label]) => ({ value, label }))}
+            />
+          </Field>
+        )}
+
+        {kind === "INTERNAL" && ["FACILITY", "STOCK_LOCATION", "DEPARTMENT"].includes(scopeType) && (
+          <Field label="Cơ sở" required>
+            <FacilitySelect
+              value={facilityId}
+              onChange={(value) => {
+                setFacilityId(value);
+                setStockLocationId("");
+                setDepartmentId("");
+              }}
+            />
+          </Field>
+        )}
+
+        {kind === "INTERNAL" && scopeType === "STOCK_LOCATION" && facilityId && (
+          <Field label="Kho" required>
+            <StockLocationSelect
+              facilityId={facilityId}
+              value={stockLocationId}
+              onChange={setStockLocationId}
+            />
+          </Field>
+        )}
+
+        {kind === "INTERNAL" && scopeType === "DEPARTMENT" && facilityId && (
+          <Field label="Bộ phận" required>
+            <DepartmentSelect
+              facilityId={facilityId}
+              value={departmentId}
+              onChange={setDepartmentId}
+            />
+          </Field>
+        )}
       </div>
     </FormDialog>
   );
@@ -354,7 +447,9 @@ function AssignGrantDialog({
 export default function UsersPage() {
   const [activeTab, setActiveTab] = React.useState<"users" | "roles" | "grants">("users");
 
-  const canCreateUser = useCan("user.create");
+  const canCreateUserAccount = useCan("user.create");
+  const canAssignNewUser = useCan("grant.assign");
+  const canCreateUser = canCreateUserAccount && canAssignNewUser;
   const canUpdateUser = useCan("user.update");
   const canResetPassword = useCan("user.reset_password");
   const canDeactivateUser = useCan("user.deactivate");
