@@ -312,7 +312,8 @@ export default function OperationsPage() {
   });
 
   const commitBatchMutation = useApiMutation<SalesImportBatch, { message: string }>({
-    mutationFn: (b) => api.post(`/sales-imports/${b.id}/commit`, {}),
+    mutationFn: (b) =>
+      api.post(`/sales-imports/${b.id}/commit`, {}, { idempotencyKey: `web:sales-import:${b.id}` }),
     invalidate: INVALIDATE,
     successMessage: "Đã ghi nhận dữ liệu bán hàng vào hệ thống tiêu hao.",
   });
@@ -633,7 +634,9 @@ export default function OperationsPage() {
       <div className="p-6 space-y-4">
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as any)}
+          onValueChange={(v) =>
+            setActiveTab(v as "mappings" | "recipes" | "sales" | "variance" | "alerts")
+          }
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">

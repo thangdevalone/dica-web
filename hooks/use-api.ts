@@ -23,11 +23,16 @@ function useSessionReady() {
   return useAuthStore((state) => state.hasHydrated && Boolean(state.accessToken));
 }
 
+function useSessionEpoch() {
+  return useAuthStore((state) => state.sessionEpoch);
+}
+
 /** GET một tài nguyên (không phân trang). */
 export function useApiQuery<T>(path: string | null | undefined, params?: QueryParams, opts?: QueryOpts) {
   const ready = useSessionReady();
+  const sessionEpoch = useSessionEpoch();
   return useQuery({
-    queryKey: [path, "one", params ?? {}],
+    queryKey: [path, "one", params ?? {}, sessionEpoch],
     queryFn: async ({ signal }) => (await api.get<T>(path as string, params, { signal })).data,
     enabled: ready && Boolean(path) && (opts?.enabled ?? true),
     ...(opts?.staleTime !== undefined ? { staleTime: opts.staleTime } : {}),
@@ -38,8 +43,9 @@ export function useApiQuery<T>(path: string | null | undefined, params?: QueryPa
 /** Một trang danh sách có meta phân trang. */
 export function usePagedQuery<T>(path: string | null | undefined, params?: QueryParams, opts?: QueryOpts) {
   const ready = useSessionReady();
+  const sessionEpoch = useSessionEpoch();
   return useQuery<Paged<T>>({
-    queryKey: [path, "page", params ?? {}],
+    queryKey: [path, "page", params ?? {}, sessionEpoch],
     queryFn: () => listPage<T>(path as string, params),
     enabled: ready && Boolean(path) && (opts?.enabled ?? true),
     placeholderData: keepPreviousData,
@@ -51,8 +57,9 @@ export function usePagedQuery<T>(path: string | null | undefined, params?: Query
 /** Toàn bộ bản ghi (dùng cho danh mục tra cứu). Cache 5 phút. */
 export function useAllQuery<T>(path: string | null | undefined, params?: QueryParams, opts?: QueryOpts) {
   const ready = useSessionReady();
+  const sessionEpoch = useSessionEpoch();
   return useQuery<T[]>({
-    queryKey: [path, "all", params ?? {}],
+    queryKey: [path, "all", params ?? {}, sessionEpoch],
     queryFn: () => listAll<T>(path as string, params),
     enabled: ready && Boolean(path) && (opts?.enabled ?? true),
     staleTime: opts?.staleTime ?? 5 * 60 * 1000,

@@ -386,7 +386,7 @@ function ConversionsTab() {
     invalidate: ["/conversions"],
     onSuccess: () => setOpen(false),
   });
-  const now = Date.now();
+  const [now] = React.useState(() => Date.now());
   const columns: Column<UnitConversion>[] = [
     { key: "ingredient", header: "Nguyên liệu", cell: (c) => <Cell2 title={c.ingredient?.name ?? "—"} sub={c.ingredient?.code} /> },
     {

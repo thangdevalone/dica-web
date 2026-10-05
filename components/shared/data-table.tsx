@@ -16,7 +16,7 @@ import { errorMessage } from "@/lib/api/client";
 import type { OffsetMeta } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-export interface Column<T = any> {
+export interface Column<T = unknown> {
   key: string;
   header: React.ReactNode;
   cell?: (row: T, index: number) => React.ReactNode;
@@ -27,7 +27,7 @@ export interface Column<T = any> {
   align?: "left" | "center" | "right";
 }
 
-export interface DataTableProps<T = any> {
+export interface DataTableProps<T = unknown> {
   columns: Column<T>[];
   rows?: T[];
   data?: T[];
@@ -48,7 +48,7 @@ export interface DataTableProps<T = any> {
   fetching?: boolean;
 }
 
-export function DataTable<T = any>({
+export function DataTable<T = unknown>({
   columns,
   rows,
   data,
@@ -71,7 +71,12 @@ export function DataTable<T = any>({
   const noDataText = emptyMessage ?? emptyText;
   const getRowKey = (r: T, idx: number) => {
     if (rowKey) return rowKey(r, idx);
-    return (r as any)?.id ?? (r as any)?.code ?? `row-${idx}`;
+    if (r && typeof r === "object") {
+      const candidate = r as { id?: unknown; code?: unknown };
+      if (typeof candidate.id === "string") return candidate.id;
+      if (typeof candidate.code === "string") return candidate.code;
+    }
+    return `row-${idx}`;
   };
 
   const effectiveMeta: OffsetMeta | null | undefined =

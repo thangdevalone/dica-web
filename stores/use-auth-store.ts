@@ -9,6 +9,8 @@ interface AuthState {
   user: MeProfile | null;
   permissions: string[];
   grants: PermissionGrant[];
+  /** Tách cache dữ liệu mỗi khi bắt đầu hoặc kết thúc một phiên đăng nhập. */
+  sessionEpoch: number;
   hasHydrated: boolean;
   setSession: (session: {
     accessToken: string;
@@ -30,23 +32,26 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       permissions: [],
       grants: [],
+      sessionEpoch: 0,
       hasHydrated: false,
       setSession: ({ accessToken, refreshToken, organizationCode }) =>
         set((state) => ({
           accessToken,
           refreshToken,
           organizationCode: organizationCode ?? state.organizationCode,
+          sessionEpoch: state.sessionEpoch + 1,
         })),
       setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
       setProfile: (user, permissions, grants) => set({ user, permissions, grants }),
       clear: () =>
-        set({
+        set((state) => ({
           accessToken: null,
           refreshToken: null,
           user: null,
           permissions: [],
           grants: [],
-        }),
+          sessionEpoch: state.sessionEpoch + 1,
+        })),
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
     }),
     {

@@ -226,7 +226,9 @@ export default function ReportsPage() {
 
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as any)}
+          onValueChange={(v) =>
+            setActiveTab(v as "stock" | "fulfillment" | "damage" | "variance" | "payment")
+          }
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">

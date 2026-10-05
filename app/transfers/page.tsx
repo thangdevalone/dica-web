@@ -235,7 +235,11 @@ export default function TransfersPage() {
 
   const approveMutation = useApiMutation<Transfer, { message: string }>({
     mutationFn: (t) =>
-      api.post(`/transfers/${t.id}/approve`, { expected_version: t.version }),
+      api.post(
+        `/transfers/${t.id}/approve`,
+        { expected_version: t.version },
+        { idempotencyKey: `web:transfer:${t.id}:v${t.version}` }
+      ),
     invalidate: INVALIDATE,
     successMessage: "Đã phê duyệt phiếu điều chuyển. Đơn thực hiện đã được khởi tạo tự động.",
     onSuccess: () => {

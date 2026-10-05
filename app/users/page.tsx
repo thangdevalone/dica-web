@@ -671,7 +671,7 @@ export default function UsersPage() {
       <div className="p-6 space-y-4">
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as any)}
+          onValueChange={(v) => setActiveTab(v as "users" | "roles" | "grants")}
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">

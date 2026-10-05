@@ -230,7 +230,13 @@ function RequestDetail({
       if (!r) throw new Error("Chưa tải xong yêu cầu.");
       const body = { expected_version: r.version, ...(note ? { note } : {}) };
       const path = kind === "refresh" ? "refresh-routing" : kind;
-      return api.post(`/requests/${r.id}/${path}`, body, kind === "approve" ? { idempotencyKey: true } : undefined);
+      return api.post(
+        `/requests/${r.id}/${path}`,
+        body,
+        kind === "approve"
+          ? { idempotencyKey: `web:request:${r.id}:v${r.version}` }
+          : undefined
+      );
     },
     invalidate: INVALIDATE,
     onSuccess: () => setAction(null),

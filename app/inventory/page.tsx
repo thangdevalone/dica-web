@@ -348,7 +348,11 @@ export default function InventoryPage() {
 
   const postAdjustMutation = useApiMutation<InventoryAdjustment, { message: string }>({
     mutationFn: (adj) =>
-      api.post(`/inventory-adjustments/${adj.id}/post`, { expected_version: adj.version }),
+      api.post(
+        `/inventory-adjustments/${adj.id}/post`,
+        { expected_version: adj.version },
+        { idempotencyKey: `web:adjustment:${adj.id}:v${adj.version}` }
+      ),
     invalidate: INVALIDATE,
     successMessage: "Đã ghi sổ điều chỉnh tồn kho vào sổ cái.",
   });
@@ -727,7 +731,9 @@ export default function InventoryPage() {
       <div className="p-6 space-y-4">
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as any)}
+          onValueChange={(v) =>
+            setActiveTab(v as "balances" | "ledger" | "adjustments" | "damage")
+          }
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">

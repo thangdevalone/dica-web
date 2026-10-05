@@ -454,7 +454,7 @@ export default function DeliveryPage() {
       if (!postDispatchTarget) throw new Error("No target");
       return api.post(`/dispatches/${postDispatchTarget.id}/post`, {
         expected_version: postDispatchTarget.version,
-      });
+      }, { idempotencyKey: `web:dispatch:${postDispatchTarget.id}:v${postDispatchTarget.version}` });
     },
     invalidate: INVALIDATE,
     successMessage: "Đã ghi sổ phiếu xuất kho và trừ tồn kho thực tế.",
@@ -469,7 +469,7 @@ export default function DeliveryPage() {
       if (!postReceiptTarget) throw new Error("No target");
       return api.post(`/receipts/${postReceiptTarget.id}/post`, {
         expected_version: postReceiptTarget.version,
-      });
+      }, { idempotencyKey: `web:receipt:${postReceiptTarget.id}:v${postReceiptTarget.version}` });
     },
     invalidate: INVALIDATE,
     successMessage: "Đã ghi sổ phiếu nhập và cộng tồn kho thực tế.",
@@ -713,7 +713,9 @@ export default function DeliveryPage() {
 
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as any)}
+          onValueChange={(v) =>
+            setActiveTab(v as "dispatches" | "receipts" | "discrepancies")
+          }
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">
