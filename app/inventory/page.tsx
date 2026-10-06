@@ -272,6 +272,7 @@ export default function InventoryPage() {
   const canPostAdjust = useCan("adjustment.post");
   const canStocktake = useCan("stocktake.create");
   const canDamage = useCan("damage.create");
+  const canSubmitDamage = useCan("damage.submit");
   const canConfirmDamage = useCan("damage.confirm");
 
   // State dialogs
@@ -358,9 +359,20 @@ export default function InventoryPage() {
   });
 
   // Action mutations for damage
-  const confirmDamageMutation = useApiMutation<DamageReport, { message: string }>({
+  const submitDamageMutation = useApiMutation<DamageReport, DamageReport>({
     mutationFn: (d) =>
-      api.post(`/damage-reports/${d.id}/confirm`, { expected_version: d.version }),
+      api.post<DamageReport>(`/damage-reports/${d.id}/submit`, {
+        expected_version: d.version,
+      }),
+    invalidate: INVALIDATE,
+    successMessage: "Đã gửi báo hỏng chờ người có quyền xác nhận.",
+  });
+
+  const confirmDamageMutation = useApiMutation<DamageReport, DamageReport>({
+    mutationFn: (d) =>
+      api.post<DamageReport>(`/damage-reports/${d.id}/confirm`, {
+        expected_version: d.version,
+      }),
     invalidate: INVALIDATE,
     successMessage: "Đã xác nhận báo hỏng và xuất trừ tồn kho.",
   });
@@ -672,8 +684,20 @@ export default function InventoryPage() {
       width: "130px",
       align: "right",
       render: (d) => (
-        <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
-          {canConfirmDamage && (d.status === "DRAFT" || d.status === "SUBMITTED") && (
+        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          {canSubmitDamage && d.status === "DRAFT" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => submitDamageMutation.mutate(d)}
+              disabled={submitDamageMutation.isPending}
+            >
+              <Send className="h-3.5 w-3.5 mr-1" />
+              Gửi xác nhận
+            </Button>
+          )}
+          {canConfirmDamage && d.status === "SUBMITTED" && (
             <Button
               variant="default"
               size="sm"

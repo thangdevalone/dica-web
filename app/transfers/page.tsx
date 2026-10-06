@@ -135,7 +135,7 @@ function TransferEditor({
       open={open}
       onOpenChange={onOpenChange}
       title={mode?.kind === "edit" ? `Sửa phiếu điều chuyển ${mode.transfer.code}` : "Tạo phiếu điều chuyển nội bộ"}
-      description="Điều chuyển nguyên vật liệu giữa các kho vật lý trong chuỗi cơ sở."
+      description="Điều chuyển giữa Kho tổng và Bếp tổng sẽ tự duyệt khi gửi; các tuyến khác chờ Quản lý tổng duyệt."
       submitLabel={mode?.kind === "edit" ? "Cập nhật" : "Tạo phiếu nháp"}
       submitting={save.isPending}
       submitDisabled={!isValid}
@@ -223,19 +223,22 @@ export default function TransfersPage() {
   const [rejectTarget, setRejectTarget] = React.useState<Transfer | null>(null);
   const [cancelTarget, setCancelTarget] = React.useState<Transfer | null>(null);
 
-  const submitMutation = useApiMutation<Transfer, { message: string }>({
+  const submitMutation = useApiMutation<Transfer, Transfer>({
     mutationFn: (t) =>
-      api.post(`/transfers/${t.id}/submit`, { expected_version: t.version }),
+      api.post<Transfer>(`/transfers/${t.id}/submit`, { expected_version: t.version }),
     invalidate: INVALIDATE,
-    successMessage: "Đã gửi phiếu điều chuyển chờ phê duyệt.",
+    successMessage: (updated) =>
+      updated.status === "APPROVED"
+        ? "Đã tự duyệt điều chuyển Kho tổng/Bếp tổng và tạo đơn thực hiện."
+        : "Đã gửi phiếu điều chuyển chờ Quản lý tổng duyệt.",
     onSuccess: () => {
       if (detailId) detailQuery.refetch();
     },
   });
 
-  const approveMutation = useApiMutation<Transfer, { message: string }>({
+  const approveMutation = useApiMutation<Transfer, Transfer>({
     mutationFn: (t) =>
-      api.post(
+      api.post<Transfer>(
         `/transfers/${t.id}/approve`,
         { expected_version: t.version },
         { idempotencyKey: `web:transfer:${t.id}:v${t.version}` }
