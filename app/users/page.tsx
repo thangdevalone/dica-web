@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   KeyRound,
   Lock,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -451,6 +452,9 @@ export default function UsersPage() {
   const canAssignNewUser = useCan("grant.assign");
   const canCreateUser = canCreateUserAccount && canAssignNewUser;
   const canUpdateUser = useCan("user.update");
+  const canReadUsers = useCan("user.read");
+  const canReadRoles = useCan("role.read");
+  const canReadGrants = useCan("grant.read");
   const canResetPassword = useCan("user.reset_password");
   const canDeactivateUser = useCan("user.deactivate");
   const canAssignGrant = useCan("grant.assign");
@@ -458,9 +462,20 @@ export default function UsersPage() {
 
   // State dialogs
   const [openCreateUser, setOpenCreateUser] = React.useState(false);
+  const [editTarget, setEditTarget] = React.useState<User | null>(null);
+  const [editDisplayName, setEditDisplayName] = React.useState("");
   const [resetTarget, setResetTarget] = React.useState<User | null>(null);
   const [openAssignGrant, setOpenAssignGrant] = React.useState(false);
   const [revokeTarget, setRevokeTarget] = React.useState<RoleGrant | null>(null);
+
+  React.useEffect(() => {
+    const permissions = { users: canReadUsers, roles: canReadRoles, grants: canReadGrants };
+    if (permissions[activeTab]) return;
+    const allowed = (Object.keys(permissions) as Array<keyof typeof permissions>).find(
+      (tab) => permissions[tab]
+    );
+    if (allowed) setActiveTab(allowed);
+  }, [activeTab, canReadGrants, canReadRoles, canReadUsers]);
 
   // Lists
   const usersList = useListState();
@@ -471,19 +486,19 @@ export default function UsersPage() {
   const usersQuery = usePagedQuery<User>(
     "/users",
     { page: usersList.page, page_size: usersList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "users" }
+    { keepPreviousData: true, enabled: activeTab === "users" && canReadUsers }
   );
 
   const rolesQuery = usePagedQuery<Role>(
     "/roles",
     { page: rolesList.page, page_size: rolesList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "roles" }
+    { keepPreviousData: true, enabled: activeTab === "roles" && canReadRoles }
   );
 
   const grantsQuery = usePagedQuery<RoleGrant>(
     "/grants",
     { page: grantsList.page, page_size: grantsList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "grants" }
+    { keepPreviousData: true, enabled: activeTab === "grants" && canReadGrants }
   );
 
   // User status toggling mutations
@@ -504,6 +519,18 @@ export default function UsersPage() {
     invalidate: INVALIDATE,
     successMessage: "Đã thu hồi phân quyền của người dùng.",
     onSuccess: () => setRevokeTarget(null),
+  });
+
+  const updateUserMutation = useApiMutation<void, User>({
+    mutationFn: () => {
+      if (!editTarget) throw new Error("Chưa chọn tài khoản.");
+      return api.patch<User>(`/users/${editTarget.id}`, {
+        display_name: editDisplayName.trim(),
+      });
+    },
+    invalidate: INVALIDATE,
+    successMessage: "Đã cập nhật thông tin tài khoản.",
+    onSuccess: () => setEditTarget(null),
   });
 
   // Columns for Users
@@ -568,6 +595,11 @@ export default function UsersPage() {
       align: "right",
       render: (u) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          {canUpdateUser && (
+            <Button variant="ghost" size="sm" className="h-8" title="Sửa tài khoản" onClick={() => { setEditDisplayName(u.displayName); setEditTarget(u); }}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
           {canResetPassword && (
             <Button
               variant="ghost"
@@ -770,18 +802,18 @@ export default function UsersPage() {
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">
-            <TabsTrigger value="users" className="text-xs">
+            {canReadUsers && <TabsTrigger value="users" className="text-xs">
               <Users className="h-3.5 w-3.5 mr-1.5" />
               Người dùng & Tài khoản
-            </TabsTrigger>
-            <TabsTrigger value="roles" className="text-xs">
+            </TabsTrigger>}
+            {canReadRoles && <TabsTrigger value="roles" className="text-xs">
               <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
               Vai trò & Quyền hạn
-            </TabsTrigger>
-            <TabsTrigger value="grants" className="text-xs">
+            </TabsTrigger>}
+            {canReadGrants && <TabsTrigger value="grants" className="text-xs">
               <KeyRound className="h-3.5 w-3.5 mr-1.5" />
               Phân quyền theo phạm vi (Grants)
-            </TabsTrigger>
+            </TabsTrigger>}
           </TabsList>
 
           {/* Users Tab */}
@@ -843,6 +875,21 @@ export default function UsersPage() {
           if (!o) setResetTarget(null);
         }}
       />
+
+      <FormDialog
+        open={Boolean(editTarget)}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+        title="Cập nhật tài khoản"
+        description={editTarget ? `@${editTarget.username}` : undefined}
+        submitLabel="Lưu thay đổi"
+        loading={updateUserMutation.isPending}
+        disabled={editDisplayName.trim().length < 2}
+        onSubmit={() => updateUserMutation.mutate()}
+      >
+        <Field label="Họ và tên" required>
+          <Input value={editDisplayName} onChange={(event) => setEditDisplayName(event.target.value)} maxLength={200} />
+        </Field>
+      </FormDialog>
 
       <AssignGrantDialog
         open={openAssignGrant}

@@ -6,6 +6,7 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { ActiveBadge } from "@/components/shared/status-badge";
@@ -40,9 +41,9 @@ function EligibilityTab() {
   const list = useListState({ department_id: "" });
   const query = usePagedQuery<ItemEligibility>("/item-eligibility", { ...list.params, facility_id: facilityId });
   const [open, setOpen] = React.useState(false);
-  const [form, setForm] = React.useState({ facility_id: "", department_id: "", ingredient_ids: [] as string[], pending: "" });
+  const [form, setForm] = React.useState({ facility_id: "", department_id: "", ingredient_ids: [] as string[], max_quantity_per_request: "", pending: "" });
   React.useEffect(() => {
-    if (open) setForm({ facility_id: facilityId ?? "", department_id: "", ingredient_ids: [], pending: "" });
+    if (open) setForm({ facility_id: facilityId ?? "", department_id: "", ingredient_ids: [], max_quantity_per_request: "", pending: "" });
   }, [open, facilityId]);
   const { data: ingredients = [] } = useIngredients();
 
@@ -54,6 +55,7 @@ function EligibilityTab() {
           facility_id: form.facility_id,
           department_id: form.department_id,
           ingredient_id,
+          max_quantity_per_request: form.max_quantity_per_request.trim() || null,
           active: true,
         });
       }
@@ -78,6 +80,7 @@ function EligibilityTab() {
     { key: "facility", header: "Cơ sở", cell: (e) => e.facility?.name ?? "—" },
     { key: "department", header: "Bộ phận", cell: (e) => <Cell2 title={e.department?.name ?? "—"} sub={e.department?.code} /> },
     { key: "ingredient", header: "Nguyên liệu", cell: (e) => <Cell2 title={e.ingredient?.name ?? "—"} sub={`${e.ingredient?.code ?? ""}${e.ingredient?.baseUnit ? ` · ${e.ingredient.baseUnit.code}` : ""}`} /> },
+    { key: "maxQuantityPerRequest", header: "Tối đa/lần gọi", className: "text-right", headClassName: "text-right", cell: (e) => e.maxQuantityPerRequest ? `${e.maxQuantityPerRequest} ${e.ingredient?.baseUnit?.code ?? ""}` : "Không giới hạn" },
     { key: "active", header: "Trạng thái", cell: (e) => <ActiveBadge active={e.active} /> },
     {
       key: "actions",
@@ -150,6 +153,16 @@ function EligibilityTab() {
                 value=""
                 onChange={(id) => id && !selected.has(id) && setForm({ ...form, ingredient_ids: [...form.ingredient_ids, id] })}
                 activeOnly
+              />
+            </Field>
+            <Field label="Số lượng tối đa mỗi lần gọi" hint="Không bắt buộc; tính theo đơn vị cơ sở và áp dụng cho các nguyên liệu đang chọn.">
+              <Input
+                type="number"
+                min="0.001"
+                step="0.001"
+                value={form.max_quantity_per_request}
+                onChange={(e) => setForm({ ...form, max_quantity_per_request: e.target.value })}
+                placeholder="Ví dụ: 25.5"
               />
             </Field>
             <div className="flex min-h-10 flex-wrap gap-1.5 rounded-xl border border-dashed border-border p-2">

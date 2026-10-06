@@ -33,6 +33,7 @@ import { DetailSheet, InfoGrid, MiniTable, Section } from "@/components/shared/d
 import { useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
 import { useStockLocations } from "@/hooks/use-lookups";
+import { useUrlParam } from "@/hooks/use-system";
 import { api } from "@/lib/api/client";
 import type {
   DamageReport,
@@ -264,9 +265,13 @@ export default function InventoryPage() {
   const [activeTab, setActiveTab] = React.useState<
     "balances" | "ledger" | "adjustments" | "stocktakes" | "damage"
   >("balances");
+  const [urlTab, clearUrlTab] = useUrlParam("tab");
 
   const canReadBalances = useCan("stock.read");
   const canReadLedger = useCan("stock_ledger.read");
+  const canReadAdjustments = useCan("adjustment.read");
+  const canReadStocktakes = useCan("stocktake.read");
+  const canReadDamage = useCan("damage.read");
   const canAdjust = useCan("adjustment.create");
   const canApproveAdjust = useCan("adjustment.approve");
   const canPostAdjust = useCan("adjustment.post");
@@ -274,6 +279,27 @@ export default function InventoryPage() {
   const canDamage = useCan("damage.create");
   const canSubmitDamage = useCan("damage.submit");
   const canConfirmDamage = useCan("damage.confirm");
+
+  React.useEffect(() => {
+    const permissions = {
+      balances: canReadBalances,
+      ledger: canReadLedger,
+      adjustments: canReadAdjustments,
+      stocktakes: canReadStocktakes,
+      damage: canReadDamage,
+    };
+    if (urlTab && urlTab in permissions) {
+      const tab = urlTab as keyof typeof permissions;
+      if (permissions[tab]) setActiveTab(tab);
+      clearUrlTab();
+      return;
+    }
+    if (permissions[activeTab]) return;
+    const allowed = (Object.keys(permissions) as Array<keyof typeof permissions>).find(
+      (tab) => permissions[tab]
+    );
+    if (allowed) setActiveTab(allowed);
+  }, [activeTab, canReadAdjustments, canReadBalances, canReadDamage, canReadLedger, canReadStocktakes, clearUrlTab, urlTab]);
 
   // State dialogs
   const [openAdjustDialog, setOpenAdjustDialog] = React.useState(false);
@@ -307,7 +333,7 @@ export default function InventoryPage() {
       facility_id: balanceList.filters.facility_id || undefined,
       stock_location_id: balanceList.filters.stock_location_id || undefined,
     },
-    { keepPreviousData: true, enabled: activeTab === "balances" }
+    { keepPreviousData: true, enabled: activeTab === "balances" && canReadBalances }
   );
 
   const ledgerQuery = usePagedQuery<StockLedgerEntry>(
@@ -318,25 +344,25 @@ export default function InventoryPage() {
       stock_location_id: ledgerList.filters.stock_location_id || undefined,
       entry_type: ledgerList.filters.entry_type || undefined,
     },
-    { keepPreviousData: true, enabled: activeTab === "ledger" }
+    { keepPreviousData: true, enabled: activeTab === "ledger" && canReadLedger }
   );
 
   const adjustmentsQuery = usePagedQuery<InventoryAdjustment>(
     "/inventory-adjustments",
     { page: adjustList.page, page_size: adjustList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "adjustments" }
+    { keepPreviousData: true, enabled: activeTab === "adjustments" && canReadAdjustments }
   );
 
   const stocktakesQuery = usePagedQuery<Stocktake>(
     "/stocktakes",
     { page: stocktakeList.page, page_size: stocktakeList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "stocktakes" }
+    { keepPreviousData: true, enabled: activeTab === "stocktakes" && canReadStocktakes }
   );
 
   const damagesQuery = usePagedQuery<DamageReport>(
     "/damage-reports",
     { page: damageList.page, page_size: damageList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "damage" }
+    { keepPreviousData: true, enabled: activeTab === "damage" && canReadDamage }
   );
 
   // Action mutations for adjustments
@@ -756,31 +782,31 @@ export default function InventoryPage() {
         <Tabs
           value={activeTab}
           onValueChange={(v) =>
-            setActiveTab(v as "balances" | "ledger" | "adjustments" | "damage")
+            setActiveTab(v as "balances" | "ledger" | "adjustments" | "stocktakes" | "damage")
           }
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">
-            <TabsTrigger value="balances" className="text-xs">
+            {canReadBalances && <TabsTrigger value="balances" className="text-xs">
               <Boxes className="h-3.5 w-3.5 mr-1.5" />
               Tồn kho tức thời
-            </TabsTrigger>
-            <TabsTrigger value="ledger" className="text-xs">
+            </TabsTrigger>}
+            {canReadLedger && <TabsTrigger value="ledger" className="text-xs">
               <BookOpen className="h-3.5 w-3.5 mr-1.5" />
               Sổ cái kho (Ledger)
-            </TabsTrigger>
-            <TabsTrigger value="adjustments" className="text-xs">
+            </TabsTrigger>}
+            {canReadAdjustments && <TabsTrigger value="adjustments" className="text-xs">
               <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" />
               Điều chỉnh tồn
-            </TabsTrigger>
-            <TabsTrigger value="stocktakes" className="text-xs">
+            </TabsTrigger>}
+            {canReadStocktakes && <TabsTrigger value="stocktakes" className="text-xs">
               <ClipboardCheck className="h-3.5 w-3.5 mr-1.5" />
               Kiểm kê định kỳ
-            </TabsTrigger>
-            <TabsTrigger value="damage" className="text-xs">
+            </TabsTrigger>}
+            {canReadDamage && <TabsTrigger value="damage" className="text-xs">
               <Flame className="h-3.5 w-3.5 mr-1.5 text-destructive" />
               Hao hụt & Hủy hỏng
-            </TabsTrigger>
+            </TabsTrigger>}
           </TabsList>
 
           {/* Balances Tab */}

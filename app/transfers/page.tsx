@@ -15,6 +15,7 @@ import {
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -42,6 +43,12 @@ const INVALIDATE = ["/transfers", "/orders", "/dashboard/summary"];
 
 type TransferEditorMode = { kind: "create" } | { kind: "edit"; transfer: Transfer };
 
+function toLocalDateTimeInput(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
 function TransferEditor({
   mode,
   onOpenChange,
@@ -55,6 +62,7 @@ function TransferEditor({
   const [fromLocId, setFromLocId] = React.useState("");
   const [toLocId, setToLocId] = React.useState("");
   const [note, setNote] = React.useState("");
+  const [expectedArrivalAt, setExpectedArrivalAt] = React.useState("");
   const [lines, setLines] = React.useState<LineDraft[]>([]);
 
   const { data: locations = [] } = useStockLocations();
@@ -69,12 +77,14 @@ function TransferEditor({
       setFromLocId("");
       setToLocId("");
       setNote("");
+      setExpectedArrivalAt("");
       setLines([newLine()]);
     } else {
       const t = mode.transfer;
       setFromLocId(t.fromStockLocationId);
       setToLocId(t.toStockLocationId);
       setNote(t.note ?? "");
+      setExpectedArrivalAt(toLocalDateTimeInput(t.expectedArrivalAt));
       setLines(
         (t.lines ?? []).map((l) =>
           newLine({
@@ -99,6 +109,7 @@ function TransferEditor({
         return api.post<Transfer>("/transfers", {
           from_stock_location_id: fromLocId,
           to_stock_location_id: toLocId,
+          ...(expectedArrivalAt ? { expected_arrival_at: new Date(expectedArrivalAt).toISOString() } : {}),
           ...(note.trim() ? { note: note.trim() } : {}),
           lines: linePayload,
         });
@@ -106,6 +117,9 @@ function TransferEditor({
 
       return api.put<Transfer>(`/transfers/${mode.transfer.id}`, {
         expected_version: mode.transfer.version,
+        from_stock_location_id: fromLocId,
+        to_stock_location_id: toLocId,
+        ...(expectedArrivalAt ? { expected_arrival_at: new Date(expectedArrivalAt).toISOString() } : {}),
         ...(note.trim() ? { note: note.trim() } : {}),
         lines: linePayload,
       });
@@ -169,6 +183,10 @@ function TransferEditor({
             onChange={(e) => setNote(e.target.value)}
             rows={2}
           />
+        </Field>
+
+        <Field label="Thời gian dự kiến nhận" hint="Dùng để thông báo cho cơ sở nhận chuẩn bị kiểm hàng.">
+          <Input type="datetime-local" value={expectedArrivalAt} onChange={(e) => setExpectedArrivalAt(e.target.value)} />
         </Field>
 
         <div className="space-y-2 pt-2 border-t border-border/60">
@@ -255,7 +273,7 @@ export default function TransfersPage() {
       if (!rejectTarget) throw new Error("No target");
       return api.post(`/transfers/${rejectTarget.id}/reject`, {
         expected_version: rejectTarget.version,
-        reason: reason || "Từ chối điều chuyển",
+        note: reason || "Từ chối điều chuyển",
       });
     },
     invalidate: INVALIDATE,
@@ -271,7 +289,7 @@ export default function TransfersPage() {
       if (!cancelTarget) throw new Error("No target");
       return api.post(`/transfers/${cancelTarget.id}/cancel`, {
         expected_version: cancelTarget.version,
-        reason: reason || "Huỷ phiếu điều chuyển",
+        note: reason || "Huỷ phiếu điều chuyển",
       });
     },
     invalidate: INVALIDATE,
@@ -497,6 +515,7 @@ export default function TransfersPage() {
                 { label: "Kho xuất", value: detail.fromStockLocation?.name },
                 { label: "Kho nhận", value: detail.toStockLocation?.name },
                 { label: "Người lập", value: detail.createdBy?.displayName },
+                { label: "Dự kiến nhận", value: detail.expectedArrivalAt ? formatDateTime(detail.expectedArrivalAt) : "—" },
                 { label: "Gửi duyệt", value: detail.submittedAt ? formatDateTime(detail.submittedAt) : "—" },
                 { label: "Quyết định", value: detail.decidedAt ? formatDateTime(detail.decidedAt) : "—" },
                 { label: "Ghi chú", value: detail.note || "—" },

@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   Ban,
   CheckCircle2,
+  CreditCard,
+  Download,
   ExternalLink,
   FileCheck2,
   PackageCheck,
@@ -15,21 +17,22 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
-import { ConfirmDialog, OptionSelect, SearchInput } from "@/components/shared/form";
+import { ConfirmDialog, Field, FormDialog, OptionSelect, SearchInput } from "@/components/shared/form";
 import { DetailSheet, InfoGrid, MiniTable, Section } from "@/components/shared/detail-sheet";
 import { useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
 import { useUrlParam } from "@/hooks/use-system";
-import { api } from "@/lib/api/client";
-import type { FulfillmentOrder, OrderStatus, SourceType } from "@/lib/api/types";
+import { api, newIdempotencyKey } from "@/lib/api/client";
+import type { FulfillmentOrder, OrderStatus, PaymentTrackingView, SourceType } from "@/lib/api/types";
 import { SOURCE_TYPE_LABELS, STATUS_LABELS, labelOf } from "@/constants/labels";
 import { useFacilityFilter } from "@/stores/use-app-store";
 import { useCan } from "@/stores/use-auth-store";
 import { formatDate, formatDateTime } from "@/lib/formatters";
-import { formatQty } from "@/lib/num";
+import { formatMoney, formatQty } from "@/lib/num";
 
 const ORDER_STATUSES: OrderStatus[] = [
   "DRAFT",
@@ -42,10 +45,39 @@ const ORDER_STATUSES: OrderStatus[] = [
 const SOURCE_TYPES: SourceType[] = ["STOCK", "SUPPLIER"];
 const INVALIDATE = ["/orders", "/dashboard/summary"];
 
+function downloadSupplierOrder(order: FulfillmentOrder) {
+  const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const rows = [
+    ["Mã đơn", order.code],
+    ["Nhà cung cấp", order.supplier?.name ?? ""],
+    ["Kho nhận", order.destinationStockLocation?.name ?? ""],
+    ["Cơ sở", order.destinationStockLocation?.facility?.name ?? ""],
+    [],
+    ["Mã hàng", "Tên hàng", "ĐVT", "Số lượng", "Đơn giá tham chiếu"],
+    ...(order.lines ?? []).map((line) => [
+      line.ingredient?.code ?? "",
+      line.ingredient?.name ?? "",
+      line.unitCodeSnapshot,
+      line.approvedQuantity,
+      line.unitPriceSnapshot ?? "",
+    ]),
+  ];
+  const csv = `\uFEFF${rows.map((row) => row.map(quote).join(",")).join("\r\n")}`;
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${order.code}-nha-cung-cap.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function OrdersPage() {
   const facilityId = useFacilityFilter();
   const canClose = useCan("order.close_outstanding");
   const canCancel = useCan("order.cancel");
+  const canExport = useCan("order.export");
+  const canReadPayment = useCan("payment_tracking.read");
+  const canUpdatePayment = useCan("payment_tracking.update");
 
   const [urlId, clearUrlId] = useUrlParam("id");
   const [detailId, setDetailId] = React.useState<string | null>(null);
@@ -74,10 +106,41 @@ export default function OrdersPage() {
     { enabled: Boolean(detailId) }
   );
   const detail = detailQuery.data;
+  const paymentQuery = useApiQuery<PaymentTrackingView>(
+    detailId ? `/orders/${detailId}/payment-tracking` : null,
+    undefined,
+    {
+      enabled:
+        Boolean(detailId) &&
+        detail?.sourceType === "SUPPLIER" &&
+        canReadPayment,
+    }
+  );
 
   // Dialog actions
   const [closeTarget, setCloseTarget] = React.useState<FulfillmentOrder | null>(null);
   const [cancelTarget, setCancelTarget] = React.useState<FulfillmentOrder | null>(null);
+  const [paymentOpen, setPaymentOpen] = React.useState(false);
+  const [paidValue, setPaidValue] = React.useState("");
+
+  const paymentMutation = useApiMutation<string, PaymentTrackingView>({
+    mutationFn: (value) => {
+      if (!detailId || !paymentQuery.data) throw new Error("Chưa tải dữ liệu thanh toán.");
+      return api.put<PaymentTrackingView>(
+        `/orders/${detailId}/payment-tracking`,
+        {
+          paid_value: value,
+          expected_version: paymentQuery.data.version,
+        },
+        { idempotencyKey: newIdempotencyKey() }
+      );
+    },
+    invalidate: ["/orders", "/reports/payment"],
+    onSuccess: () => {
+      setPaymentOpen(false);
+      paymentQuery.refetch();
+    },
+  });
 
   const closeMutation = useApiMutation<string, { message: string }>({
     mutationFn: (reason) => {
@@ -285,6 +348,11 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between w-full">
               <span className="text-xs text-muted-foreground">Phiên bản #{detail.version}</span>
               <div className="flex items-center gap-2">
+                {canExport && detail.sourceType === "SUPPLIER" && (
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => downloadSupplierOrder(detail)}>
+                    <Download className="size-3.5 mr-1" /> Xuất phiếu NCC
+                  </Button>
+                )}
                 {canClose && (detail.status === "PARTIAL" || detail.status === "RELEASED") && (
                   <Button
                     variant="outline"
@@ -353,6 +421,30 @@ export default function OrdersPage() {
                 { label: "Cập nhật lúc", value: formatDateTime(detail.updatedAt) },
               ]}
             />
+
+            {detail.sourceType === "SUPPLIER" && canReadPayment && (
+              <Section title="Đối soát thanh toán">
+                {paymentQuery.isLoading ? (
+                  <p className="text-xs text-muted-foreground">Đang tải thông tin thanh toán...</p>
+                ) : paymentQuery.data ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+                    <div className="flex items-center gap-5 text-xs">
+                      <CreditCard className="size-4 text-emerald-600" />
+                      <span>Giá trị đối soát: <strong>{formatMoney(paymentQuery.data.reconciledValue)}</strong></span>
+                      <span>Đã thanh toán: <strong>{formatMoney(paymentQuery.data.paidValue)}</strong></span>
+                      <StatusBadge status={paymentQuery.data.status} />
+                    </div>
+                    {canUpdatePayment && (
+                      <Button size="sm" variant="outline" className="text-xs" onClick={() => { setPaidValue(paymentQuery.data?.paidValue ?? "0"); setPaymentOpen(true); }}>
+                        Cập nhật thanh toán
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Không có dữ liệu đối soát.</p>
+                )}
+              </Section>
+            )}
 
             <Section title={`Chi tiết mặt hàng (${detail.lines?.length ?? 0})`}>
               <MiniTable
@@ -450,6 +542,21 @@ export default function OrdersPage() {
         loading={cancelMutation.isPending}
         onConfirm={(reason) => cancelMutation.mutate(reason ?? "")}
       />
+
+      <FormDialog
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+        title="Cập nhật thanh toán"
+        description={`Số tiền không được vượt giá trị đối soát ${formatMoney(paymentQuery.data?.reconciledValue)}.`}
+        submitLabel="Lưu thanh toán"
+        loading={paymentMutation.isPending}
+        disabled={!/^\d+(?:\.\d{1,4})?$/.test(paidValue) || Number(paidValue) > Number(paymentQuery.data?.reconciledValue ?? 0)}
+        onSubmit={() => paymentMutation.mutate(paidValue)}
+      >
+        <Field label="Giá trị đã thanh toán" required>
+          <Input type="number" min="0" step="0.0001" value={paidValue} onChange={(event) => setPaidValue(event.target.value)} />
+        </Field>
+      </FormDialog>
     </AdminLayout>
   );
 }

@@ -404,6 +404,16 @@ export default function DeliveryPage() {
   const canCreateReceipt = useCan("receipt.create");
   const canPostReceipt = useCan("receipt.post");
   const canResolveDiscrepancy = useCan("discrepancy.resolve");
+  const canReadDispatch = useCan("dispatch.read");
+  const canReadReceipt = useCan("receipt.read");
+  const canReadDiscrepancy = useCan("discrepancy.read");
+
+  React.useEffect(() => {
+    const permissions = { dispatches: canReadDispatch, receipts: canReadReceipt, discrepancies: canReadDiscrepancy };
+    if (permissions[activeTab]) return;
+    const allowed = (Object.keys(permissions) as Array<keyof typeof permissions>).find((tab) => permissions[tab]);
+    if (allowed) setActiveTab(allowed);
+  }, [activeTab, canReadDiscrepancy, canReadDispatch, canReadReceipt]);
 
   const [openDispatchDialog, setOpenDispatchDialog] = React.useState(false);
   const [openReceiptDialog, setOpenReceiptDialog] = React.useState(false);
@@ -422,19 +432,19 @@ export default function DeliveryPage() {
   const dispatchesQuery = usePagedQuery<Dispatch>(
     "/dispatches",
     dispatchList.params,
-    { enabled: activeTab === "dispatches" }
+    { enabled: activeTab === "dispatches" && canReadDispatch }
   );
 
   const receiptsQuery = usePagedQuery<Receipt>(
     "/receipts",
     receiptList.params,
-    { enabled: activeTab === "receipts" }
+    { enabled: activeTab === "receipts" && canReadReceipt }
   );
 
   const discrepanciesQuery = usePagedQuery<DiscrepancyCase>(
     "/discrepancies",
     discrepancyList.params,
-    { enabled: activeTab === "discrepancies" }
+    { enabled: activeTab === "discrepancies" && canReadDiscrepancy }
   );
 
   const dispatchDetailQuery = useApiQuery<Dispatch>(
@@ -719,15 +729,15 @@ export default function DeliveryPage() {
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">
-            <TabsTrigger value="dispatches" className="text-xs">
+            {canReadDispatch && <TabsTrigger value="dispatches" className="text-xs">
               <Truck className="size-3.5 mr-1.5" /> Phiếu xuất kho
-            </TabsTrigger>
-            <TabsTrigger value="receipts" className="text-xs">
+            </TabsTrigger>}
+            {canReadReceipt && <TabsTrigger value="receipts" className="text-xs">
               <PackageCheck className="size-3.5 mr-1.5" /> Phiếu nhập nhận hàng
-            </TabsTrigger>
-            <TabsTrigger value="discrepancies" className="text-xs">
+            </TabsTrigger>}
+            {canReadDiscrepancy && <TabsTrigger value="discrepancies" className="text-xs">
               <AlertTriangle className="size-3.5 mr-1.5 text-amber-500" /> Sai lệch giao nhận
-            </TabsTrigger>
+            </TabsTrigger>}
           </TabsList>
 
           <TabsContent value="dispatches" className="space-y-4">

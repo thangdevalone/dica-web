@@ -17,6 +17,7 @@ import {
   Search,
   Sliders,
   TrendingDown,
+  Trash2,
   UploadCloud,
   Utensils,
 } from "lucide-react";
@@ -31,7 +32,7 @@ import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-ta
 import { ConfirmDialog, Field, FormDialog, OptionSelect, SearchInput } from "@/components/shared/form";
 import { FacilitySelect, IngredientSelect, StockLocationSelect } from "@/components/shared/entity-select";
 import { DetailSheet, InfoGrid, MiniTable, Section } from "@/components/shared/detail-sheet";
-import { useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
+import { useAllQuery, useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
 import { api } from "@/lib/api/client";
 import type {
@@ -39,6 +40,7 @@ import type {
   MenuItemMapping,
   RecipeVersion,
   SalesImportBatch,
+  Stocktake,
   VarianceResult,
 } from "@/lib/api/types";
 import { STATUS_LABELS, labelOf } from "@/constants/labels";
@@ -52,7 +54,7 @@ const INVALIDATE = [
   "/menu-item-mappings",
   "/recipes",
   "/sales-imports",
-  "/variance-results",
+  "/variances",
   "/alert-rules",
   "/dashboard/summary",
 ];
@@ -227,6 +229,75 @@ function CreateAlertRuleDialog({
   );
 }
 
+function CreateRecipeDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; onCreated: () => void }) {
+  const mappings = useAllQuery<MenuItemMapping>(open ? "/menu-item-mappings" : null);
+  const [mappingId, setMappingId] = React.useState("");
+  const [locationId, setLocationId] = React.useState("");
+  const [effectiveFrom, setEffectiveFrom] = React.useState("");
+  const [lines, setLines] = React.useState([{ key: crypto.randomUUID(), ingredientId: "", quantity: "" }]);
+  const create = useApiMutation<void, RecipeVersion>({
+    mutationFn: () => api.post<RecipeVersion>("/recipes", {
+      mapping_id: mappingId,
+      stock_location_id: locationId,
+      effective_from: new Date(effectiveFrom).toISOString(),
+      ingredients: lines.map((line) => ({ ingredient_id: line.ingredientId, base_quantity: line.quantity })),
+    }),
+    invalidate: INVALIDATE,
+    onSuccess: () => { onOpenChange(false); onCreated(); },
+  });
+  const valid = Boolean(mappingId && locationId && effectiveFrom) && lines.length > 0 && lines.every((line) => line.ingredientId && Number(line.quantity) > 0);
+  return <FormDialog open={open} onOpenChange={onOpenChange} title="Tạo phiên bản định mức" description="Khai báo lượng nguyên liệu tiêu hao cho một món bán trên iPOS." submitLabel="Tạo định mức" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field label="Món iPOS" required><OptionSelect value={mappingId} onChange={setMappingId} options={(mappings.data ?? []).map((item) => ({ value: item.id, label: `${item.menuItemName} (${item.externalItemKey})` }))} /></Field>
+      <Field label="Kho xuất nguyên liệu" required><StockLocationSelect value={locationId} onChange={setLocationId} /></Field>
+      <Field label="Hiệu lực từ" required><Input type="datetime-local" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} /></Field>
+    </div>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between"><span className="text-xs font-semibold">Thành phần nguyên liệu</span><Button type="button" variant="outline" size="sm" onClick={() => setLines((items) => [...items, { key: crypto.randomUUID(), ingredientId: "", quantity: "" }])}><Plus className="mr-1 size-3.5" />Thêm dòng</Button></div>
+      {lines.map((line, index) => <div key={line.key} className="grid grid-cols-[1fr_140px_36px] gap-2">
+        <IngredientSelect value={line.ingredientId} onChange={(value) => setLines((items) => items.map((item) => item.key === line.key ? { ...item, ingredientId: value } : item))} />
+        <Input type="number" min="0" step="0.000001" placeholder="Định lượng" value={line.quantity} onChange={(event) => setLines((items) => items.map((item) => item.key === line.key ? { ...item, quantity: event.target.value } : item))} />
+        <Button type="button" variant="ghost" size="icon" disabled={lines.length === 1} onClick={() => setLines((items) => items.filter((item) => item.key !== line.key))}><Trash2 className="size-4" /></Button>
+      </div>)}
+    </div>
+  </FormDialog>;
+}
+
+function CreateSalesImportDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; onCreated: () => void }) {
+  const [facilityId, setFacilityId] = React.useState("");
+  const [source, setSource] = React.useState("IPOS");
+  const [batchKey, setBatchKey] = React.useState("");
+  const [recordsText, setRecordsText] = React.useState("");
+  const records = React.useMemo(() => recordsText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => {
+    const [external_key, external_item_key, sold_at, quantity] = line.split(",").map((part) => part.trim());
+    return { external_key, external_item_key, sold_at, quantity };
+  }), [recordsText]);
+  const valid = Boolean(facilityId && source.trim() && batchKey.trim() && records.length) && records.every((row) => row.external_key && row.external_item_key && row.sold_at && !Number.isNaN(Date.parse(row.sold_at)) && Number(row.quantity) > 0);
+  const create = useApiMutation<void, SalesImportBatch>({
+    mutationFn: () => api.post<SalesImportBatch>("/sales-imports", { facility_id: facilityId, source: source.trim(), external_batch_key: batchKey.trim(), records }),
+    invalidate: INVALIDATE,
+    onSuccess: () => { onOpenChange(false); setRecordsText(""); onCreated(); },
+  });
+  return <FormDialog open={open} onOpenChange={onOpenChange} title="Tạo đợt nhập bán hàng" description="Mỗi dòng: mã giao dịch, mã món iPOS, thời gian ISO, số lượng." submitLabel="Tạo đợt nhập" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
+    <div className="grid gap-4 sm:grid-cols-2"><Field label="Cơ sở" required><FacilitySelect value={facilityId} onChange={setFacilityId} /></Field><Field label="Nguồn" required><Input value={source} onChange={(event) => setSource(event.target.value)} /></Field><Field label="Mã đợt nhập" required><Input value={batchKey} onChange={(event) => setBatchKey(event.target.value)} placeholder="BATCH-20261006-01" /></Field></div>
+    <Field label="Dữ liệu bán hàng CSV" required hint="Ví dụ: SALE-001,ITEM-001,2026-10-06T12:30:00+07:00,2"><Textarea rows={8} value={recordsText} onChange={(event) => setRecordsText(event.target.value)} /></Field>
+    <p className="text-xs text-muted-foreground">Đã đọc {records.length} dòng dữ liệu.</p>
+  </FormDialog>;
+}
+
+function RecalculateVarianceDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (open: boolean) => void; onDone: () => void }) {
+  const stocktakes = useAllQuery<Stocktake>(open ? "/stocktakes" : null, { status: "SUBMITTED" });
+  const [stocktakeId, setStocktakeId] = React.useState("");
+  const recalculate = useApiMutation<void, VarianceResult[]>({
+    mutationFn: () => api.post<VarianceResult[]>("/variances/recalculate", { stocktake_id: stocktakeId }),
+    invalidate: INVALIDATE,
+    onSuccess: () => { onOpenChange(false); onDone(); },
+  });
+  return <FormDialog open={open} onOpenChange={onOpenChange} title="Tính lại chênh lệch" description="Chọn phiếu kiểm kê đã gửi để đối soát với bán hàng iPOS và định mức." submitLabel="Tính lại" loading={recalculate.isPending} disabled={!stocktakeId} onSubmit={() => recalculate.mutate()}>
+    <Field label="Phiếu kiểm kê" required><OptionSelect value={stocktakeId} onChange={setStocktakeId} options={(stocktakes.data ?? []).map((item) => ({ value: item.id, label: `${item.stockLocation?.name ?? "Kho"} - ${formatDate(item.businessDate)}` }))} /></Field>
+  </FormDialog>;
+}
+
 // ---------------------------------------------------------------------------
 // Main Operations Page
 // ---------------------------------------------------------------------------
@@ -240,11 +311,28 @@ export default function OperationsPage() {
   const canManageMapping = useCan("ipos_mapping.manage");
   const canManageRecipe = useCan("recipe.manage");
   const canManageSales = useCan("sales_import.create");
+  const canCommitSales = useCan("sales_import.commit");
   const canManageAlerts = useCan("alert_rule.manage");
+  const canReadMappings = useCan("ipos_mapping.read");
+  const canReadRecipes = useCan("recipe.read");
+  const canReadSales = useCan("sales_import.read");
+  const canReadVariance = useCan("variance.read");
+  const canRecalculateVariance = useCan("variance.recalculate");
 
   // State dialogs
   const [openMappingDialog, setOpenMappingDialog] = React.useState(false);
   const [openAlertDialog, setOpenAlertDialog] = React.useState(false);
+  const [openRecipeDialog, setOpenRecipeDialog] = React.useState(false);
+  const [openSalesDialog, setOpenSalesDialog] = React.useState(false);
+  const [openRecalculateDialog, setOpenRecalculateDialog] = React.useState(false);
+  const [previewId, setPreviewId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const permissions = { mappings: canReadMappings, recipes: canReadRecipes, sales: canReadSales, variance: canReadVariance, alerts: canManageAlerts };
+    if (permissions[activeTab]) return;
+    const allowed = (Object.keys(permissions) as Array<keyof typeof permissions>).find((tab) => permissions[tab]);
+    if (allowed) setActiveTab(allowed);
+  }, [activeTab, canManageAlerts, canReadMappings, canReadRecipes, canReadSales, canReadVariance]);
 
   // Lists
   const mappingList = useListState({
@@ -273,13 +361,13 @@ export default function OperationsPage() {
       page_size: mappingList.pageSize,
       facility_id: mappingList.filters.facility_id || undefined,
     },
-    { keepPreviousData: true, enabled: activeTab === "mappings" }
+    { keepPreviousData: true, enabled: activeTab === "mappings" && canReadMappings }
   );
 
   const recipesQuery = usePagedQuery<RecipeVersion>(
     "/recipes",
     { page: recipeList.page, page_size: recipeList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "recipes" }
+    { keepPreviousData: true, enabled: activeTab === "recipes" && canReadRecipes }
   );
 
   const salesQuery = usePagedQuery<SalesImportBatch>(
@@ -289,19 +377,26 @@ export default function OperationsPage() {
       page_size: salesList.pageSize,
       facility_id: salesList.filters.facility_id || undefined,
     },
-    { keepPreviousData: true, enabled: activeTab === "sales" }
+    { keepPreviousData: true, enabled: activeTab === "sales" && canReadSales }
   );
 
   const varianceQuery = usePagedQuery<VarianceResult>(
-    "/variance-results",
+    "/variances",
     { page: varianceList.page, page_size: varianceList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "variance" }
+    { keepPreviousData: true, enabled: activeTab === "variance" && canReadVariance }
   );
 
   const alertsQuery = usePagedQuery<AlertRule>(
     "/alert-rules",
     { page: alertsList.page, page_size: alertsList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "alerts" }
+    { keepPreviousData: true, enabled: activeTab === "alerts" && canManageAlerts }
+  );
+
+  const adapterQuery = useApiQuery<{ adapter: string; real_ipos_api_connected: boolean; status: string }>(
+    canReadSales ? "/sales-imports/adapter-status" : null
+  );
+  const previewQuery = useApiQuery<SalesImportBatch>(
+    previewId ? `/sales-imports/${previewId}/preview` : null
   );
 
   // Sales Batch Actions (Validate & Commit)
@@ -461,7 +556,7 @@ export default function OperationsPage() {
               Kiểm tra
             </Button>
           )}
-          {canManageSales && s.status === "VALIDATED" && (
+          {canCommitSales && s.status === "VALIDATED" && (
             <Button
               variant="default"
               size="sm"
@@ -470,6 +565,11 @@ export default function OperationsPage() {
               disabled={commitBatchMutation.isPending}
             >
               Ghi nhận
+            </Button>
+          )}
+          {canReadSales && (
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPreviewId(s.id)}>
+              Xem trước
             </Button>
           )}
         </div>
@@ -621,6 +721,15 @@ export default function OperationsPage() {
                 Thêm món iPOS
               </Button>
             )}
+            {activeTab === "recipes" && canManageRecipe && (
+              <Button size="sm" onClick={() => setOpenRecipeDialog(true)}><Plus className="h-4 w-4 mr-1.5" />Thêm định mức</Button>
+            )}
+            {activeTab === "sales" && canManageSales && (
+              <Button size="sm" onClick={() => setOpenSalesDialog(true)}><UploadCloud className="h-4 w-4 mr-1.5" />Nhập dữ liệu bán</Button>
+            )}
+            {activeTab === "variance" && canRecalculateVariance && (
+              <Button size="sm" onClick={() => setOpenRecalculateDialog(true)}><RefreshCw className="h-4 w-4 mr-1.5" />Tính lại</Button>
+            )}
             {activeTab === "alerts" && canManageAlerts && (
               <Button size="sm" onClick={() => setOpenAlertDialog(true)}>
                 <Plus className="h-4 w-4 mr-1.5" />
@@ -640,26 +749,26 @@ export default function OperationsPage() {
           className="space-y-4"
         >
           <TabsList className="bg-muted/70 p-1">
-            <TabsTrigger value="mappings" className="text-xs">
+            {canReadMappings && <TabsTrigger value="mappings" className="text-xs">
               <LinkIcon className="h-3.5 w-3.5 mr-1.5" />
               Món ăn iPOS
-            </TabsTrigger>
-            <TabsTrigger value="recipes" className="text-xs">
+            </TabsTrigger>}
+            {canReadRecipes && <TabsTrigger value="recipes" className="text-xs">
               <ChefHat className="h-3.5 w-3.5 mr-1.5" />
               Công thức (BOM)
-            </TabsTrigger>
-            <TabsTrigger value="sales" className="text-xs">
+            </TabsTrigger>}
+            {canReadSales && <TabsTrigger value="sales" className="text-xs">
               <UploadCloud className="h-3.5 w-3.5 mr-1.5" />
               Đợt nhập bán hàng
-            </TabsTrigger>
-            <TabsTrigger value="variance" className="text-xs">
+            </TabsTrigger>}
+            {canReadVariance && <TabsTrigger value="variance" className="text-xs">
               <TrendingDown className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
               Đối soát hao hụt
-            </TabsTrigger>
-            <TabsTrigger value="alerts" className="text-xs">
+            </TabsTrigger>}
+            {canManageAlerts && <TabsTrigger value="alerts" className="text-xs">
               <BellRing className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
               Quy tắc cảnh báo
-            </TabsTrigger>
+            </TabsTrigger>}
           </TabsList>
 
           {/* Mappings Tab */}
@@ -708,6 +817,14 @@ export default function OperationsPage() {
 
           {/* Sales Imports Tab */}
           <TabsContent value="sales" className="space-y-4">
+            {adapterQuery.data && (
+              <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 p-3 text-xs">
+                <span>Adapter: <strong>{adapterQuery.data.adapter}</strong></span>
+                <span className={adapterQuery.data.real_ipos_api_connected ? "text-emerald-600" : "text-amber-600"}>
+                  {adapterQuery.data.real_ipos_api_connected ? "Đã kết nối iPOS" : "Chưa kết nối API iPOS — đang nhập thủ công"}
+                </span>
+              </div>
+            )}
             <DataTable
               columns={salesColumns}
               data={salesQuery.data?.items ?? []}
@@ -764,6 +881,35 @@ export default function OperationsPage() {
         onOpenChange={setOpenAlertDialog}
         onCreated={() => alertsQuery.refetch()}
       />
+
+      <CreateRecipeDialog open={openRecipeDialog} onOpenChange={setOpenRecipeDialog} onCreated={() => recipesQuery.refetch()} />
+      <CreateSalesImportDialog open={openSalesDialog} onOpenChange={setOpenSalesDialog} onCreated={() => salesQuery.refetch()} />
+      <RecalculateVarianceDialog open={openRecalculateDialog} onOpenChange={setOpenRecalculateDialog} onDone={() => varianceQuery.refetch()} />
+
+      <DetailSheet
+        open={Boolean(previewId)}
+        onOpenChange={(open) => !open && setPreviewId(null)}
+        title={previewQuery.data ? `Xem trước ${previewQuery.data.externalKey}` : "Xem trước đợt nhập"}
+        badge={previewQuery.data && <StatusBadge status={previewQuery.data.status} />}
+        wide
+      >
+        {previewQuery.data && <div className="space-y-5">
+          <InfoGrid columns={3} items={[
+            { label: "Nguồn", value: previewQuery.data.source },
+            { label: "Cơ sở", value: previewQuery.data.facility?.name ?? previewQuery.data.facilityId },
+            { label: "Số dòng", value: previewQuery.data.records?.length ?? 0 },
+          ]} />
+          <Section title="Dữ liệu bán hàng">
+            <MiniTable headers={[{ label: "Mã giao dịch" }, { label: "Mã món" }, { label: "Thời gian" }, { label: "Số lượng", className: "text-right" }, { label: "Kiểm tra" }]} rows={(previewQuery.data.records ?? []).map((record) => [
+              <Code key="key">{record.externalKey}</Code>,
+              <Code key="item">{record.externalItemKey}</Code>,
+              formatDateTime(record.soldAt),
+              formatQty(record.quantity),
+              record.validationError ? <span key="error" className="text-destructive">{record.validationError}</span> : <span key="ok" className="text-emerald-600">Hợp lệ</span>,
+            ])} />
+          </Section>
+        </div>}
+      </DetailSheet>
     </AdminLayout>
   );
 }

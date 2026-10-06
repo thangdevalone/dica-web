@@ -225,6 +225,7 @@ export interface ItemEligibility {
   facilityId: string;
   departmentId: string;
   ingredientId: string;
+  maxQuantityPerRequest: Decimal | null;
   active: boolean;
   facility?: Facility;
   department?: Department;
@@ -327,6 +328,7 @@ export interface TransferLine {
 
 export interface Transfer {
   id: string;
+  organizationId: string;
   code: string;
   fromStockLocationId: string;
   toStockLocationId: string;
@@ -334,9 +336,11 @@ export interface Transfer {
   status: DocumentStatus;
   version: number;
   note: string | null;
+  expectedArrivalAt: ISODate | null;
   submittedAt: ISODate | null;
   decidedAt: ISODate | null;
   createdAt: ISODate;
+  updatedAt: ISODate;
   fromStockLocation?: StockLocation;
   toStockLocation?: StockLocation;
   createdBy?: UserRef;
@@ -375,6 +379,16 @@ export interface PaymentTracking {
   status: PaymentStatus;
   version: number;
   updatedAt: ISODate;
+  order?: FulfillmentOrder;
+}
+
+export interface PaymentTrackingView {
+  orderId: string;
+  orderCode: string;
+  reconciledValue: Decimal;
+  paidValue: Decimal;
+  status: PaymentStatus;
+  version: number;
 }
 
 export interface FulfillmentOrder {
@@ -651,6 +665,7 @@ export interface VarianceResult {
   calculatedAt: ISODate;
   stockLocation?: StockLocation;
   ingredient?: Ingredient;
+  stocktake?: Stocktake;
 }
 
 export interface AlertRule {
