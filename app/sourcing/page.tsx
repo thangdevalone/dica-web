@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { ActiveBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -22,6 +22,7 @@ import {
 import { DetailSheet, MiniTable } from "@/components/shared/detail-sheet";
 import { useApiMutation, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
+import { useTabSync } from "@/hooks/use-tab-sync";
 import { useFacilities, useIngredients, useStockLocations, useSuppliers } from "@/hooks/use-lookups";
 import { api } from "@/lib/api/client";
 import type { ItemEligibility, SourceRule, SourceRuleRevision } from "@/lib/api/types";
@@ -462,7 +463,9 @@ function RulesTab() {
 export default function SourcingPage() {
   const canEligibility = useCan("eligibility.read");
   const canRules = useCan("source_rule.read");
-  const [tab, setTab] = React.useState("rules");
+  const validTabs = ["rules", "eligibility"] as const;
+  const defaultTab = canRules ? "rules" : "eligibility";
+  const [tab, setTab] = useTabSync(defaultTab, validTabs);
   React.useEffect(() => {
     if (!canRules && canEligibility) setTab("eligibility");
   }, [canRules, canEligibility]);
@@ -473,19 +476,7 @@ export default function SourcingPage() {
           title="Nguồn Cấp & Quyền Xin Hàng"
           description="Định tuyến nguồn cấp cho từng cơ sở – nguyên liệu và cấu hình nguyên liệu mỗi bộ phận được phép xin."
         />
-        <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-          <TabsList data-tour="sourcing-tabs" className="h-auto flex-wrap bg-muted/70 p-1">
-            {canRules && (
-              <TabsTrigger data-tour="sourcing-tab-rules" value="rules" className="gap-2 text-xs">
-                <GitBranch className="size-4" /> Nguồn cấp
-              </TabsTrigger>
-            )}
-            {canEligibility && (
-              <TabsTrigger data-tour="sourcing-tab-eligibility" value="eligibility" className="gap-2 text-xs">
-                <ListChecks className="size-4" /> Hàng được phép xin
-              </TabsTrigger>
-            )}
-          </TabsList>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof validTabs)[number])} className="space-y-4">
           {canRules && (
             <TabsContent value="rules">
               <RulesTab />

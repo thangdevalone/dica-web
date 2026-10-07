@@ -1,35 +1,29 @@
 "use client";
 
-import * as React from "react";
+import { AdminLayout } from "@/components/layout/admin-layout";
+import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
+import { DetailSheet, InfoGrid, Section } from "@/components/shared/detail-sheet";
+import { Field, OptionSelect, SearchInput, type Option } from "@/components/shared/form";
+import { PageHeader } from "@/components/shared/page-header";
+import { Button } from "@/components/ui/button";
+import { useApiQuery, usePagedQuery } from "@/hooks/use-api";
+import { useListState } from "@/hooks/use-list-state";
+import type { AuditEvent } from "@/lib/api/types";
+import { formatDateTime } from "@/lib/formatters";
+import { useCan, useUser } from "@/stores/use-auth-store";
 import {
-  Activity,
   CheckCircle2,
   Database,
   Eye,
-  FileCode2,
-  HardDrive,
   RefreshCw,
-  Server,
   Shield,
   Sliders,
   Terminal,
   X,
-  XCircle,
+  XCircle
 } from "lucide-react";
-import { AdminLayout } from "@/components/layout/admin-layout";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/shared/page-header";
-import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
-import { DetailSheet, InfoGrid, Section } from "@/components/shared/detail-sheet";
-import { DateTimePicker } from "@/components/shared/date-time-picker";
-import { Field, OptionSelect, SearchInput, type Option } from "@/components/shared/form";
-import { useApiQuery, usePagedQuery } from "@/hooks/use-api";
-import { useListState } from "@/hooks/use-list-state";
-import { api } from "@/lib/api/client";
-import type { AuditEvent } from "@/lib/api/types";
-import { useCan, useUser } from "@/stores/use-auth-store";
-import { formatDateTime } from "@/lib/formatters";
+import * as React from "react";
 
 interface HealthResponse {
   status: string;

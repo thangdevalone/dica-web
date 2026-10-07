@@ -23,7 +23,7 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -34,6 +34,7 @@ import { useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
 import { useStockLocations } from "@/hooks/use-lookups";
 import { useUrlParam } from "@/hooks/use-system";
+import { useTabSync } from "@/hooks/use-tab-sync";
 import { api } from "@/lib/api/client";
 import type {
   DamageReport,
@@ -264,16 +265,27 @@ function CreateDamageDialog({
 
 export default function InventoryPage() {
   const globalFacility = useFacilityFilter();
-  const [activeTab, setActiveTab] = React.useState<
-    "balances" | "ledger" | "adjustments" | "stocktakes" | "damage"
-  >("balances");
-  const [urlTab, clearUrlTab] = useUrlParam("tab");
+
+
+
+
 
   const canReadBalances = useCan("stock.read");
   const canReadLedger = useCan("stock_ledger.read");
   const canReadAdjustments = useCan("adjustment.read");
   const canReadStocktakes = useCan("stocktake.read");
   const canReadDamage = useCan("damage.read");
+  const validTabs = ["balances", "ledger", "adjustments", "stocktakes", "damage"] as const;
+  const defaultTab = canReadBalances
+    ? "balances"
+    : canReadLedger
+      ? "ledger"
+      : canReadAdjustments
+        ? "adjustments"
+        : canReadStocktakes
+          ? "stocktakes"
+          : "damage";
+  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs);
   const canAdjust = useCan("adjustment.create");
   const canApproveAdjust = useCan("adjustment.approve");
   const canPostAdjust = useCan("adjustment.post");
@@ -290,18 +302,18 @@ export default function InventoryPage() {
       stocktakes: canReadStocktakes,
       damage: canReadDamage,
     };
-    if (urlTab && urlTab in permissions) {
-      const tab = urlTab as keyof typeof permissions;
-      if (permissions[tab]) setActiveTab(tab);
-      clearUrlTab();
-      return;
-    }
+
+
+
+
+
+
     if (permissions[activeTab]) return;
     const allowed = (Object.keys(permissions) as Array<keyof typeof permissions>).find(
       (tab) => permissions[tab]
     );
     if (allowed) setActiveTab(allowed);
-  }, [activeTab, canReadAdjustments, canReadBalances, canReadDamage, canReadLedger, canReadStocktakes, clearUrlTab, urlTab]);
+  }, [activeTab, canReadAdjustments, canReadBalances, canReadDamage, canReadLedger, canReadStocktakes, setActiveTab]);
 
   // State dialogs
   const [openAdjustDialog, setOpenAdjustDialog] = React.useState(false);
@@ -786,28 +798,6 @@ export default function InventoryPage() {
           }
           className="space-y-4"
         >
-          <TabsList data-tour="inventory-tabs" className="bg-muted/70 p-1">
-            {canReadBalances && <TabsTrigger data-tour="inventory-tab-balances" value="balances" className="text-xs">
-              <Boxes className="h-3.5 w-3.5" />
-              Tồn kho tức thời
-            </TabsTrigger>}
-            {canReadLedger && <TabsTrigger data-tour="inventory-tab-ledger" value="ledger" className="text-xs">
-              <BookOpen className="h-3.5 w-3.5" />
-              Sổ cái kho (Ledger)
-            </TabsTrigger>}
-            {canReadAdjustments && <TabsTrigger data-tour="inventory-tab-adjustments" value="adjustments" className="text-xs">
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Điều chỉnh tồn
-            </TabsTrigger>}
-            {canReadStocktakes && <TabsTrigger data-tour="inventory-tab-stocktakes" value="stocktakes" className="text-xs">
-              <ClipboardCheck className="h-3.5 w-3.5" />
-              Kiểm kê định kỳ
-            </TabsTrigger>}
-            {canReadDamage && <TabsTrigger data-tour="inventory-tab-damage" value="damage" className="text-xs">
-              <Flame className="h-3.5 w-3.5 text-destructive" />
-              Hao hụt & Hủy hỏng
-            </TabsTrigger>}
-          </TabsList>
 
           {/* Balances Tab */}
           <TabsContent value="balances" className="space-y-4">

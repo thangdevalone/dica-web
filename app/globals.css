@@ -115,6 +115,21 @@ html.dark:root {
     --tour-overlay: rgb(0 0 0 / 0.76);
 }
 
+.framer-tour-spotlight-container {
+    z-index: 99998 !important;
+}
+
+.framer-tour-tooltip {
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+}
+
+.framer-tour-tooltip button,
+.framer-tour-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
 @theme inline {
     --font-sans: var(--font-sans);
     --font-heading: var(--font-heading);
@@ -160,8 +175,14 @@ html.dark:root {
     * {
         @apply border-border;
     }
+    html {
+        scroll-behavior: smooth;
+    }
     body {
         @apply bg-background text-foreground;
         font-feature-settings: "rlig" 1, "calt" 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
 }

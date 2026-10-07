@@ -1084,7 +1084,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "admin-tour-restart",
     title: "Hoàn tất tour vận hành",
     content:
-      "Trang Hướng dẫn giữ lại toàn bộ thứ tự thiết lập và flow hằng ngày. Khi cần xem lại, bấm Bắt đầu tour; tour sẽ tiếp tục tự chuyển trang và chỉ hiển thị các bước tài khoản của bạn có quyền dùng.",
+      "Trang Hướng dẫn giữ lại toàn bộ thứ tự thiết lập và flow hằng ngày. Khi cần xem lại, bấm Bắt đầu hướng dẫn; tour sẽ tiếp tục tự chuyển trang và chỉ hiển thị các bước tài khoản của bạn có quyền dùng.",
   },
 ]
 
@@ -1126,13 +1126,24 @@ function portalTarget(marker: string) {
 function prepareInteractiveStep(step: FlowStep) {
   if (!step.marker) return
 
-  const attempt = () => {
-    if (document.querySelector(portalTarget(step.marker!))) return true
+  // Automatically expand parent menu in sidebar
+  window.dispatchEvent(
+    new CustomEvent("dica:expand-sidebar", { detail: { route: step.route } })
+  )
 
+  const attempt = () => {
+    // 1. If step has a dialog to close, check if the dialog is already open
+    if (step.closeDialogMarker && document.querySelector(portalTarget(step.closeDialogMarker))) {
+      return true
+    }
+
+    // 2. If step needs a tab activated
     if (step.activateMarker) {
-      const tab = document.querySelector<HTMLElement>(
-        markerTarget(step.route, step.activateMarker)
-      )
+      const tabKey = step.activateMarker.replace(/^.*-tab-/, "")
+      const tab =
+        document.querySelector<HTMLElement>(`[data-tour="sidebar-sub-${tabKey}"]`) ||
+        document.querySelector<HTMLElement>(portalTarget(step.activateMarker)) ||
+        document.querySelector<HTMLElement>(markerTarget(step.route, step.activateMarker))
       if (tab && tab.getAttribute("data-state") !== "active") {
         tab.click()
         return false
@@ -1141,12 +1152,14 @@ function prepareInteractiveStep(step: FlowStep) {
 
     if (!step.openViaMarker) return true
 
-    const opener = document.querySelector<HTMLElement>(
-      markerTarget(step.route, step.openViaMarker)
-    )
+    if (document.querySelector(portalTarget(step.closeDialogMarker || step.marker!))) return true
+
+    const opener =
+      document.querySelector<HTMLElement>(markerTarget(step.route, step.openViaMarker)) ||
+      document.querySelector<HTMLElement>(portalTarget(step.openViaMarker))
     if (!opener) return false
     opener.click()
-    return true
+    return false
   }
 
   if (attempt()) return
@@ -1162,14 +1175,25 @@ function prepareInteractiveStep(step: FlowStep) {
 }
 
 function closeTourDialog(marker: string) {
-  const cancel = document.querySelector<HTMLElement>(
-    `${portalTarget(marker)} [data-tour="${marker}-cancel"]`
-  )
-  cancel?.click()
+  const container = document.querySelector<HTMLElement>(portalTarget(marker))
+  if (container) {
+    const cancel =
+      container.querySelector<HTMLElement>(`[data-tour="${marker}-cancel"]`) ||
+      container.querySelector<HTMLElement>('[data-tour$="-cancel"]') ||
+      container.querySelector<HTMLElement>('[data-slot="dialog-close"]')
+    if (cancel) {
+      cancel.click()
+      return
+    }
+  }
+  const cancelAny =
+    document.querySelector<HTMLElement>(`[data-tour="${marker}-cancel"]`) ||
+    document.querySelector<HTMLElement>('[data-tour$="-cancel"]') ||
+    document.querySelector<HTMLElement>('[data-slot="dialog-close"]')
+  cancelAny?.click()
 }
 
 function TourLifecycle({
-  storageKey,
   enabled,
 }: {
   storageKey?: string
@@ -1179,21 +1203,13 @@ function TourLifecycle({
   const startTour = React.useEffectEvent(() => start(0))
 
   React.useEffect(() => {
-    if (!enabled || !storageKey) return
+    if (!enabled) return
     const onStart = () => startTour()
     window.addEventListener(START_ADMIN_TOUR_EVENT, onStart)
-    const timer = window.setTimeout(() => {
-      try {
-        if (!window.localStorage.getItem(storageKey)) startTour()
-      } catch {
-        startTour()
-      }
-    }, 700)
     return () => {
-      window.clearTimeout(timer)
       window.removeEventListener(START_ADMIN_TOUR_EVENT, onStart)
     }
-  }, [enabled, storageKey])
+  }, [enabled])
 
   return null
 }
@@ -1261,27 +1277,46 @@ export function AdminTourProvider({ children }: { children: React.ReactNode }) {
       const navItem = NAV_ITEMS.find((item) => item.href === step.route)
       return canOpen(navItem, permissions) && canUseStep(step, permissions)
     }).map<TourStep>((step) => {
-      const target = step.marker
-        ? step.closeDialogMarker
-          ? portalTarget(step.marker)
-          : markerTarget(step.route, step.marker)
-        : routeTarget(step.route)
+      let target: string
+      if (step.marker) {
+        if (step.closeDialogMarker) {
+          // Bọc trọn vẹn toàn bộ khung form dialog thay vì chỉ bọc các ô input bên trong
+          target = portalTarget(step.closeDialogMarker)
+        } else if (step.marker.endsWith("-tabs")) {
+          target = `[data-tour="sidebar-parent-${step.route}"]`
+        } else if (step.marker.includes("-tab-")) {
+          const tabKey = step.marker.replace(/^.*-tab-/, "")
+          target = `[data-tour="sidebar-sub-${tabKey}"], [data-tour="page-content"]`
+        } else {
+          target = markerTarget(step.route, step.marker)
+        }
+      } else {
+        target = routeTarget(step.route)
+      }
       return {
         id: `flow:${step.id}`,
         target,
         title: step.title,
         content: step.content,
         route: step.route,
-        position: "bottom-start",
-        spotlightPadding: 10,
+        position: step.closeDialogMarker ? "bottom" : "bottom-start",
+        spotlightPadding: step.closeDialogMarker ? 6 : 10,
         delay: step.marker ? 160 : 220,
         disableInteraction: true,
         ...(step.activateMarker
           ? {
               onActive: () => {
-                const element = document.querySelector<HTMLElement>(
-                  markerTarget(step.route, step.activateMarker!)
-                )
+                const tabKey = step.activateMarker!.replace(/^.*-tab-/, "")
+                const element =
+                  document.querySelector<HTMLElement>(
+                    `[data-tour="sidebar-sub-${tabKey}"]`
+                  ) ||
+                  document.querySelector<HTMLElement>(
+                    markerTarget(step.route, step.activateMarker!)
+                  ) ||
+                  document.querySelector<HTMLElement>(
+                    portalTarget(step.activateMarker!)
+                  )
                 if (element?.getAttribute("data-state") !== "active")
                   element?.click()
               },
@@ -1328,7 +1363,7 @@ export function AdminTourProvider({ children }: { children: React.ReactNode }) {
       autoStart: false,
       animation: "smooth",
       keyboardNavigation: true,
-      closeOnEscape: true,
+      closeOnEscape: false,
       closeOnOverlayClick: false,
       showProgress: true,
       showNavigation: true,
@@ -1336,7 +1371,7 @@ export function AdminTourProvider({ children }: { children: React.ReactNode }) {
       spotlightPadding: 8,
       scrollBehavior: "smooth",
       scrollMargin: 80,
-      waitForTargetTimeout: 10_000,
+      waitForTargetTimeout: 60_000,
       stepDelay: 120,
       labels: {
         next: "Tiếp theo",

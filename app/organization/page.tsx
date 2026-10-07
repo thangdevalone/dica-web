@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { ActiveBadge } from "@/components/shared/status-badge";
 import { Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -17,6 +17,7 @@ import { FacilitySelect, LocationSelect } from "@/components/shared/entity-selec
 import { useApiMutation, usePagedQuery } from "@/hooks/use-api";
 import { useFacilities } from "@/hooks/use-lookups";
 import { useDashboardSummary } from "@/hooks/use-system";
+import { useTabSync } from "@/hooks/use-tab-sync";
 import { api } from "@/lib/api/client";
 import type { Department, Facility, StockLocation } from "@/lib/api/types";
 import { useFacilityFilter } from "@/stores/use-app-store";
@@ -537,7 +538,9 @@ export default function OrganizationPage() {
   const canLocation = useCan("stock_location.read");
   const canDepartment = useCan("department.read");
   const { data: summary } = useDashboardSummary();
+  const validTabs = ["facilities", "locations", "departments"] as const;
   const defaultTab = canFacility ? "facilities" : canLocation ? "locations" : "departments";
+  const [tab, setTab] = useTabSync(defaultTab, validTabs);
 
   return (
     <AdminLayout permission={["facility.read", "stock_location.read", "department.read"]}>
@@ -546,25 +549,7 @@ export default function OrganizationPage() {
           title="Cơ Cấu Tổ Chức & Chi Nhánh"
           description="Thiết lập mạng lưới kho tổng, bếp trung tâm, chi nhánh, điểm lưu kho và bộ phận vận hành."
         />
-        <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList data-tour="organization-tabs" className="bg-muted/70 p-1">
-            {canFacility && (
-              <TabsTrigger data-tour="organization-tab-facilities" value="facilities" className="gap-2 text-xs">
-                <Building2 className="size-4" /> Cơ sở{summary?.counts.facilities != null && ` (${summary.counts.facilities})`}
-              </TabsTrigger>
-            )}
-            {canLocation && (
-              <TabsTrigger data-tour="organization-tab-locations" value="locations" className="gap-2 text-xs">
-                <Warehouse className="size-4" /> Điểm lưu kho
-                {summary?.counts.stock_locations != null && ` (${summary.counts.stock_locations})`}
-              </TabsTrigger>
-            )}
-            {canDepartment && (
-              <TabsTrigger data-tour="organization-tab-departments" value="departments" className="gap-2 text-xs">
-                <Flame className="size-4" /> Bộ phận{summary?.counts.departments != null && ` (${summary.counts.departments})`}
-              </TabsTrigger>
-            )}
-          </TabsList>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof validTabs)[number])} className="space-y-6">
           {canFacility && (
             <TabsContent value="facilities">
               <FacilitiesTab />

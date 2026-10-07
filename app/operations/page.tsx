@@ -25,7 +25,7 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -34,6 +34,7 @@ import { FacilitySelect, IngredientSelect, StockLocationSelect } from "@/compone
 import { DetailSheet, InfoGrid, MiniTable, Section } from "@/components/shared/detail-sheet";
 import { useAllQuery, useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
+import { useTabSync } from "@/hooks/use-tab-sync";
 import { api } from "@/lib/api/client";
 import type {
   AlertRule,
@@ -306,9 +307,9 @@ function RecalculateVarianceDialog({ open, onOpenChange, onDone }: { open: boole
 
 export default function OperationsPage() {
   const globalFacility = useFacilityFilter();
-  const [activeTab, setActiveTab] = React.useState<
-    "mappings" | "recipes" | "sales" | "variance" | "alerts"
-  >("mappings");
+
+
+
 
   const canManageMapping = useCan("ipos_mapping.manage");
   const canManageRecipe = useCan("recipe.manage");
@@ -320,6 +321,17 @@ export default function OperationsPage() {
   const canReadSales = useCan("sales_import.read");
   const canReadVariance = useCan("variance.read");
   const canRecalculateVariance = useCan("variance.recalculate");
+  const validTabs = ["mappings", "recipes", "sales", "variance", "alerts"] as const;
+  const defaultTab = canReadMappings
+    ? "mappings"
+    : canReadRecipes
+      ? "recipes"
+      : canReadSales
+        ? "sales"
+        : canReadVariance
+          ? "variance"
+          : "alerts";
+  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs);
 
   // State dialogs
   const [openMappingDialog, setOpenMappingDialog] = React.useState(false);
@@ -748,28 +760,6 @@ export default function OperationsPage() {
           }
           className="space-y-4"
         >
-          <TabsList data-tour="operations-tabs" className="bg-muted/70 p-1">
-            {canReadMappings && <TabsTrigger data-tour="operations-tab-mappings" value="mappings" className="text-xs">
-              <LinkIcon className="h-3.5 w-3.5" />
-              Món ăn iPOS
-            </TabsTrigger>}
-            {canReadRecipes && <TabsTrigger data-tour="operations-tab-recipes" value="recipes" className="text-xs">
-              <ChefHat className="h-3.5 w-3.5" />
-              Công thức (BOM)
-            </TabsTrigger>}
-            {canReadSales && <TabsTrigger data-tour="operations-tab-sales" value="sales" className="text-xs">
-              <UploadCloud className="h-3.5 w-3.5" />
-              Đợt nhập bán hàng
-            </TabsTrigger>}
-            {canReadVariance && <TabsTrigger data-tour="operations-tab-variance" value="variance" className="text-xs">
-              <TrendingDown className="h-3.5 w-3.5 text-amber-500" />
-              Đối soát hao hụt
-            </TabsTrigger>}
-            {canManageAlerts && <TabsTrigger data-tour="operations-tab-alerts" value="alerts" className="text-xs">
-              <BellRing className="h-3.5 w-3.5 text-blue-500" />
-              Quy tắc cảnh báo
-            </TabsTrigger>}
-          </TabsList>
 
           {/* Mappings Tab */}
           <TabsContent value="mappings" className="space-y-4">

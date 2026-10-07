@@ -16,7 +16,7 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -24,6 +24,7 @@ import { ConfirmDialog, Field, FormDialog, OptionSelect, SearchInput } from "@/c
 import { DetailSheet, InfoGrid, MiniTable, Section } from "@/components/shared/detail-sheet";
 import { useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
+import { useTabSync } from "@/hooks/use-tab-sync";
 import { api } from "@/lib/api/client";
 import type {
   Dispatch,
@@ -399,7 +400,7 @@ function CreateReceiptDialog({
 // ---------------------------------------------------------------------------
 
 export default function DeliveryPage() {
-  const [activeTab, setActiveTab] = React.useState<"dispatches" | "receipts" | "discrepancies">("dispatches");
+
 
   const canCreateDispatch = useCan("dispatch.create");
   const canPostDispatch = useCan("dispatch.post");
@@ -409,6 +410,9 @@ export default function DeliveryPage() {
   const canReadDispatch = useCan("dispatch.read");
   const canReadReceipt = useCan("receipt.read");
   const canReadDiscrepancy = useCan("discrepancy.read");
+  const validTabs = ["dispatches", "receipts", "discrepancies"] as const;
+  const defaultTab = canReadDispatch ? "dispatches" : canReadReceipt ? "receipts" : "discrepancies";
+  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs);
 
   React.useEffect(() => {
     const permissions = { dispatches: canReadDispatch, receipts: canReadReceipt, discrepancies: canReadDiscrepancy };
@@ -730,17 +734,6 @@ export default function DeliveryPage() {
           }
           className="space-y-4"
         >
-          <TabsList data-tour="delivery-tabs" className="bg-muted/70 p-1">
-            {canReadDispatch && <TabsTrigger data-tour="delivery-tab-dispatches" value="dispatches" className="text-xs">
-              <Truck className="size-3.5" /> Phiếu xuất kho
-            </TabsTrigger>}
-            {canReadReceipt && <TabsTrigger data-tour="delivery-tab-receipts" value="receipts" className="text-xs">
-              <PackageCheck className="size-3.5" /> Phiếu nhập nhận hàng
-            </TabsTrigger>}
-            {canReadDiscrepancy && <TabsTrigger data-tour="delivery-tab-discrepancies" value="discrepancies" className="text-xs">
-              <AlertTriangle className="size-3.5 text-amber-500" /> Sai lệch giao nhận
-            </TabsTrigger>}
-          </TabsList>
 
           <TabsContent value="dispatches" className="space-y-4">
             <DataTable

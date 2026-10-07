@@ -6,7 +6,7 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { PageHeader } from "@/components/shared/page-header";
 import { ActiveBadge } from "@/components/shared/status-badge";
@@ -16,6 +16,7 @@ import { IngredientSelect, SupplierSelect, UnitSelect } from "@/components/share
 import { useApiMutation, usePagedQuery } from "@/hooks/use-api";
 import { useIngredientGroups } from "@/hooks/use-lookups";
 import { useUrlParam } from "@/hooks/use-system";
+import { useTabSync } from "@/hooks/use-tab-sync";
 import { api } from "@/lib/api/client";
 import type {
   Ingredient,
@@ -681,7 +682,9 @@ export default function CatalogPage() {
   const canConversion = useCan("conversion.read");
   const canSupplier = useCan("supplier.read");
   const canLinks = useCan("supplier_ingredient.read");
-  const [tab, setTab] = React.useState("ingredients");
+  const validTabs = ["ingredients", "groups", "units", "conversions", "suppliers", "links"] as const;
+  const defaultTab = canIngredient ? "ingredients" : canUnit ? "units" : canSupplier ? "suppliers" : "conversions";
+  const [tab, setTab] = useTabSync(defaultTab, validTabs);
   React.useEffect(() => {
     if (!canIngredient) setTab(canUnit ? "units" : canSupplier ? "suppliers" : "conversions");
   }, [canIngredient, canUnit, canSupplier]);
@@ -696,39 +699,7 @@ export default function CatalogPage() {
           title="Danh Mục Nguyên Liệu & Nhà Cung Cấp"
           description="Quản lý nguyên liệu, nhóm, đơn vị tính, quy đổi đơn vị, nhà cung cấp và giá tham chiếu."
         />
-        <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-          <TabsList data-tour="catalog-tabs" className="h-auto flex-wrap bg-muted/70 p-1">
-            {canIngredient && (
-              <TabsTrigger data-tour="catalog-tab-ingredients" value="ingredients" className="gap-2 text-xs">
-                <Boxes className="size-4" /> Nguyên liệu
-              </TabsTrigger>
-            )}
-            {canIngredient && (
-              <TabsTrigger data-tour="catalog-tab-groups" value="groups" className="gap-2 text-xs">
-                <Tags className="size-4" /> Nhóm
-              </TabsTrigger>
-            )}
-            {canUnit && (
-              <TabsTrigger data-tour="catalog-tab-units" value="units" className="gap-2 text-xs">
-                <Ruler className="size-4" /> Đơn vị tính
-              </TabsTrigger>
-            )}
-            {canConversion && (
-              <TabsTrigger data-tour="catalog-tab-conversions" value="conversions" className="gap-2 text-xs">
-                <Repeat className="size-4" /> Quy đổi
-              </TabsTrigger>
-            )}
-            {canSupplier && (
-              <TabsTrigger data-tour="catalog-tab-suppliers" value="suppliers" className="gap-2 text-xs">
-                <Truck className="size-4" /> Nhà cung cấp
-              </TabsTrigger>
-            )}
-            {canLinks && (
-              <TabsTrigger data-tour="catalog-tab-links" value="links" className="gap-2 text-xs">
-                <Link2 className="size-4" /> Giá & SKU NCC
-              </TabsTrigger>
-            )}
-          </TabsList>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof validTabs)[number])} className="space-y-4">
           {canIngredient && (
             <TabsContent value="ingredients">
               <IngredientsTab autoCreate={action === "create-ingredient"} />

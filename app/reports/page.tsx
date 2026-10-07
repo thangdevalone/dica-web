@@ -16,13 +16,14 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
 import { FacilitySelect } from "@/components/shared/entity-select";
 import { usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
+import { useTabSync } from "@/hooks/use-tab-sync";
 import type {
   DamageReport,
   FulfillmentOrder,
@@ -37,15 +38,18 @@ import { formatMoney, formatQty } from "@/lib/num";
 
 export default function ReportsPage() {
   const globalFacility = useFacilityFilter();
-  const [activeTab, setActiveTab] = React.useState<
-    "stock" | "fulfillment" | "damage" | "variance" | "payment"
-  >("stock");
+
+
+
 
   const canStock = useCan("report.stock");
   const canFulfillment = useCan("report.fulfillment");
   const canDamage = useCan("report.damage");
   const canVariance = useCan("report.variance");
   const canPayment = useCan("report.payment");
+  const validTabs = ["stock", "fulfillment", "damage", "variance", "payment"] as const;
+  const defaultTab = canStock ? "stock" : canFulfillment ? "fulfillment" : canDamage ? "damage" : canVariance ? "variance" : "payment";
+  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs);
 
   React.useEffect(() => {
     const permissions = {
@@ -270,28 +274,7 @@ export default function ReportsPage() {
           }
           className="space-y-4"
         >
-          <TabsList data-tour="reports-tabs" className="w-full bg-muted/70 p-1 sm:w-fit">
-            {canStock && <TabsTrigger data-tour="reports-tab-stock" value="stock" className="text-xs">
-              <Boxes className="h-3.5 w-3.5" />
-              Báo cáo tồn kho
-            </TabsTrigger>}
-            {canFulfillment && <TabsTrigger data-tour="reports-tab-fulfillment" value="fulfillment" className="text-xs">
-              <ShoppingCart className="h-3.5 w-3.5" />
-              Tỷ lệ hoàn tất đơn
-            </TabsTrigger>}
-            {canDamage && <TabsTrigger data-tour="reports-tab-damage" value="damage" className="text-xs">
-              <Flame className="h-3.5 w-3.5 text-destructive" />
-              Tổng hợp hao hụt
-            </TabsTrigger>}
-            {canVariance && <TabsTrigger data-tour="reports-tab-variance" value="variance" className="text-xs">
-              <TrendingDown className="h-3.5 w-3.5 text-amber-500" />
-              Đối soát iPOS
-            </TabsTrigger>}
-            {canPayment && <TabsTrigger data-tour="reports-tab-payment" value="payment" className="text-xs">
-              <CreditCard className="h-3.5 w-3.5 text-emerald-500" />
-              Đối soát thanh toán
-            </TabsTrigger>}
-          </TabsList>
+
 
           <TabsContent value="stock" className="space-y-4">
             <DataTable

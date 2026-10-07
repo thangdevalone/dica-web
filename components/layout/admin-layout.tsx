@@ -22,7 +22,9 @@ import {
   Loader2,
   ShieldX,
   BellRing,
+  BookOpenCheck,
 } from "lucide-react";
+import { START_ADMIN_TOUR_EVENT } from "@/components/shared/admin-guided-tour";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -52,7 +54,9 @@ import { toast } from "sonner";
 import { useAppStore } from "@/stores/use-app-store";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { cn } from "@/lib/utils";
-import { NAV_SECTIONS, type NavCountKey, type NavItem } from "@/constants";
+import { NAV_SECTIONS, type NavCountKey, type NavItem, type NavChildItem } from "@/constants";
+import { useCurrentTab, TAB_CHANGE_EVENT, type TabChangeEventDetail } from "@/hooks/use-tab-sync";
+import { ChevronDown } from "lucide-react";
 import { API_BASE_URL, api, errorMessage } from "@/lib/api/client";
 import { loadProfile, logout } from "@/lib/api/auth";
 import type { DashboardSummary, Notification } from "@/lib/api/types";
@@ -62,10 +66,21 @@ import { useDashboardSummary, useHealth } from "@/hooks/use-system";
 import { formatDateTime } from "@/lib/formatters";
 import { BrandLogo } from "@/components/shared/brand-logo";
 
-function canSee(item: NavItem, permissions: string[]) {
-  if (!item.permission) return true;
-  const required = Array.isArray(item.permission) ? item.permission : [item.permission];
+function canSeeChild(child: NavChildItem, permissions: string[]) {
+  if (!child.permission) return true;
+  const required = Array.isArray(child.permission) ? child.permission : [child.permission];
   return required.some((code) => permissions.includes(code));
+}
+
+function canSee(item: NavItem, permissions: string[]) {
+  if (item.permission) {
+    const required = Array.isArray(item.permission) ? item.permission : [item.permission];
+    if (required.some((code) => permissions.includes(code))) return true;
+  }
+  if (item.children && item.children.length > 0) {
+    return item.children.some((child) => canSeeChild(child, permissions));
+  }
+  return !item.permission;
 }
 
 function navCounts(summary: DashboardSummary | undefined): Partial<Record<NavCountKey, number>> {
@@ -85,9 +100,77 @@ interface NavigationListProps {
 }
 
 function NavigationList({ pathname, onNavigate }: NavigationListProps) {
+  const router = useRouter();
   const permissions = useAuthStore((state) => state.permissions);
   const { data: summary } = useDashboardSummary();
   const counts = navCounts(summary);
+  const currentTab = useCurrentTab();
+
+  // Manage expanded state for items with children
+  const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    for (const section of NAV_SECTIONS) {
+      for (const item of section.items) {
+        if (item.children && item.children.length > 0) {
+          if (pathname === item.href || pathname.startsWith(item.href + "/")) {
+            initial[item.href] = true;
+          }
+        }
+      }
+    }
+    return initial;
+  });
+
+  // Automatically expand active item when pathname changes
+  React.useEffect(() => {
+    for (const section of NAV_SECTIONS) {
+      for (const item of section.items) {
+        if (item.children && item.children.length > 0) {
+          if (pathname === item.href || pathname.startsWith(item.href + "/")) {
+            setExpandedItems((prev) => (prev[item.href] ? prev : { ...prev, [item.href]: true }));
+          }
+        }
+      }
+    }
+  }, [pathname]);
+
+  React.useEffect(() => {
+    const handleExpand = (e: Event) => {
+      const detail = (e as CustomEvent<{ route: string }>).detail;
+      if (detail && detail.route) {
+        setExpandedItems((prev) => ({ ...prev, [detail.route]: true }));
+      }
+    };
+    window.addEventListener("dica:expand-sidebar", handleExpand);
+    return () => window.removeEventListener("dica:expand-sidebar", handleExpand);
+  }, []);
+
+  const toggleExpand = (href: string, e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setExpandedItems((prev) => ({
+      ...prev,
+      [href]: !prev[href],
+    }));
+  };
+
+  const handleChildClick = (itemHref: string, child: NavChildItem, e: React.MouseEvent) => {
+    if (pathname === itemHref) {
+      e.preventDefault();
+      // On same page: update URL search param directly and notify tab sync listeners
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", child.tabKey);
+      window.history.replaceState(null, "", url.pathname + url.search);
+      window.dispatchEvent(
+        new CustomEvent<TabChangeEventDetail>(TAB_CHANGE_EVENT, {
+          detail: { pathname: url.pathname, tab: child.tabKey },
+        })
+      );
+      onNavigate?.();
+    } else {
+      onNavigate?.();
+    }
+  };
 
   return (
     <nav className="space-y-6" data-tour="navigation">
@@ -99,59 +182,174 @@ function NavigationList({ pathname, onNavigate }: NavigationListProps) {
             <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
               {section.title}
             </p>
-            <div className="space-y-0.5 pt-1">
+            <div className="space-y-1 pt-1">
               {items.map((item) => {
-                const isActive = pathname === item.href;
                 const Icon = item.icon;
-                const count = item.countKey ? counts[item.countKey] : undefined;
+                const visibleChildren = item.children?.filter((child) => canSeeChild(child, permissions)) ?? [];
+                const hasChildren = visibleChildren.length > 0;
+                const isCurrentRoute = pathname === item.href;
+                const isExpanded = expandedItems[item.href] ?? isCurrentRoute;
+                const parentCount = item.countKey ? counts[item.countKey] : undefined;
+
+                if (!hasChildren) {
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        "group relative flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150",
+                        isCurrentRoute
+                          ? "bg-foreground text-background font-semibold shadow-xs"
+                          : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Icon
+                          className={cn(
+                            "size-4 shrink-0 transition-colors",
+                            isCurrentRoute ? "text-background" : "text-muted-foreground group-hover:text-foreground"
+                          )}
+                        />
+                        <span className="truncate">{item.label}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        {item.badge && (
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                              isCurrentRoute
+                                ? "bg-background/20 text-background"
+                                : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                        {parentCount !== undefined && parentCount > 0 && (
+                          <span
+                            className={cn(
+                              "flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold",
+                              isCurrentRoute
+                                ? "bg-background/20 text-background"
+                                : "bg-muted text-muted-foreground border border-border"
+                            )}
+                          >
+                            {parentCount > 99 ? "99+" : parentCount}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                }
+
+                // Item has children (sidebar con)
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onNavigate}
-                    className={cn(
-                      "group relative flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150",
-                      isActive
-                        ? "bg-foreground text-background font-semibold shadow-xs"
-                        : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className={cn(
-                          "size-4 shrink-0 transition-colors",
-                          isActive
-                            ? "text-background"
-                            : "text-muted-foreground group-hover:text-foreground"
+                  <div key={item.href} className="space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => toggleExpand(item.href, e)}
+                      data-tour={`sidebar-parent-${item.href}`}
+                      className={cn(
+                        "group relative flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 select-none text-left",
+                        isCurrentRoute
+                          ? "bg-muted/80 text-foreground font-semibold"
+                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Icon
+                          className={cn(
+                            "size-4 shrink-0 transition-colors",
+                            isCurrentRoute ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                          )}
+                        />
+                        <span className="truncate">{item.label}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
+                        {parentCount !== undefined && parentCount > 0 && (
+                          <span
+                            className={cn(
+                              "flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold",
+                              isCurrentRoute
+                                ? "bg-background text-foreground border border-border/80"
+                                : "bg-muted text-muted-foreground border border-border"
+                            )}
+                          >
+                            {parentCount > 99 ? "99+" : parentCount}
+                          </span>
                         )}
-                      />
-                      <span>{item.label}</span>
+                        <ChevronDown
+                          className={cn(
+                            "size-3.5 transition-transform duration-200 text-muted-foreground group-hover:text-foreground",
+                            isExpanded ? "rotate-0" : "-rotate-90"
+                          )}
+                        />
+                      </div>
+                    </button>
+
+                    {/* Children: sidebar con */}
+                    <div
+                      className={cn(
+                        "grid transition-all duration-200 ease-in-out",
+                        isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 pointer-events-none"
+                      )}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="ml-4 pl-3 border-l border-border/70 my-1 space-y-0.5">
+                          {visibleChildren.map((child, childIdx) => {
+                            const ChildIcon = child.icon;
+                            const isActiveChild =
+                              isCurrentRoute &&
+                              (currentTab === child.tabKey || (!currentTab && childIdx === 0));
+                            const childCount = child.countKey ? counts[child.countKey] : undefined;
+
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={(e) => handleChildClick(item.href, child, e)}
+                                data-tour={`sidebar-sub-${child.tabKey}`}
+                                data-tour-tab={child.tabKey}
+                                data-state={isActiveChild ? "active" : "inactive"}
+                                className={cn(
+                                  "group relative flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-150",
+                                  isActiveChild
+                                    ? "bg-foreground text-background font-semibold shadow-xs"
+                                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <ChildIcon
+                                    className={cn(
+                                      "size-3.5 shrink-0 transition-colors",
+                                      isActiveChild
+                                        ? "text-background"
+                                        : "text-muted-foreground/80 group-hover:text-foreground"
+                                    )}
+                                  />
+                                  <span className="truncate">{child.label}</span>
+                                </div>
+                                {childCount !== undefined && childCount > 0 && (
+                                  <span
+                                    className={cn(
+                                      "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold",
+                                      isActiveChild
+                                        ? "bg-background/25 text-background"
+                                        : "bg-muted text-muted-foreground border border-border"
+                                    )}
+                                  >
+                                    {childCount > 99 ? "99+" : childCount}
+                                  </span>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                    {item.badge && (
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                          isActive
-                            ? "bg-background/20 text-background"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                    {count !== undefined && count > 0 && (
-                      <span
-                        className={cn(
-                          "flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold",
-                          isActive
-                            ? "bg-background/20 text-background"
-                            : "bg-muted text-muted-foreground border border-border"
-                        )}
-                      >
-                        {count > 99 ? "99+" : count}
-                      </span>
-                    )}
-                  </Link>
+                  </div>
                 );
               })}
             </div>
@@ -666,6 +864,17 @@ export function AdminLayout({
             {permissions.includes("facility.read") && <FacilityScopeMenu />}
             <HealthPopover />
 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.dispatchEvent(new Event(START_ADMIN_TOUR_EVENT))}
+              className="h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium rounded-xl border-border bg-card/90 text-foreground hover:bg-accent transition-colors shrink-0"
+              title="Bắt đầu hướng dẫn sử dụng hệ thống"
+            >
+              <BookOpenCheck className="size-3.5 text-primary" />
+              <span className="hidden lg:inline">Bắt đầu hướng dẫn</span>
+            </Button>
+
             <div className="shrink-0" data-tour="quick-search">
               <Button
                 variant="outline"
@@ -763,17 +972,36 @@ export function AdminLayout({
           <CommandGroup heading="Điều hướng nhanh">
             {visibleItems.map((item) => {
               const Icon = item.icon;
+              const visibleChildren = item.children?.filter((child) => canSeeChild(child, permissions)) ?? [];
               return (
-                <CommandItem
-                  key={item.href}
-                  onSelect={() => {
-                    setOpenCommand(false);
-                    router.push(item.href);
-                  }}
-                >
-                  <Icon className="mr-2 size-4 text-foreground" />
-                  <span>{item.label}</span>
-                </CommandItem>
+                <React.Fragment key={item.href}>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpenCommand(false);
+                      router.push(item.href);
+                    }}
+                  >
+                    <Icon className="mr-2 size-4 text-foreground" />
+                    <span className="font-medium">{item.label}</span>
+                  </CommandItem>
+                  {visibleChildren.map((child) => {
+                    const ChildIcon = child.icon;
+                    return (
+                      <CommandItem
+                        key={child.href}
+                        onSelect={() => {
+                          setOpenCommand(false);
+                          router.push(child.href);
+                        }}
+                        className="pl-6"
+                      >
+                        <ChildIcon className="mr-2 size-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">{item.label} &rarr;</span>
+                        <span className="font-medium text-foreground ml-1">{child.label}</span>
+                      </CommandItem>
+                    );
+                  })}
+                </React.Fragment>
               );
             })}
           </CommandGroup>

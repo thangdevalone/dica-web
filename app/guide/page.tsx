@@ -105,7 +105,7 @@ export default function AdminGuidePage() {
               onClick={() => window.dispatchEvent(new Event(START_ADMIN_TOUR_EVENT))}
             >
               <PlayCircle className="size-4" />
-              Bắt đầu tour đầy đủ
+              Bắt đầu hướng dẫn
             </Button>
           }
         />

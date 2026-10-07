@@ -17,7 +17,7 @@ import { AdminLayout } from "@/components/layout/admin-layout"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/shared/page-header"
 import { StatusBadge } from "@/components/shared/status-badge"
 import {
@@ -41,6 +41,7 @@ import {
 } from "@/components/shared/entity-select"
 import { useApiMutation, usePagedQuery } from "@/hooks/use-api"
 import { useListState } from "@/hooks/use-list-state"
+import { useTabSync } from "@/hooks/use-tab-sync"
 import { api } from "@/lib/api/client"
 import type {
   Permission,
@@ -841,9 +842,9 @@ function AssignGrantDialog({
 // ---------------------------------------------------------------------------
 
 export default function UsersPage() {
-  const [activeTab, setActiveTab] = React.useState<
-    "users" | "roles" | "grants"
-  >("users")
+
+
+
 
   const canCreateUserAccount = useCan("user.create")
   const canAssignNewUser = useCan("grant.assign")
@@ -853,6 +854,9 @@ export default function UsersPage() {
   const canReadRoles = useCan("role.read")
   const canManageRoles = useCan("role.manage")
   const canReadGrants = useCan("grant.read")
+  const validTabs = ["users", "roles", "grants"] as const
+  const defaultTab = canReadUsers ? "users" : canReadRoles ? "roles" : "grants"
+  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs)
   const canResetPassword = useCan("user.reset_password")
   const canDeactivateUser = useCan("user.deactivate")
   const canAssignGrant = useCan("grant.assign")
@@ -1311,26 +1315,6 @@ export default function UsersPage() {
           onValueChange={(v) => setActiveTab(v as "users" | "roles" | "grants")}
           className="space-y-4"
         >
-          <TabsList data-tour="users-tabs" className="bg-muted/70 p-1">
-            {canReadUsers && (
-              <TabsTrigger data-tour="users-tab-users" value="users" className="text-xs">
-                <Users className="h-3.5 w-3.5" />
-                Người dùng & Tài khoản
-              </TabsTrigger>
-            )}
-            {canReadRoles && (
-              <TabsTrigger data-tour="users-tab-roles" value="roles" className="text-xs">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Vai trò & Quyền hạn
-              </TabsTrigger>
-            )}
-            {canReadGrants && (
-              <TabsTrigger data-tour="users-tab-grants" value="grants" className="text-xs">
-                <KeyRound className="h-3.5 w-3.5" />
-                Phân quyền theo phạm vi (Grants)
-              </TabsTrigger>
-            )}
-          </TabsList>
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
