@@ -88,6 +88,33 @@
     --sidebar-ring: oklch(0.55 0 0);
 }
 
+/* modern-tour: đồng bộ giao diện tour với theme DICA. */
+html:root {
+    --tour-bg: var(--popover);
+    --tour-text: var(--popover-foreground);
+    --tour-text-secondary: var(--muted-foreground);
+    --tour-text-muted: var(--muted-foreground);
+    --tour-primary: var(--primary);
+    --tour-primary-foreground: var(--primary-foreground);
+    --tour-secondary: var(--secondary);
+    --tour-secondary-foreground: var(--secondary-foreground);
+    --tour-secondary-hover: var(--accent);
+    --tour-border: var(--border);
+    --tour-radius: 1rem;
+    --tour-tooltip-width: 360px;
+    --tour-shadow: 0 24px 64px -20px rgb(0 0 0 / 0.35);
+    --tour-overlay: rgb(0 0 0 / 0.62);
+}
+
+html.dark:root {
+    --tour-bg: var(--popover);
+    --tour-text: var(--popover-foreground);
+    --tour-primary: var(--primary);
+    --tour-primary-foreground: var(--primary-foreground);
+    --tour-border: var(--border);
+    --tour-overlay: rgb(0 0 0 / 0.76);
+}
+
 @theme inline {
     --font-sans: var(--font-sans);
     --font-heading: var(--font-heading);

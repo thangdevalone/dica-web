@@ -90,7 +90,7 @@ function NavigationList({ pathname, onNavigate }: NavigationListProps) {
   const counts = navCounts(summary);
 
   return (
-    <nav className="space-y-6">
+    <nav className="space-y-6" data-tour="navigation">
       {NAV_SECTIONS.map((section) => {
         const items = section.items.filter((item) => canSee(item, permissions));
         if (items.length === 0) return null;
@@ -268,6 +268,7 @@ function NotificationsPopover() {
           size="icon"
           className="relative size-9 text-muted-foreground hover:text-foreground"
           aria-label="Thông báo"
+          data-tour="notifications"
         >
           <Bell className="size-4" />
           {unreadCount > 0 && (
@@ -346,6 +347,7 @@ function HealthPopover() {
           variant="outline"
           size="sm"
           className="h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium rounded-xl border-border bg-card/90 text-foreground hover:bg-accent transition-colors"
+          data-tour="health"
         >
           <span
             className={cn(
@@ -429,10 +431,13 @@ function FacilityScopeMenu() {
         <Button
           variant="outline"
           size="sm"
-          className="h-9 gap-2 px-2.5 sm:px-3 text-xs font-medium max-w-[130px] sm:max-w-[190px]"
+          className="size-9 gap-2 p-0 text-xs font-medium sm:h-9 sm:w-auto sm:max-w-[190px] sm:px-3"
+          aria-label={`Phạm vi cơ sở: ${current}`}
+          title={current}
+          data-tour="facility"
         >
           <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{current}</span>
+          <span className="hidden truncate sm:inline">{current}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60 text-xs">
@@ -638,7 +643,7 @@ export function AdminLayout({
       {/* 3. Main Column */}
       <div className="flex flex-1 flex-col h-full min-w-0 overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-2 sm:h-16 sm:px-4 lg:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3" data-tour="navigation-entry">
             <Button
               variant="ghost"
               size="icon"
@@ -661,29 +666,31 @@ export function AdminLayout({
             {permissions.includes("facility.read") && <FacilityScopeMenu />}
             <HealthPopover />
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setOpenCommand(true)}
-              className="hidden xl:flex h-9 w-44 justify-between bg-muted/30 px-3 text-xs text-muted-foreground hover:bg-muted/60"
-            >
-              <span className="flex items-center gap-1.5">
-                <Search className="size-3.5" />
-                <span>Tìm kiếm nhanh...</span>
-              </span>
-              <kbd className="pointer-events-none rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-                ⌘K
-              </kbd>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpenCommand(true)}
-              className="xl:hidden size-9 text-muted-foreground hover:text-foreground"
-              title="Tìm kiếm nhanh (⌘K)"
-            >
-              <Search className="size-4" />
-            </Button>
+            <div className="shrink-0" data-tour="quick-search">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpenCommand(true)}
+                className="hidden xl:flex h-9 w-44 justify-between bg-muted/30 px-3 text-xs text-muted-foreground hover:bg-muted/60"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Search className="size-3.5" />
+                  <span>Tìm kiếm nhanh...</span>
+                </span>
+                <kbd className="pointer-events-none rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpenCommand(true)}
+                className="size-9 text-muted-foreground hover:text-foreground xl:hidden"
+                title="Tìm kiếm nhanh (⌘K)"
+              >
+                <Search className="size-4" />
+              </Button>
+            </div>
 
             <NotificationsPopover />
 
@@ -728,7 +735,11 @@ export function AdminLayout({
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-4 lg:p-6">
-          <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
+          <div
+            className="mx-auto max-w-7xl space-y-4 sm:space-y-6"
+            data-tour="page-content"
+            data-tour-page={pathname}
+          >
             {allowed ? (
               children
             ) : (

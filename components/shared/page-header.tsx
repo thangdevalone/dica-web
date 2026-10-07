@@ -12,6 +12,7 @@ export interface PageHeaderProps {
 export function PageHeader({ title, description, actions, className, icon: Icon }: PageHeaderProps) {
   return (
     <div
+      data-tour="page-heading"
       className={cn(
         "flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
         className

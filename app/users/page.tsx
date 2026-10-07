@@ -1274,13 +1274,14 @@ export default function UsersPage() {
               Làm mới
             </Button>
             {activeTab === "users" && canCreateUser && (
-              <Button size="sm" onClick={() => setOpenCreateUser(true)}>
+              <Button data-tour="users-create-user" size="sm" onClick={() => setOpenCreateUser(true)}>
                 <UserPlus className="h-4 w-4" />
                 Tạo tài khoản
               </Button>
             )}
             {activeTab === "roles" && canManageRoles && (
               <Button
+                data-tour="users-create-role"
                 size="sm"
                 onClick={() => {
                   setRoleTarget(null)
@@ -1292,7 +1293,7 @@ export default function UsersPage() {
               </Button>
             )}
             {activeTab === "grants" && canAssignGrant && (
-              <Button size="sm" onClick={() => setOpenAssignGrant(true)}>
+              <Button data-tour="users-create-grant" size="sm" onClick={() => setOpenAssignGrant(true)}>
                 <Plus className="h-4 w-4" />
                 Gán quyền (Grant)
               </Button>
@@ -1301,27 +1302,27 @@ export default function UsersPage() {
         }
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-3 sm:space-y-4">
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "users" | "roles" | "grants")}
           className="space-y-4"
         >
-          <TabsList className="bg-muted/70 p-1">
+          <TabsList data-tour="users-tabs" className="bg-muted/70 p-1">
             {canReadUsers && (
-              <TabsTrigger value="users" className="text-xs">
+              <TabsTrigger data-tour="users-tab-users" value="users" className="text-xs">
                 <Users className="h-3.5 w-3.5" />
                 Người dùng & Tài khoản
               </TabsTrigger>
             )}
             {canReadRoles && (
-              <TabsTrigger value="roles" className="text-xs">
+              <TabsTrigger data-tour="users-tab-roles" value="roles" className="text-xs">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Vai trò & Quyền hạn
               </TabsTrigger>
             )}
             {canReadGrants && (
-              <TabsTrigger value="grants" className="text-xs">
+              <TabsTrigger data-tour="users-tab-grants" value="grants" className="text-xs">
                 <KeyRound className="h-3.5 w-3.5" />
                 Phân quyền theo phạm vi (Grants)
               </TabsTrigger>

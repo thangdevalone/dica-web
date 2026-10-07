@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { AdminTourProvider } from "@/components/shared/admin-guided-tour";
 import { cn } from "@/lib/utils";
 
 const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" });
@@ -59,7 +60,7 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>
             <TooltipProvider delayDuration={150}>
-              {children}
+              <AdminTourProvider>{children}</AdminTourProvider>
               <Toaster richColors position="top-right" />
             </TooltipProvider>
           </ThemeProvider>

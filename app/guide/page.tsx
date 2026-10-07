@@ -10,6 +10,7 @@ import {
   ClipboardList,
   KeyRound,
   PackageCheck,
+  PlayCircle,
   ShieldCheck,
   Truck,
   Users,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { PageHeader } from "@/components/shared/page-header"
+import { START_ADMIN_TOUR_EVENT } from "@/components/shared/admin-guided-tour"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -94,6 +96,18 @@ export default function AdminGuidePage() {
           title="Hướng dẫn quản trị DICA"
           description="Thứ tự cấu hình ban đầu và quy trình vận hành hằng ngày dành cho quản trị viên."
           icon={BookOpenCheck}
+          actions={
+            <Button
+              data-tour="admin-tour-restart"
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.dispatchEvent(new Event(START_ADMIN_TOUR_EVENT))}
+            >
+              <PlayCircle className="size-4" />
+              Bắt đầu tour thao tác
+            </Button>
+          }
         />
 
         <Card className="border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/20">

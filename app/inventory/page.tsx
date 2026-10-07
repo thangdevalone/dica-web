@@ -761,13 +761,13 @@ export default function InventoryPage() {
               Làm mới
             </Button>
             {activeTab === "adjustments" && canAdjust && (
-              <Button size="sm" onClick={() => setOpenAdjustDialog(true)}>
+              <Button data-tour="inventory-create-adjustment" size="sm" onClick={() => setOpenAdjustDialog(true)}>
                 <Plus className="h-4 w-4" />
                 Lập phiếu điều chỉnh
               </Button>
             )}
             {activeTab === "damage" && canDamage && (
-              <Button size="sm" onClick={() => setOpenDamageDialog(true)}>
+              <Button data-tour="inventory-create-damage" size="sm" onClick={() => setOpenDamageDialog(true)}>
                 <Plus className="h-4 w-4" />
                 Lập biên bản báo hỏng
               </Button>
@@ -776,7 +776,7 @@ export default function InventoryPage() {
         }
       />
 
-      <div className="p-6 space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <Tabs
           value={activeTab}
           onValueChange={(v) =>
@@ -784,7 +784,7 @@ export default function InventoryPage() {
           }
           className="space-y-4"
         >
-          <TabsList className="bg-muted/70 p-1">
+          <TabsList data-tour="inventory-tabs" className="bg-muted/70 p-1">
             {canReadBalances && <TabsTrigger value="balances" className="text-xs">
               <Boxes className="h-3.5 w-3.5" />
               Tồn kho tức thời
@@ -793,7 +793,7 @@ export default function InventoryPage() {
               <BookOpen className="h-3.5 w-3.5" />
               Sổ cái kho (Ledger)
             </TabsTrigger>}
-            {canReadAdjustments && <TabsTrigger value="adjustments" className="text-xs">
+            {canReadAdjustments && <TabsTrigger data-tour="inventory-tab-adjustments" value="adjustments" className="text-xs">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Điều chỉnh tồn
             </TabsTrigger>}
@@ -801,7 +801,7 @@ export default function InventoryPage() {
               <ClipboardCheck className="h-3.5 w-3.5" />
               Kiểm kê định kỳ
             </TabsTrigger>}
-            {canReadDamage && <TabsTrigger value="damage" className="text-xs">
+            {canReadDamage && <TabsTrigger data-tour="inventory-tab-damage" value="damage" className="text-xs">
               <Flame className="h-3.5 w-3.5 text-destructive" />
               Hao hụt & Hủy hỏng
             </TabsTrigger>}

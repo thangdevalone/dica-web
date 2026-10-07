@@ -441,7 +441,7 @@ function RulesTab() {
                 </Button>
               )}
               {canManage && (
-                <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+                <Button data-tour="sourcing-create-rule" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
                   <Plus className="size-3.5" /> Thêm nguồn cấp
                 </Button>
               )}
@@ -471,7 +471,7 @@ export default function SourcingPage() {
           description="Định tuyến nguồn cấp cho từng cơ sở – nguyên liệu và cấu hình nguyên liệu mỗi bộ phận được phép xin."
         />
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-          <TabsList className="h-auto flex-wrap bg-muted/70 p-1">
+          <TabsList data-tour="sourcing-tabs" className="h-auto flex-wrap bg-muted/70 p-1">
             {canRules && (
               <TabsTrigger value="rules" className="gap-2 text-xs">
                 <GitBranch className="size-4" /> Nguồn cấp

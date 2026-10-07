@@ -193,7 +193,7 @@ function IngredientsTab({ autoCreate }: { autoCreate: boolean }) {
         <>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm nguyên liệu theo mã hoặc tên..." />
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+            <Button data-tour="catalog-create-ingredient" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-3.5" /> Thêm nguyên liệu
             </Button>
           )}
@@ -691,7 +691,7 @@ export default function CatalogPage() {
           description="Quản lý nguyên liệu, nhóm, đơn vị tính, quy đổi đơn vị, nhà cung cấp và giá tham chiếu."
         />
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-          <TabsList className="h-auto flex-wrap bg-muted/70 p-1">
+          <TabsList data-tour="catalog-tabs" className="h-auto flex-wrap bg-muted/70 p-1">
             {canIngredient && (
               <TabsTrigger value="ingredients" className="gap-2 text-xs">
                 <Boxes className="size-4" /> Nguyên liệu

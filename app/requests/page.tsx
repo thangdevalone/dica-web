@@ -438,7 +438,7 @@ export default function RequestsPage() {
           description="Bộ phận lập yêu cầu, gửi duyệt; khi duyệt hệ thống tự tạo đơn xuất kho hoặc đặt nhà cung cấp."
           actions={
             canCreate && (
-              <Button size="sm" className="gap-1.5 text-xs" onClick={() => setEditor({ kind: "create" })}>
+              <Button data-tour="requests-create" size="sm" className="gap-1.5 text-xs" onClick={() => setEditor({ kind: "create" })}>
                 <Plus className="size-3.5" /> Tạo yêu cầu
               </Button>
             )

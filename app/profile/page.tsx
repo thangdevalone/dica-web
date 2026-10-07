@@ -249,7 +249,7 @@ export default function ProfilePage() {
         description="Cập nhật thông tin cá nhân, tên đăng nhập và mật khẩu."
         icon={ShieldCheck}
       />
-      <div className="p-6">{user && <ProfileForms key={user.id} user={user} />}</div>
+      <div>{user && <ProfileForms key={user.id} user={user} />}</div>
     </AdminLayout>
   );
 }

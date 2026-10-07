@@ -232,7 +232,7 @@ export default function SystemPage() {
         }
       />
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Health status banner */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-5 rounded-2xl bg-card border border-border/70 shadow-sm flex items-center gap-4">
@@ -302,7 +302,7 @@ export default function SystemPage() {
         </div>
 
         {/* Audit Log Section */}
-        <div className="bg-card rounded-2xl border border-border/70 shadow-sm overflow-hidden p-6 space-y-4">
+        <div className="space-y-4 overflow-hidden rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -322,7 +322,7 @@ export default function SystemPage() {
           </div>
 
           {canReadAudit && (
-            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div data-tour="audit-filters" className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 <Field label="Hành động">
                   <OptionSelect

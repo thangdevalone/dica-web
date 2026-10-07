@@ -122,6 +122,7 @@ function FacilitiesTab() {
           </Button>
           {canManage && (
             <Button
+              data-tour="organization-create-facility"
               size="sm"
               className="h-9 gap-1.5 text-xs"
               onClick={() => {
@@ -543,7 +544,7 @@ export default function OrganizationPage() {
           description="Thiết lập mạng lưới kho tổng, bếp trung tâm, chi nhánh, điểm lưu kho và bộ phận vận hành."
         />
         <Tabs defaultValue={defaultTab} className="space-y-6">
-          <TabsList className="bg-muted/70 p-1">
+          <TabsList data-tour="organization-tabs" className="bg-muted/70 p-1">
             {canFacility && (
               <TabsTrigger value="facilities" className="gap-2 text-xs">
                 <Building2 className="size-4" /> Cơ sở{summary?.counts.facilities != null && ` (${summary.counts.facilities})`}

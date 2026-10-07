@@ -708,12 +708,12 @@ export default function DeliveryPage() {
           actions={
             <div className="flex items-center gap-2">
               {activeTab === "dispatches" && canCreateDispatch && (
-                <Button size="sm" className="gap-1.5 text-xs" onClick={() => setOpenDispatchDialog(true)}>
+                <Button data-tour="delivery-create-dispatch" size="sm" className="gap-1.5 text-xs" onClick={() => setOpenDispatchDialog(true)}>
                   <Plus className="size-3.5" /> Lập phiếu xuất
                 </Button>
               )}
               {activeTab === "receipts" && canCreateReceipt && (
-                <Button size="sm" className="gap-1.5 text-xs" onClick={() => setOpenReceiptDialog(true)}>
+                <Button data-tour="delivery-create-receipt" size="sm" className="gap-1.5 text-xs" onClick={() => setOpenReceiptDialog(true)}>
                   <Plus className="size-3.5" /> Lập phiếu nhập
                 </Button>
               )}
@@ -728,14 +728,14 @@ export default function DeliveryPage() {
           }
           className="space-y-4"
         >
-          <TabsList className="bg-muted/70 p-1">
-            {canReadDispatch && <TabsTrigger value="dispatches" className="text-xs">
+          <TabsList data-tour="delivery-tabs" className="bg-muted/70 p-1">
+            {canReadDispatch && <TabsTrigger data-tour="delivery-tab-dispatches" value="dispatches" className="text-xs">
               <Truck className="size-3.5" /> Phiếu xuất kho
             </TabsTrigger>}
-            {canReadReceipt && <TabsTrigger value="receipts" className="text-xs">
+            {canReadReceipt && <TabsTrigger data-tour="delivery-tab-receipts" value="receipts" className="text-xs">
               <PackageCheck className="size-3.5" /> Phiếu nhập nhận hàng
             </TabsTrigger>}
-            {canReadDiscrepancy && <TabsTrigger value="discrepancies" className="text-xs">
+            {canReadDiscrepancy && <TabsTrigger data-tour="delivery-tab-discrepancies" value="discrepancies" className="text-xs">
               <AlertTriangle className="size-3.5 text-amber-500" /> Sai lệch giao nhận
             </TabsTrigger>}
           </TabsList>

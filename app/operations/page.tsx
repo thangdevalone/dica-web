@@ -714,22 +714,22 @@ export default function OperationsPage() {
               Làm mới
             </Button>
             {activeTab === "mappings" && canManageMapping && (
-              <Button size="sm" onClick={() => setOpenMappingDialog(true)}>
+              <Button data-tour="operations-create-mapping" size="sm" onClick={() => setOpenMappingDialog(true)}>
                 <Plus className="h-4 w-4" />
                 Thêm món iPOS
               </Button>
             )}
             {activeTab === "recipes" && canManageRecipe && (
-              <Button size="sm" onClick={() => setOpenRecipeDialog(true)}><Plus className="h-4 w-4" />Thêm định mức</Button>
+              <Button data-tour="operations-create-recipe" size="sm" onClick={() => setOpenRecipeDialog(true)}><Plus className="h-4 w-4" />Thêm định mức</Button>
             )}
             {activeTab === "sales" && canManageSales && (
-              <Button size="sm" onClick={() => setOpenSalesDialog(true)}><UploadCloud className="h-4 w-4" />Nhập dữ liệu bán</Button>
+              <Button data-tour="operations-create-sales-import" size="sm" onClick={() => setOpenSalesDialog(true)}><UploadCloud className="h-4 w-4" />Nhập dữ liệu bán</Button>
             )}
             {activeTab === "variance" && canRecalculateVariance && (
-              <Button size="sm" onClick={() => setOpenRecalculateDialog(true)}><RefreshCw className="h-4 w-4" />Tính lại</Button>
+              <Button data-tour="operations-recalculate" size="sm" onClick={() => setOpenRecalculateDialog(true)}><RefreshCw className="h-4 w-4" />Tính lại</Button>
             )}
             {activeTab === "alerts" && canManageAlerts && (
-              <Button size="sm" onClick={() => setOpenAlertDialog(true)}>
+              <Button data-tour="operations-create-alert" size="sm" onClick={() => setOpenAlertDialog(true)}>
                 <Plus className="h-4 w-4" />
                 Thêm ngưỡng cảnh báo
               </Button>
@@ -738,7 +738,7 @@ export default function OperationsPage() {
         }
       />
 
-      <div className="p-6 space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <Tabs
           value={activeTab}
           onValueChange={(v) =>
@@ -746,24 +746,24 @@ export default function OperationsPage() {
           }
           className="space-y-4"
         >
-          <TabsList className="bg-muted/70 p-1">
-            {canReadMappings && <TabsTrigger value="mappings" className="text-xs">
+          <TabsList data-tour="operations-tabs" className="bg-muted/70 p-1">
+            {canReadMappings && <TabsTrigger data-tour="operations-tab-mappings" value="mappings" className="text-xs">
               <LinkIcon className="h-3.5 w-3.5" />
               Món ăn iPOS
             </TabsTrigger>}
-            {canReadRecipes && <TabsTrigger value="recipes" className="text-xs">
+            {canReadRecipes && <TabsTrigger data-tour="operations-tab-recipes" value="recipes" className="text-xs">
               <ChefHat className="h-3.5 w-3.5" />
               Công thức (BOM)
             </TabsTrigger>}
-            {canReadSales && <TabsTrigger value="sales" className="text-xs">
+            {canReadSales && <TabsTrigger data-tour="operations-tab-sales" value="sales" className="text-xs">
               <UploadCloud className="h-3.5 w-3.5" />
               Đợt nhập bán hàng
             </TabsTrigger>}
-            {canReadVariance && <TabsTrigger value="variance" className="text-xs">
+            {canReadVariance && <TabsTrigger data-tour="operations-tab-variance" value="variance" className="text-xs">
               <TrendingDown className="h-3.5 w-3.5 text-amber-500" />
               Đối soát hao hụt
             </TabsTrigger>}
-            {canManageAlerts && <TabsTrigger value="alerts" className="text-xs">
+            {canManageAlerts && <TabsTrigger data-tour="operations-tab-alerts" value="alerts" className="text-xs">
               <BellRing className="h-3.5 w-3.5 text-blue-500" />
               Quy tắc cảnh báo
             </TabsTrigger>}

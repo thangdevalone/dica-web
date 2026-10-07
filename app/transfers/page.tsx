@@ -396,7 +396,7 @@ export default function TransfersPage() {
           description="Lập phiếu, phê duyệt và giám sát luồng điều chuyển nguyên vật liệu giữa các kho vật lý."
           actions={
             canCreate && (
-              <Button size="sm" className="gap-1.5 text-xs" onClick={() => setEditorMode({ kind: "create" })}>
+              <Button data-tour="transfers-create" size="sm" className="gap-1.5 text-xs" onClick={() => setEditorMode({ kind: "create" })}>
                 <Plus className="size-3.5" /> Lập phiếu điều chuyển
               </Button>
             )

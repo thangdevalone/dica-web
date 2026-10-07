@@ -248,13 +248,13 @@ export default function ReportsPage() {
         }
       />
 
-      <div className="p-6 space-y-4">
-        <div className="flex flex-wrap items-center gap-3 bg-card p-4 rounded-xl border border-border/60 shadow-sm">
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card p-3 shadow-sm sm:gap-3 sm:p-4">
           <FacilitySelect
             value={list.filters.facility_id}
             onChange={(v) => list.setFilter("facility_id", v)}
             allLabel="Tất cả cơ sở"
-            className="w-64"
+            className="w-full sm:w-64"
           />
           {list.hasActiveFilters && (
             <Button variant="ghost" size="sm" onClick={list.reset}>
@@ -270,7 +270,7 @@ export default function ReportsPage() {
           }
           className="space-y-4"
         >
-          <TabsList className="bg-muted/70 p-1">
+          <TabsList data-tour="reports-tabs" className="w-full bg-muted/70 p-1 sm:w-fit">
             {canStock && <TabsTrigger value="stock" className="text-xs">
               <Boxes className="h-3.5 w-3.5" />
               Báo cáo tồn kho
