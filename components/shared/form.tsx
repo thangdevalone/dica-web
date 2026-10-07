@@ -372,6 +372,7 @@ export function FormDialog({
   size = "md",
   submitDisabled,
   disabled,
+  tourId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -385,6 +386,8 @@ export function FormDialog({
   size?: "md" | "lg" | "xl"
   submitDisabled?: boolean
   disabled?: boolean
+  /** Định danh vùng form để tour có thể mở và giải thích mà không gửi dữ liệu. */
+  tourId?: string
 }) {
   const isSubmitting = submitting ?? loading ?? false
   const isDisabled = submitDisabled ?? disabled ?? isSubmitting
@@ -392,6 +395,7 @@ export function FormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        data-tour={tourId}
         className={cn(
           "flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0",
           size === "lg" && "sm:max-w-2xl",
@@ -415,11 +419,18 @@ export function FormDialog({
             if (!isSubmitting) onSubmit()
           }}
         >
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-1 pb-5">
+          <div
+            data-tour={tourId ? `${tourId}-fields` : undefined}
+            className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-1 pb-5"
+          >
             {children}
           </div>
-          <DialogFooter className="shrink-0 border-t border-border bg-popover px-6 py-4">
+          <DialogFooter
+            data-tour={tourId ? `${tourId}-actions` : undefined}
+            className="shrink-0 border-t border-border bg-popover px-6 py-4"
+          >
             <Button
+              data-tour={tourId ? `${tourId}-cancel` : undefined}
               type="button"
               variant="outline"
               size="sm"

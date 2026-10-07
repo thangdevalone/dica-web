@@ -120,6 +120,7 @@ function CreateDispatchDialog({
 
   return (
     <FormDialog
+      tourId="delivery-dispatch-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Lập phiếu xuất kho mới"
@@ -292,6 +293,7 @@ function CreateReceiptDialog({
 
   return (
     <FormDialog
+      tourId="delivery-receipt-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Lập phiếu nhập nhận hàng mới"

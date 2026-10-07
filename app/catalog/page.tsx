@@ -105,6 +105,7 @@ function IngredientDialog({
   });
   return (
     <FormDialog
+      tourId={ingredient ? undefined : "catalog-ingredient-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={ingredient ? `Sửa nguyên liệu ${ingredient.code}` : "Thêm nguyên liệu"}
@@ -256,11 +257,12 @@ function GroupsTab() {
         <>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm nhóm..." />
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+            <Button data-tour="catalog-create-group" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-3.5" /> Thêm nhóm
             </Button>
           )}
           <FormDialog
+            tourId={editing ? undefined : "catalog-group-form"}
             open={open}
             onOpenChange={setOpen}
             title={editing ? `Sửa nhóm ${editing.code}` : "Thêm nhóm nguyên liệu"}
@@ -331,11 +333,12 @@ function UnitsTab() {
         <>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm đơn vị..." />
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+            <Button data-tour="catalog-create-unit" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-3.5" /> Thêm đơn vị
             </Button>
           )}
           <FormDialog
+            tourId={editing ? undefined : "catalog-unit-form"}
             open={open}
             onOpenChange={setOpen}
             title={editing ? `Sửa đơn vị ${editing.code}` : "Thêm đơn vị tính"}
@@ -431,11 +434,12 @@ function ConversionsTab() {
         <>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo nguyên liệu / đơn vị..." />
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setOpen(true)}>
+            <Button data-tour="catalog-create-conversion" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setOpen(true)}>
               <Plus className="size-3.5" /> Thêm quy đổi
             </Button>
           )}
           <FormDialog
+            tourId="catalog-conversion-form"
             open={open}
             onOpenChange={setOpen}
             title="Thêm quy đổi đơn vị"
@@ -521,11 +525,12 @@ function SuppliersTab() {
         <>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm nhà cung cấp..." />
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+            <Button data-tour="catalog-create-supplier" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-3.5" /> Thêm nhà cung cấp
             </Button>
           )}
           <FormDialog
+            tourId={editing ? undefined : "catalog-supplier-form"}
             open={open}
             onOpenChange={setOpen}
             title={editing ? `Sửa nhà cung cấp ${editing.code}` : "Thêm nhà cung cấp"}
@@ -634,11 +639,12 @@ function SupplierLinksTab() {
             <SupplierSelect value={supplierId} onChange={setSupplierId} allLabel="Tất cả nhà cung cấp" className="sm:w-56" />
           </div>
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+            <Button data-tour="catalog-create-supplier-link" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-3.5" /> Liên kết mới
             </Button>
           )}
           <FormDialog
+            tourId={editing ? undefined : "catalog-supplier-link-form"}
             open={open}
             onOpenChange={setOpen}
             title={editing ? "Sửa liên kết nhà cung cấp" : "Liên kết nguyên liệu với nhà cung cấp"}
@@ -693,32 +699,32 @@ export default function CatalogPage() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
           <TabsList data-tour="catalog-tabs" className="h-auto flex-wrap bg-muted/70 p-1">
             {canIngredient && (
-              <TabsTrigger value="ingredients" className="gap-2 text-xs">
+              <TabsTrigger data-tour="catalog-tab-ingredients" value="ingredients" className="gap-2 text-xs">
                 <Boxes className="size-4" /> Nguyên liệu
               </TabsTrigger>
             )}
             {canIngredient && (
-              <TabsTrigger value="groups" className="gap-2 text-xs">
+              <TabsTrigger data-tour="catalog-tab-groups" value="groups" className="gap-2 text-xs">
                 <Tags className="size-4" /> Nhóm
               </TabsTrigger>
             )}
             {canUnit && (
-              <TabsTrigger value="units" className="gap-2 text-xs">
+              <TabsTrigger data-tour="catalog-tab-units" value="units" className="gap-2 text-xs">
                 <Ruler className="size-4" /> Đơn vị tính
               </TabsTrigger>
             )}
             {canConversion && (
-              <TabsTrigger value="conversions" className="gap-2 text-xs">
+              <TabsTrigger data-tour="catalog-tab-conversions" value="conversions" className="gap-2 text-xs">
                 <Repeat className="size-4" /> Quy đổi
               </TabsTrigger>
             )}
             {canSupplier && (
-              <TabsTrigger value="suppliers" className="gap-2 text-xs">
+              <TabsTrigger data-tour="catalog-tab-suppliers" value="suppliers" className="gap-2 text-xs">
                 <Truck className="size-4" /> Nhà cung cấp
               </TabsTrigger>
             )}
             {canLinks && (
-              <TabsTrigger value="links" className="gap-2 text-xs">
+              <TabsTrigger data-tour="catalog-tab-links" value="links" className="gap-2 text-xs">
                 <Link2 className="size-4" /> Giá & SKU NCC
               </TabsTrigger>
             )}

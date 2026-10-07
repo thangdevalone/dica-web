@@ -310,7 +310,7 @@ export default function OrdersPage() {
           onRowClick={(r) => setDetailId(r.id)}
           emptyText="Chưa có đơn thực hiện nào."
           toolbar={
-            <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+            <div data-tour="orders-list" className="flex flex-1 flex-col gap-2 sm:flex-row">
               <SearchInput
                 value={list.search}
                 onChange={list.setSearch}

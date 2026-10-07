@@ -59,7 +59,7 @@ export default function DashboardPage() {
           }
           actions={
             <>
-              <Tabs value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+              <Tabs data-tour="dashboard-period" value={String(days)} onValueChange={(v) => setDays(Number(v))}>
                 <TabsList className="bg-muted/70 p-1">
                   {PERIODS.map((p) => (
                     <TabsTrigger key={p} value={String(p)} className="text-xs">
@@ -103,7 +103,9 @@ export default function DashboardPage() {
           </Card>
         ) : summary ? (
           <>
-            <KpiCards summary={summary} />
+            <div data-tour="dashboard-kpis">
+              <KpiCards summary={summary} />
+            </div>
 
             <div className="grid gap-6 lg:grid-cols-12">
               <div className={summary.inventory ? "lg:col-span-8" : "lg:col-span-12"}>
@@ -116,7 +118,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div data-tour="dashboard-work-queues" className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               <PendingRequestsPanel summary={summary} />
               <RecentOrdersPanel summary={summary} />
               <OperationsPanel summary={summary} />

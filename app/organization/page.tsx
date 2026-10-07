@@ -59,6 +59,7 @@ function FacilityDialog({
   });
   return (
     <FormDialog
+      tourId={facility ? undefined : "organization-facility-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={facility ? `Sửa cơ sở ${facility.code}` : "Thêm cơ sở mới"}
@@ -260,6 +261,7 @@ function LocationDialog({
   });
   return (
     <FormDialog
+      tourId={location ? undefined : "organization-location-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={location ? `Sửa kho ${location.code}` : "Thêm điểm lưu kho"}
@@ -347,7 +349,7 @@ function LocationsTab() {
         <>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm kho theo mã hoặc tên..." />
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+            <Button data-tour="organization-create-location" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-3.5" /> Thêm kho
             </Button>
           )}
@@ -403,6 +405,7 @@ function DepartmentDialog({
   });
   return (
     <FormDialog
+      tourId={department ? undefined : "organization-department-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={department ? `Sửa bộ phận ${department.code}` : "Thêm bộ phận"}
@@ -518,7 +521,7 @@ function DepartmentsTab() {
         <>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm bộ phận theo mã hoặc tên..." />
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
+            <Button data-tour="organization-create-department" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-3.5" /> Thêm bộ phận
             </Button>
           )}
@@ -546,18 +549,18 @@ export default function OrganizationPage() {
         <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList data-tour="organization-tabs" className="bg-muted/70 p-1">
             {canFacility && (
-              <TabsTrigger value="facilities" className="gap-2 text-xs">
+              <TabsTrigger data-tour="organization-tab-facilities" value="facilities" className="gap-2 text-xs">
                 <Building2 className="size-4" /> Cơ sở{summary?.counts.facilities != null && ` (${summary.counts.facilities})`}
               </TabsTrigger>
             )}
             {canLocation && (
-              <TabsTrigger value="locations" className="gap-2 text-xs">
+              <TabsTrigger data-tour="organization-tab-locations" value="locations" className="gap-2 text-xs">
                 <Warehouse className="size-4" /> Điểm lưu kho
                 {summary?.counts.stock_locations != null && ` (${summary.counts.stock_locations})`}
               </TabsTrigger>
             )}
             {canDepartment && (
-              <TabsTrigger value="departments" className="gap-2 text-xs">
+              <TabsTrigger data-tour="organization-tab-departments" value="departments" className="gap-2 text-xs">
                 <Flame className="size-4" /> Bộ phận{summary?.counts.departments != null && ` (${summary.counts.departments})`}
               </TabsTrigger>
             )}

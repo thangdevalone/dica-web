@@ -103,6 +103,7 @@ function CreateMappingDialog({
 
   return (
     <FormDialog
+      tourId="operations-mapping-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo liên kết món ăn iPOS"
@@ -180,6 +181,7 @@ function CreateAlertRuleDialog({
 
   return (
     <FormDialog
+      tourId="operations-alert-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Thêm quy tắc cảnh báo tồn kho"
@@ -246,7 +248,7 @@ function CreateRecipeDialog({ open, onOpenChange, onCreated }: { open: boolean; 
     onSuccess: () => { onOpenChange(false); onCreated(); },
   });
   const valid = Boolean(mappingId && locationId && effectiveFrom) && lines.length > 0 && lines.every((line) => line.ingredientId && Number(line.quantity) > 0);
-  return <FormDialog open={open} onOpenChange={onOpenChange} title="Tạo phiên bản định mức" description="Khai báo lượng nguyên liệu tiêu hao cho một món bán trên iPOS." submitLabel="Tạo định mức" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
+  return <FormDialog tourId="operations-recipe-form" open={open} onOpenChange={onOpenChange} title="Tạo phiên bản định mức" description="Khai báo lượng nguyên liệu tiêu hao cho một món bán trên iPOS." submitLabel="Tạo định mức" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
     <div className="grid gap-4 sm:grid-cols-2">
       <Field label="Món iPOS" required><OptionSelect value={mappingId} onChange={setMappingId} options={(mappings.data ?? []).map((item) => ({ value: item.id, label: `${item.menuItemName} (${item.externalItemKey})` }))} /></Field>
       <Field label="Kho xuất nguyên liệu" required><StockLocationSelect value={locationId} onChange={setLocationId} /></Field>
@@ -278,7 +280,7 @@ function CreateSalesImportDialog({ open, onOpenChange, onCreated }: { open: bool
     invalidate: INVALIDATE,
     onSuccess: () => { onOpenChange(false); setRecordsText(""); onCreated(); },
   });
-  return <FormDialog open={open} onOpenChange={onOpenChange} title="Tạo đợt nhập bán hàng" description="Mỗi dòng: mã giao dịch, mã món iPOS, thời gian ISO, số lượng." submitLabel="Tạo đợt nhập" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
+  return <FormDialog tourId="operations-sales-form" open={open} onOpenChange={onOpenChange} title="Tạo đợt nhập bán hàng" description="Mỗi dòng: mã giao dịch, mã món iPOS, thời gian ISO, số lượng." submitLabel="Tạo đợt nhập" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
     <div className="grid gap-4 sm:grid-cols-2"><Field label="Cơ sở" required><FacilitySelect value={facilityId} onChange={setFacilityId} /></Field><Field label="Nguồn" required><Input value={source} onChange={(event) => setSource(event.target.value)} /></Field><Field label="Mã đợt nhập" required><Input value={batchKey} onChange={(event) => setBatchKey(event.target.value)} placeholder="BATCH-20261006-01" /></Field></div>
     <Field label="Dữ liệu bán hàng CSV" required hint="Ví dụ: SALE-001,ITEM-001,2026-10-06T12:30:00+07:00,2"><Textarea rows={8} value={recordsText} onChange={(event) => setRecordsText(event.target.value)} /></Field>
     <p className="text-xs text-muted-foreground">Đã đọc {records.length} dòng dữ liệu.</p>
@@ -293,7 +295,7 @@ function RecalculateVarianceDialog({ open, onOpenChange, onDone }: { open: boole
     invalidate: INVALIDATE,
     onSuccess: () => { onOpenChange(false); onDone(); },
   });
-  return <FormDialog open={open} onOpenChange={onOpenChange} title="Tính lại chênh lệch" description="Chọn phiếu kiểm kê đã gửi để đối soát với bán hàng iPOS và định mức." submitLabel="Tính lại" loading={recalculate.isPending} disabled={!stocktakeId} onSubmit={() => recalculate.mutate()}>
+  return <FormDialog tourId="operations-recalculate-form" open={open} onOpenChange={onOpenChange} title="Tính lại chênh lệch" description="Chọn phiếu kiểm kê đã gửi để đối soát với bán hàng iPOS và định mức." submitLabel="Tính lại" loading={recalculate.isPending} disabled={!stocktakeId} onSubmit={() => recalculate.mutate()}>
     <Field label="Phiếu kiểm kê" required><OptionSelect value={stocktakeId} onChange={setStocktakeId} options={(stocktakes.data ?? []).map((item) => ({ value: item.id, label: `${item.stockLocation?.name ?? "Kho"} - ${formatDate(item.businessDate)}` }))} /></Field>
   </FormDialog>;
 }
@@ -814,7 +816,7 @@ export default function OperationsPage() {
           </TabsContent>
 
           {/* Sales Imports Tab */}
-          <TabsContent value="sales" className="space-y-4">
+          <TabsContent data-tour="operations-sales-list" value="sales" className="space-y-4">
             {adapterQuery.data && (
               <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 p-3 text-xs">
                 <span>Adapter: <strong>{adapterQuery.data.adapter}</strong></span>

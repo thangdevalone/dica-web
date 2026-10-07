@@ -249,7 +249,7 @@ export default function ReportsPage() {
       />
 
       <div className="space-y-3 sm:space-y-4">
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card p-3 shadow-sm sm:gap-3 sm:p-4">
+        <div data-tour="reports-filters" className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card p-3 shadow-sm sm:gap-3 sm:p-4">
           <FacilitySelect
             value={list.filters.facility_id}
             onChange={(v) => list.setFilter("facility_id", v)}
@@ -271,23 +271,23 @@ export default function ReportsPage() {
           className="space-y-4"
         >
           <TabsList data-tour="reports-tabs" className="w-full bg-muted/70 p-1 sm:w-fit">
-            {canStock && <TabsTrigger value="stock" className="text-xs">
+            {canStock && <TabsTrigger data-tour="reports-tab-stock" value="stock" className="text-xs">
               <Boxes className="h-3.5 w-3.5" />
               Báo cáo tồn kho
             </TabsTrigger>}
-            {canFulfillment && <TabsTrigger value="fulfillment" className="text-xs">
+            {canFulfillment && <TabsTrigger data-tour="reports-tab-fulfillment" value="fulfillment" className="text-xs">
               <ShoppingCart className="h-3.5 w-3.5" />
               Tỷ lệ hoàn tất đơn
             </TabsTrigger>}
-            {canDamage && <TabsTrigger value="damage" className="text-xs">
+            {canDamage && <TabsTrigger data-tour="reports-tab-damage" value="damage" className="text-xs">
               <Flame className="h-3.5 w-3.5 text-destructive" />
               Tổng hợp hao hụt
             </TabsTrigger>}
-            {canVariance && <TabsTrigger value="variance" className="text-xs">
+            {canVariance && <TabsTrigger data-tour="reports-tab-variance" value="variance" className="text-xs">
               <TrendingDown className="h-3.5 w-3.5 text-amber-500" />
               Đối soát iPOS
             </TabsTrigger>}
-            {canPayment && <TabsTrigger value="payment" className="text-xs">
+            {canPayment && <TabsTrigger data-tour="reports-tab-payment" value="payment" className="text-xs">
               <CreditCard className="h-3.5 w-3.5 text-emerald-500" />
               Đối soát thanh toán
             </TabsTrigger>}

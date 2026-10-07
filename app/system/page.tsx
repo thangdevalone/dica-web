@@ -234,7 +234,7 @@ export default function SystemPage() {
 
       <div className="space-y-4 sm:space-y-6">
         {/* Health status banner */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div data-tour="system-health" className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-5 rounded-2xl bg-card border border-border/70 shadow-sm flex items-center gap-4">
             <div
               className={`w-12 h-12 rounded-xl flex items-center justify-center ${

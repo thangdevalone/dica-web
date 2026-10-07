@@ -146,6 +146,7 @@ function TransferEditor({
 
   return (
     <FormDialog
+      tourId={mode?.kind === "create" ? "transfers-create-form" : undefined}
       open={open}
       onOpenChange={onOpenChange}
       title={mode?.kind === "edit" ? `Sửa phiếu điều chuyển ${mode.transfer.code}` : "Tạo phiếu điều chuyển nội bộ"}
@@ -415,7 +416,7 @@ export default function TransfersPage() {
           onRowClick={(r) => setDetailId(r.id)}
           emptyText="Chưa có phiếu điều chuyển nào."
           toolbar={
-            <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+            <div data-tour="transfers-list" className="flex flex-1 flex-col gap-2 sm:flex-row">
               <SearchInput
                 value={list.search}
                 onChange={list.setSearch}

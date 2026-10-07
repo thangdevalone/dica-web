@@ -217,6 +217,7 @@ function ManageRoleDialog({
 
   return (
     <FormDialog
+      tourId={role ? undefined : "users-role-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={role ? `Cập nhật vai trò ${role.name}` : "Tạo vai trò tùy chỉnh"}
@@ -440,6 +441,7 @@ function CreateUserDialog({
 
   return (
     <FormDialog
+      tourId="users-user-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo tài khoản người dùng"
@@ -713,6 +715,7 @@ function AssignGrantDialog({
 
   return (
     <FormDialog
+      tourId="users-grant-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Phân quyền tài khoản (Assign Grant)"

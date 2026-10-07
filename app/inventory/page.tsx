@@ -106,6 +106,7 @@ function CreateAdjustmentDialog({
 
   return (
     <FormDialog
+      tourId="inventory-adjustment-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo phiếu điều chỉnh tồn kho"
@@ -204,6 +205,7 @@ function CreateDamageDialog({
 
   return (
     <FormDialog
+      tourId="inventory-damage-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Lập biên bản báo hỏng / hết hạn"
@@ -785,11 +787,11 @@ export default function InventoryPage() {
           className="space-y-4"
         >
           <TabsList data-tour="inventory-tabs" className="bg-muted/70 p-1">
-            {canReadBalances && <TabsTrigger value="balances" className="text-xs">
+            {canReadBalances && <TabsTrigger data-tour="inventory-tab-balances" value="balances" className="text-xs">
               <Boxes className="h-3.5 w-3.5" />
               Tồn kho tức thời
             </TabsTrigger>}
-            {canReadLedger && <TabsTrigger value="ledger" className="text-xs">
+            {canReadLedger && <TabsTrigger data-tour="inventory-tab-ledger" value="ledger" className="text-xs">
               <BookOpen className="h-3.5 w-3.5" />
               Sổ cái kho (Ledger)
             </TabsTrigger>}
@@ -797,7 +799,7 @@ export default function InventoryPage() {
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Điều chỉnh tồn
             </TabsTrigger>}
-            {canReadStocktakes && <TabsTrigger value="stocktakes" className="text-xs">
+            {canReadStocktakes && <TabsTrigger data-tour="inventory-tab-stocktakes" value="stocktakes" className="text-xs">
               <ClipboardCheck className="h-3.5 w-3.5" />
               Kiểm kê định kỳ
             </TabsTrigger>}

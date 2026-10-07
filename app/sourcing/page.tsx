@@ -120,11 +120,12 @@ function EligibilityTab() {
             />
           </div>
           {canManage && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setOpen(true)}>
+            <Button data-tour="sourcing-create-eligibility" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setOpen(true)}>
               <Plus className="size-3.5" /> Cấp quyền xin hàng
             </Button>
           )}
           <FormDialog
+            tourId="sourcing-eligibility-form"
             open={open}
             onOpenChange={setOpen}
             title="Cấp quyền xin hàng cho bộ phận"
@@ -221,6 +222,7 @@ function RuleDialog({ open, onOpenChange, rule }: { open: boolean; onOpenChange:
     form.facility_id && form.ingredient_id && (form.source_type === "STOCK" ? form.source_stock_location_id : form.supplier_id);
   return (
     <FormDialog
+      tourId={rule ? undefined : "sourcing-rule-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={rule ? "Đổi nguồn cấp" : "Cấu hình nguồn cấp"}
@@ -333,6 +335,7 @@ function BulkDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
   };
   return (
     <FormDialog
+      tourId="sourcing-bulk-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Cập nhật nguồn cấp hàng loạt"
@@ -436,7 +439,7 @@ function RulesTab() {
             </div>
             <div className="flex gap-2">
               {canBulk && (
-                <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setBulk(true)}>
+                <Button data-tour="sourcing-bulk" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setBulk(true)}>
                   <Upload className="size-3.5" /> Hàng loạt
                 </Button>
               )}
@@ -473,12 +476,12 @@ export default function SourcingPage() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
           <TabsList data-tour="sourcing-tabs" className="h-auto flex-wrap bg-muted/70 p-1">
             {canRules && (
-              <TabsTrigger value="rules" className="gap-2 text-xs">
+              <TabsTrigger data-tour="sourcing-tab-rules" value="rules" className="gap-2 text-xs">
                 <GitBranch className="size-4" /> Nguồn cấp
               </TabsTrigger>
             )}
             {canEligibility && (
-              <TabsTrigger value="eligibility" className="gap-2 text-xs">
+              <TabsTrigger data-tour="sourcing-tab-eligibility" value="eligibility" className="gap-2 text-xs">
                 <ListChecks className="size-4" /> Hàng được phép xin
               </TabsTrigger>
             )}

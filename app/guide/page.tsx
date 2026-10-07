@@ -94,7 +94,7 @@ export default function AdminGuidePage() {
       <div className="space-y-6">
         <PageHeader
           title="Hướng dẫn quản trị DICA"
-          description="Thứ tự cấu hình ban đầu và quy trình vận hành hằng ngày dành cho quản trị viên."
+          description="Tour thao tác đầy đủ đi qua từng trang, tab, form cấu hình và vòng đời chứng từ trên web."
           icon={BookOpenCheck}
           actions={
             <Button
@@ -105,7 +105,7 @@ export default function AdminGuidePage() {
               onClick={() => window.dispatchEvent(new Event(START_ADMIN_TOUR_EVENT))}
             >
               <PlayCircle className="size-4" />
-              Bắt đầu tour thao tác
+              Bắt đầu tour đầy đủ
             </Button>
           }
         />
@@ -118,9 +118,11 @@ export default function AdminGuidePage() {
                 Bắt đầu theo đúng thứ tự bên dưới
               </p>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Cơ cấu tổ chức và danh mục phải có trước khi tạo tài khoản vận
-                hành. Sau khi hoàn tất, hãy dùng một tài khoản thử để kiểm tra
-                đúng menu và đúng dữ liệu được phép xem.
+                Tour tự chuyển trang, mở đúng tab và mở form mẫu để giải thích
+                từng trường; tour không tự bấm Lưu hay tạo dữ liệu. Cơ cấu tổ
+                chức và danh mục phải có trước khi tạo tài khoản vận hành. Sau
+                khi hoàn tất, hãy dùng một tài khoản thử để kiểm tra đúng menu
+                và đúng dữ liệu được phép xem.
               </p>
             </div>
           </CardContent>

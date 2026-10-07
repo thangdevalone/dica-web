@@ -145,6 +145,7 @@ function RequestEditor({
 
   return (
     <FormDialog
+      tourId={mode?.kind === "create" ? "requests-create-form" : undefined}
       open={open}
       onOpenChange={onOpenChange}
       title={title}
@@ -456,7 +457,7 @@ export default function RequestsPage() {
           onRowClick={(r) => setDetailId(r.id)}
           emptyText="Chưa có yêu cầu hàng nào."
           toolbar={
-            <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+            <div data-tour="requests-list" className="flex flex-1 flex-col gap-2 sm:flex-row">
               <SearchInput value={list.search} onChange={list.setSearch} placeholder="Tìm theo mã hoặc ghi chú..." />
               <OptionSelect
                 value={list.filters.status}
