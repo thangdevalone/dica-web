@@ -270,7 +270,7 @@ export default function OrdersPage() {
                 title="Đóng phần chưa giao"
                 onClick={() => setCloseTarget(row)}
               >
-                <FileCheck2 className="size-3.5 mr-1" /> Đóng
+                <FileCheck2 className="size-3.5" /> Đóng
               </Button>
             )}
             {canDoCancel && (
@@ -281,7 +281,7 @@ export default function OrdersPage() {
                 title="Huỷ đơn"
                 onClick={() => setCancelTarget(row)}
               >
-                <Ban className="size-3.5 mr-1" /> Huỷ
+                <Ban className="size-3.5" /> Huỷ
               </Button>
             )}
           </div>
@@ -350,7 +350,7 @@ export default function OrdersPage() {
               <div className="flex items-center gap-2">
                 {canExport && detail.sourceType === "SUPPLIER" && (
                   <Button variant="outline" size="sm" className="text-xs" onClick={() => downloadSupplierOrder(detail)}>
-                    <Download className="size-3.5 mr-1" /> Xuất phiếu NCC
+                    <Download className="size-3.5" /> Xuất phiếu NCC
                   </Button>
                 )}
                 {canClose && (detail.status === "PARTIAL" || detail.status === "RELEASED") && (
@@ -360,7 +360,7 @@ export default function OrdersPage() {
                     className="text-amber-600 border-amber-300 hover:bg-amber-50 text-xs"
                     onClick={() => setCloseTarget(detail)}
                   >
-                    <FileCheck2 className="size-3.5 mr-1" /> Đóng phần chưa giao
+                    <FileCheck2 className="size-3.5" /> Đóng phần chưa giao
                   </Button>
                 )}
                 {canCancel && (detail.status === "DRAFT" || detail.status === "RELEASED") && (
@@ -370,7 +370,7 @@ export default function OrdersPage() {
                     className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs"
                     onClick={() => setCancelTarget(detail)}
                   >
-                    <Ban className="size-3.5 mr-1" /> Huỷ đơn
+                    <Ban className="size-3.5" /> Huỷ đơn
                   </Button>
                 )}
               </div>

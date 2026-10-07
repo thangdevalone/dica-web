@@ -523,7 +523,12 @@ export function AdminLayout({
     let cancelled = false;
     loadProfile()
       .then(() => !cancelled && setProfileError(null))
-      .catch((error) => !cancelled && setProfileError(errorMessage(error)));
+      .catch((error) => {
+        if (cancelled) return;
+        const message = errorMessage(error);
+        setProfileError(message);
+        toast.error(message, { id: "profile-load-error" });
+      });
     return () => {
       cancelled = true;
     };

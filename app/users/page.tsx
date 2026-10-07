@@ -1270,12 +1270,12 @@ export default function UsersPage() {
                 if (activeTab === "grants") grantsQuery.refetch()
               }}
             >
-              <RefreshCw className="mr-1 h-4 w-4" />
+              <RefreshCw className="h-4 w-4" />
               Làm mới
             </Button>
             {activeTab === "users" && canCreateUser && (
               <Button size="sm" onClick={() => setOpenCreateUser(true)}>
-                <UserPlus className="mr-1.5 h-4 w-4" />
+                <UserPlus className="h-4 w-4" />
                 Tạo tài khoản
               </Button>
             )}
@@ -1287,13 +1287,13 @@ export default function UsersPage() {
                   setRoleDialogOpen(true)
                 }}
               >
-                <Plus className="mr-1.5 h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 Tạo vai trò
               </Button>
             )}
             {activeTab === "grants" && canAssignGrant && (
               <Button size="sm" onClick={() => setOpenAssignGrant(true)}>
-                <Plus className="mr-1.5 h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 Gán quyền (Grant)
               </Button>
             )}
@@ -1310,19 +1310,19 @@ export default function UsersPage() {
           <TabsList className="bg-muted/70 p-1">
             {canReadUsers && (
               <TabsTrigger value="users" className="text-xs">
-                <Users className="mr-1.5 h-3.5 w-3.5" />
+                <Users className="h-3.5 w-3.5" />
                 Người dùng & Tài khoản
               </TabsTrigger>
             )}
             {canReadRoles && (
               <TabsTrigger value="roles" className="text-xs">
-                <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+                <ShieldCheck className="h-3.5 w-3.5" />
                 Vai trò & Quyền hạn
               </TabsTrigger>
             )}
             {canReadGrants && (
               <TabsTrigger value="grants" className="text-xs">
-                <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+                <KeyRound className="h-3.5 w-3.5" />
                 Phân quyền theo phạm vi (Grants)
               </TabsTrigger>
             )}

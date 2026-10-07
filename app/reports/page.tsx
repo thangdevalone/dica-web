@@ -67,9 +67,7 @@ export default function ReportsPage() {
   });
 
   React.useEffect(() => {
-    if (globalFacility !== undefined) {
-      list.setFilter("facility_id", globalFacility ?? "");
-    }
+    list.setFilter("facility_id", globalFacility ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalFacility]);
 
@@ -244,7 +242,7 @@ export default function ReportsPage() {
               if (activeTab === "payment") paymentReport.refetch();
             }}
           >
-            <RefreshCw className="h-4 w-4 mr-1" />
+            <RefreshCw className="h-4 w-4" />
             Làm mới
           </Button>
         }
@@ -274,23 +272,23 @@ export default function ReportsPage() {
         >
           <TabsList className="bg-muted/70 p-1">
             {canStock && <TabsTrigger value="stock" className="text-xs">
-              <Boxes className="h-3.5 w-3.5 mr-1.5" />
+              <Boxes className="h-3.5 w-3.5" />
               Báo cáo tồn kho
             </TabsTrigger>}
             {canFulfillment && <TabsTrigger value="fulfillment" className="text-xs">
-              <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+              <ShoppingCart className="h-3.5 w-3.5" />
               Tỷ lệ hoàn tất đơn
             </TabsTrigger>}
             {canDamage && <TabsTrigger value="damage" className="text-xs">
-              <Flame className="h-3.5 w-3.5 mr-1.5 text-destructive" />
+              <Flame className="h-3.5 w-3.5 text-destructive" />
               Tổng hợp hao hụt
             </TabsTrigger>}
             {canVariance && <TabsTrigger value="variance" className="text-xs">
-              <TrendingDown className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+              <TrendingDown className="h-3.5 w-3.5 text-amber-500" />
               Đối soát iPOS
             </TabsTrigger>}
             {canPayment && <TabsTrigger value="payment" className="text-xs">
-              <CreditCard className="h-3.5 w-3.5 mr-1.5 text-emerald-500" />
+              <CreditCard className="h-3.5 w-3.5 text-emerald-500" />
               Đối soát thanh toán
             </TabsTrigger>}
           </TabsList>

@@ -253,7 +253,7 @@ function CreateRecipeDialog({ open, onOpenChange, onCreated }: { open: boolean; 
       <Field label="Hiệu lực từ" required><Input type="datetime-local" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} /></Field>
     </div>
     <div className="space-y-2">
-      <div className="flex items-center justify-between"><span className="text-xs font-semibold">Thành phần nguyên liệu</span><Button type="button" variant="outline" size="sm" onClick={() => setLines((items) => [...items, { key: crypto.randomUUID(), ingredientId: "", quantity: "" }])}><Plus className="mr-1 size-3.5" />Thêm dòng</Button></div>
+      <div className="flex items-center justify-between"><span className="text-xs font-semibold">Thành phần nguyên liệu</span><Button type="button" variant="outline" size="sm" onClick={() => setLines((items) => [...items, { key: crypto.randomUUID(), ingredientId: "", quantity: "" }])}><Plus className="size-3.5" />Thêm dòng</Button></div>
       {lines.map((line, index) => <div key={line.key} className="grid grid-cols-[1fr_140px_36px] gap-2">
         <IngredientSelect value={line.ingredientId} onChange={(value) => setLines((items) => items.map((item) => item.key === line.key ? { ...item, ingredientId: value } : item))} />
         <Input type="number" min="0" step="0.000001" placeholder="Định lượng" value={line.quantity} onChange={(event) => setLines((items) => items.map((item) => item.key === line.key ? { ...item, quantity: event.target.value } : item))} />
@@ -346,10 +346,8 @@ export default function OperationsPage() {
   const alertsList = useListState();
 
   React.useEffect(() => {
-    if (globalFacility !== undefined) {
-      mappingList.setFilter("facility_id", globalFacility ?? "");
-      salesList.setFilter("facility_id", globalFacility ?? "");
-    }
+    mappingList.setFilter("facility_id", globalFacility ?? "");
+    salesList.setFilter("facility_id", globalFacility ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalFacility]);
 
@@ -712,27 +710,27 @@ export default function OperationsPage() {
                 if (activeTab === "alerts") alertsQuery.refetch();
               }}
             >
-              <RefreshCw className="h-4 w-4 mr-1" />
+              <RefreshCw className="h-4 w-4" />
               Làm mới
             </Button>
             {activeTab === "mappings" && canManageMapping && (
               <Button size="sm" onClick={() => setOpenMappingDialog(true)}>
-                <Plus className="h-4 w-4 mr-1.5" />
+                <Plus className="h-4 w-4" />
                 Thêm món iPOS
               </Button>
             )}
             {activeTab === "recipes" && canManageRecipe && (
-              <Button size="sm" onClick={() => setOpenRecipeDialog(true)}><Plus className="h-4 w-4 mr-1.5" />Thêm định mức</Button>
+              <Button size="sm" onClick={() => setOpenRecipeDialog(true)}><Plus className="h-4 w-4" />Thêm định mức</Button>
             )}
             {activeTab === "sales" && canManageSales && (
-              <Button size="sm" onClick={() => setOpenSalesDialog(true)}><UploadCloud className="h-4 w-4 mr-1.5" />Nhập dữ liệu bán</Button>
+              <Button size="sm" onClick={() => setOpenSalesDialog(true)}><UploadCloud className="h-4 w-4" />Nhập dữ liệu bán</Button>
             )}
             {activeTab === "variance" && canRecalculateVariance && (
-              <Button size="sm" onClick={() => setOpenRecalculateDialog(true)}><RefreshCw className="h-4 w-4 mr-1.5" />Tính lại</Button>
+              <Button size="sm" onClick={() => setOpenRecalculateDialog(true)}><RefreshCw className="h-4 w-4" />Tính lại</Button>
             )}
             {activeTab === "alerts" && canManageAlerts && (
               <Button size="sm" onClick={() => setOpenAlertDialog(true)}>
-                <Plus className="h-4 w-4 mr-1.5" />
+                <Plus className="h-4 w-4" />
                 Thêm ngưỡng cảnh báo
               </Button>
             )}
@@ -750,23 +748,23 @@ export default function OperationsPage() {
         >
           <TabsList className="bg-muted/70 p-1">
             {canReadMappings && <TabsTrigger value="mappings" className="text-xs">
-              <LinkIcon className="h-3.5 w-3.5 mr-1.5" />
+              <LinkIcon className="h-3.5 w-3.5" />
               Món ăn iPOS
             </TabsTrigger>}
             {canReadRecipes && <TabsTrigger value="recipes" className="text-xs">
-              <ChefHat className="h-3.5 w-3.5 mr-1.5" />
+              <ChefHat className="h-3.5 w-3.5" />
               Công thức (BOM)
             </TabsTrigger>}
             {canReadSales && <TabsTrigger value="sales" className="text-xs">
-              <UploadCloud className="h-3.5 w-3.5 mr-1.5" />
+              <UploadCloud className="h-3.5 w-3.5" />
               Đợt nhập bán hàng
             </TabsTrigger>}
             {canReadVariance && <TabsTrigger value="variance" className="text-xs">
-              <TrendingDown className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+              <TrendingDown className="h-3.5 w-3.5 text-amber-500" />
               Đối soát hao hụt
             </TabsTrigger>}
             {canManageAlerts && <TabsTrigger value="alerts" className="text-xs">
-              <BellRing className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
+              <BellRing className="h-3.5 w-3.5 text-blue-500" />
               Quy tắc cảnh báo
             </TabsTrigger>}
           </TabsList>

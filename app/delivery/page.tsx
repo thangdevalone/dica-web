@@ -556,7 +556,7 @@ export default function DeliveryPage() {
               className="h-7 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50"
               onClick={() => setPostDispatchTarget(d)}
             >
-              <FileCheck2 className="size-3.5 mr-1" /> Ghi sổ
+              <FileCheck2 className="size-3.5" /> Ghi sổ
             </Button>
           )}
         </div>
@@ -628,7 +628,7 @@ export default function DeliveryPage() {
               className="h-7 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50"
               onClick={() => setPostReceiptTarget(r)}
             >
-              <FileCheck2 className="size-3.5 mr-1" /> Ghi sổ
+              <FileCheck2 className="size-3.5" /> Ghi sổ
             </Button>
           )}
         </div>
@@ -691,7 +691,7 @@ export default function DeliveryPage() {
               className="h-7 text-xs text-primary border-primary/30 hover:bg-primary/10"
               onClick={() => setResolveTarget(c)}
             >
-              <Wrench className="size-3 mr-1" /> Xử lý
+              <Wrench className="size-3" /> Xử lý
             </Button>
           )}
         </div>
@@ -730,13 +730,13 @@ export default function DeliveryPage() {
         >
           <TabsList className="bg-muted/70 p-1">
             {canReadDispatch && <TabsTrigger value="dispatches" className="text-xs">
-              <Truck className="size-3.5 mr-1.5" /> Phiếu xuất kho
+              <Truck className="size-3.5" /> Phiếu xuất kho
             </TabsTrigger>}
             {canReadReceipt && <TabsTrigger value="receipts" className="text-xs">
-              <PackageCheck className="size-3.5 mr-1.5" /> Phiếu nhập nhận hàng
+              <PackageCheck className="size-3.5" /> Phiếu nhập nhận hàng
             </TabsTrigger>}
             {canReadDiscrepancy && <TabsTrigger value="discrepancies" className="text-xs">
-              <AlertTriangle className="size-3.5 mr-1.5 text-amber-500" /> Sai lệch giao nhận
+              <AlertTriangle className="size-3.5 text-amber-500" /> Sai lệch giao nhận
             </TabsTrigger>}
           </TabsList>
 
@@ -816,7 +816,7 @@ export default function DeliveryPage() {
                   onClick={() => setPostDispatchTarget(dispatchDetailQuery.data!)}
                   className="bg-emerald-600 hover:bg-emerald-700 text-xs"
                 >
-                  <FileCheck2 className="size-3.5 mr-1" /> Ghi sổ xuất kho
+                  <FileCheck2 className="size-3.5" /> Ghi sổ xuất kho
                 </Button>
               )}
             </div>
@@ -887,7 +887,7 @@ export default function DeliveryPage() {
                   onClick={() => setPostReceiptTarget(receiptDetailQuery.data!)}
                   className="bg-emerald-600 hover:bg-emerald-700 text-xs"
                 >
-                  <FileCheck2 className="size-3.5 mr-1" /> Ghi sổ nhập kho
+                  <FileCheck2 className="size-3.5" /> Ghi sổ nhập kho
                 </Button>
               )}
             </div>

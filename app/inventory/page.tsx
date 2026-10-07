@@ -317,9 +317,7 @@ export default function InventoryPage() {
   const damageList = useListState();
 
   React.useEffect(() => {
-    if (globalFacility !== undefined) {
-      balanceList.setFilter("facility_id", globalFacility ?? "");
-    }
+    balanceList.setFilter("facility_id", globalFacility ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalFacility]);
 
@@ -600,7 +598,7 @@ export default function InventoryPage() {
               onClick={() => approveAdjustMutation.mutate(a)}
               disabled={approveAdjustMutation.isPending}
             >
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
               Duyệt
             </Button>
           )}
@@ -612,7 +610,7 @@ export default function InventoryPage() {
               onClick={() => postAdjustMutation.mutate(a)}
               disabled={postAdjustMutation.isPending}
             >
-              <FileCheck2 className="h-3.5 w-3.5 mr-1" />
+              <FileCheck2 className="h-3.5 w-3.5" />
               Ghi sổ
             </Button>
           )}
@@ -719,7 +717,7 @@ export default function InventoryPage() {
               onClick={() => submitDamageMutation.mutate(d)}
               disabled={submitDamageMutation.isPending}
             >
-              <Send className="h-3.5 w-3.5 mr-1" />
+              <Send className="h-3.5 w-3.5" />
               Gửi xác nhận
             </Button>
           )}
@@ -731,7 +729,7 @@ export default function InventoryPage() {
               onClick={() => confirmDamageMutation.mutate(d)}
               disabled={confirmDamageMutation.isPending}
             >
-              <Flame className="h-3.5 w-3.5 mr-1" />
+              <Flame className="h-3.5 w-3.5" />
               Xác nhận hủy
             </Button>
           )}
@@ -759,18 +757,18 @@ export default function InventoryPage() {
                 if (activeTab === "damage") damagesQuery.refetch();
               }}
             >
-              <RefreshCw className="h-4 w-4 mr-1" />
+              <RefreshCw className="h-4 w-4" />
               Làm mới
             </Button>
             {activeTab === "adjustments" && canAdjust && (
               <Button size="sm" onClick={() => setOpenAdjustDialog(true)}>
-                <Plus className="h-4 w-4 mr-1.5" />
+                <Plus className="h-4 w-4" />
                 Lập phiếu điều chỉnh
               </Button>
             )}
             {activeTab === "damage" && canDamage && (
               <Button size="sm" onClick={() => setOpenDamageDialog(true)}>
-                <Plus className="h-4 w-4 mr-1.5" />
+                <Plus className="h-4 w-4" />
                 Lập biên bản báo hỏng
               </Button>
             )}
@@ -788,23 +786,23 @@ export default function InventoryPage() {
         >
           <TabsList className="bg-muted/70 p-1">
             {canReadBalances && <TabsTrigger value="balances" className="text-xs">
-              <Boxes className="h-3.5 w-3.5 mr-1.5" />
+              <Boxes className="h-3.5 w-3.5" />
               Tồn kho tức thời
             </TabsTrigger>}
             {canReadLedger && <TabsTrigger value="ledger" className="text-xs">
-              <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+              <BookOpen className="h-3.5 w-3.5" />
               Sổ cái kho (Ledger)
             </TabsTrigger>}
             {canReadAdjustments && <TabsTrigger value="adjustments" className="text-xs">
-              <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" />
+              <SlidersHorizontal className="h-3.5 w-3.5" />
               Điều chỉnh tồn
             </TabsTrigger>}
             {canReadStocktakes && <TabsTrigger value="stocktakes" className="text-xs">
-              <ClipboardCheck className="h-3.5 w-3.5 mr-1.5" />
+              <ClipboardCheck className="h-3.5 w-3.5" />
               Kiểm kê định kỳ
             </TabsTrigger>}
             {canReadDamage && <TabsTrigger value="damage" className="text-xs">
-              <Flame className="h-3.5 w-3.5 mr-1.5 text-destructive" />
+              <Flame className="h-3.5 w-3.5 text-destructive" />
               Hao hụt & Hủy hỏng
             </TabsTrigger>}
           </TabsList>

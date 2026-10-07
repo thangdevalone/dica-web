@@ -369,7 +369,7 @@ export default function TransfersPage() {
               title="Gửi phê duyệt"
               onClick={() => submitMutation.mutate(row)}
             >
-              <Send className="size-3.5 mr-1" /> Gửi duyệt
+              <Send className="size-3.5" /> Gửi duyệt
             </Button>
           )}
           {canApprove && row.status === "SUBMITTED" && (
@@ -380,7 +380,7 @@ export default function TransfersPage() {
               title="Phê duyệt"
               onClick={() => approveMutation.mutate(row)}
             >
-              <CheckCircle2 className="size-3.5 mr-1" /> Duyệt
+              <CheckCircle2 className="size-3.5" /> Duyệt
             </Button>
           )}
         </div>
@@ -458,7 +458,7 @@ export default function TransfersPage() {
                     className="text-xs"
                     onClick={() => setEditorMode({ kind: "edit", transfer: detail })}
                   >
-                    <FilePen className="size-3.5 mr-1" /> Chỉnh sửa
+                    <FilePen className="size-3.5" /> Chỉnh sửa
                   </Button>
                 )}
                 {canSubmit && detail.status === "DRAFT" && (
@@ -468,7 +468,7 @@ export default function TransfersPage() {
                     onClick={() => submitMutation.mutate(detail)}
                     disabled={submitMutation.isPending}
                   >
-                    <Send className="size-3.5 mr-1" /> Gửi duyệt
+                    <Send className="size-3.5" /> Gửi duyệt
                   </Button>
                 )}
                 {canApprove && detail.status === "SUBMITTED" && (
@@ -478,7 +478,7 @@ export default function TransfersPage() {
                     onClick={() => approveMutation.mutate(detail)}
                     disabled={approveMutation.isPending}
                   >
-                    <CheckCircle2 className="size-3.5 mr-1" /> Phê duyệt
+                    <CheckCircle2 className="size-3.5" /> Phê duyệt
                   </Button>
                 )}
                 {canReject && detail.status === "SUBMITTED" && (
@@ -488,7 +488,7 @@ export default function TransfersPage() {
                     className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs"
                     onClick={() => setRejectTarget(detail)}
                   >
-                    <XCircle className="size-3.5 mr-1" /> Từ chối
+                    <XCircle className="size-3.5" /> Từ chối
                   </Button>
                 )}
                 {canCancel && (detail.status === "DRAFT" || detail.status === "SUBMITTED") && (
@@ -498,7 +498,7 @@ export default function TransfersPage() {
                     className="text-destructive hover:bg-destructive/10 text-xs"
                     onClick={() => setCancelTarget(detail)}
                   >
-                    <Ban className="size-3.5 mr-1" /> Huỷ phiếu
+                    <Ban className="size-3.5" /> Huỷ phiếu
                   </Button>
                 )}
               </div>

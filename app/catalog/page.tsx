@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { PageHeader } from "@/components/shared/page-header";
 import { ActiveBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -455,7 +456,7 @@ function ConversionsTab() {
               </Field>
             </div>
             <Field label="Hiệu lực từ" required>
-              <Input type="datetime-local" value={form.effective_from} onChange={(e) => setForm({ ...form, effective_from: e.target.value })} className="h-9 text-xs" />
+              <DateTimePicker mode="datetime" value={form.effective_from} onChange={(effective_from) => setForm({ ...form, effective_from })} clearable={false} />
             </Field>
           </FormDialog>
         </>

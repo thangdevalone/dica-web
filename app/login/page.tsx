@@ -89,7 +89,9 @@ export default function LoginPage() {
       const next = safeNext(new URLSearchParams(window.location.search).get("next"));
       router.replace(next);
     } catch (error) {
-      setFormError(errorMessage(error));
+      const message = errorMessage(error);
+      setFormError(message);
+      toast.error(message, { id: "login-error" });
     } finally {
       setIsSubmitting(false);
     }

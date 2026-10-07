@@ -13,6 +13,7 @@ import {
   Shield,
   Sliders,
   Terminal,
+  X,
   XCircle,
 } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
@@ -21,7 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
 import { DetailSheet, InfoGrid, Section } from "@/components/shared/detail-sheet";
-import { SearchInput } from "@/components/shared/form";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
+import { Field, OptionSelect, SearchInput, type Option } from "@/components/shared/form";
 import { useApiQuery, usePagedQuery } from "@/hooks/use-api";
 import { useListState } from "@/hooks/use-list-state";
 import { api } from "@/lib/api/client";
@@ -32,6 +34,92 @@ import { formatDateTime } from "@/lib/formatters";
 interface HealthResponse {
   status: string;
   database: string;
+}
+
+interface AuditFilters extends Record<string, string> {
+  action: string;
+  resource_type: string;
+  actor: string;
+  created_from: string;
+  created_to: string;
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  "adjustment.approve": "Duyệt điều chỉnh tồn",
+  "adjustment.post": "Ghi sổ điều chỉnh tồn",
+  "damage.confirm": "Xác nhận báo hỏng",
+  "discrepancy.resolve": "Xử lý chênh lệch giao nhận",
+  "dispatch.post": "Ghi nhận xuất hàng",
+  "grant.assign": "Cấp quyền người dùng",
+  "grant.revoke": "Thu hồi quyền người dùng",
+  "order.cancel": "Hủy đơn thực hiện",
+  "order.close_outstanding": "Đóng số lượng còn thiếu",
+  "payment_tracking.update": "Cập nhật thanh toán",
+  "receipt.post": "Ghi nhận nhận hàng",
+  "request.approve": "Duyệt yêu cầu cấp hàng",
+  "request.cancel": "Hủy yêu cầu cấp hàng",
+  "request.refresh_routing": "Tính lại định tuyến yêu cầu",
+  "sales_import.commit": "Chốt đợt nhập bán hàng",
+  "stocktake.reopen": "Mở lại phiếu kiểm kê",
+  "stocktake.submit": "Gửi phiếu kiểm kê",
+  "transfer.approve": "Duyệt phiếu điều chuyển",
+  "transfer.auto_approve": "Tự duyệt điều chuyển",
+  "transfer.cancel": "Hủy phiếu điều chuyển",
+  "transfer.update_draft": "Sửa nháp điều chuyển",
+  "user.activate": "Kích hoạt tài khoản",
+  "user.deactivate": "Vô hiệu hóa tài khoản",
+  "user.password.change": "Người dùng đổi mật khẩu",
+  "user.profile.update": "Cập nhật hồ sơ",
+  "user.reset_password": "Quản trị đặt lại mật khẩu",
+  "user.username.change": "Đổi tên đăng nhập",
+  "variance.recalculate": "Tính lại chênh lệch tiêu hao",
+};
+
+const ACTION_OPTIONS: Option[] = [
+  { value: "config.", label: "Mọi thay đổi cấu hình", hint: "config.*" },
+  ...Object.entries(ACTION_LABELS).map(([value, label]) => ({ value, label, hint: value })),
+];
+
+const RESOURCE_LABELS: Record<string, string> = {
+  DamageReport: "Báo hỏng",
+  DiscrepancyCase: "Chênh lệch giao nhận",
+  Dispatch: "Phiếu xuất hàng",
+  FulfillmentOrder: "Đơn thực hiện",
+  InventoryAdjustment: "Điều chỉnh tồn",
+  Receipt: "Phiếu nhận hàng",
+  RoleGrant: "Phân quyền",
+  SalesImportBatch: "Đợt nhập bán hàng",
+  Stocktake: "Phiếu kiểm kê",
+  SupplyRequest: "Yêu cầu cấp hàng",
+  Transfer: "Phiếu điều chuyển",
+  User: "Tài khoản người dùng",
+  ALERT_RULE_CONFIG: "Cấu hình cảnh báo",
+  CATALOG_CONFIG: "Cấu hình danh mục",
+  IDENTITY_ACCESS_CONFIG: "Cấu hình tài khoản & quyền",
+  IPOS_MAPPING_CONFIG: "Cấu hình ánh xạ iPOS",
+  ORGANIZATION_CONFIG: "Cấu hình tổ chức",
+  RECIPE_CONFIG: "Cấu hình công thức",
+  SOURCING_CONFIG: "Cấu hình nguồn cung",
+};
+
+const RESOURCE_OPTIONS: Option[] = Object.entries(RESOURCE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+  hint: value,
+}));
+
+function actionLabel(action: string) {
+  if (ACTION_LABELS[action]) return ACTION_LABELS[action];
+  if (action.startsWith("config.")) return "Thay đổi cấu hình";
+  return action;
+}
+
+function startOfLocalDay(value: string) {
+  return value ? new Date(`${value}T00:00:00.000`).toISOString() : undefined;
+}
+
+function endOfLocalDay(value: string) {
+  return value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined;
 }
 
 export default function SystemPage() {
@@ -47,13 +135,24 @@ export default function SystemPage() {
   );
 
   // Audit List
-  const auditList = useListState();
+  const auditList = useListState<AuditFilters>({
+    action: "",
+    resource_type: "",
+    actor: "",
+    created_from: "",
+    created_to: "",
+  });
   const auditQuery = usePagedQuery<AuditEvent>(
     "/audit-events",
     {
       page: auditList.page,
       page_size: auditList.pageSize,
-      action: auditList.search.trim() || undefined,
+      search: auditList.search.trim() || undefined,
+      action: auditList.filters.action || undefined,
+      resource_type: auditList.filters.resource_type || undefined,
+      actor: auditList.filters.actor.trim() || undefined,
+      created_from: startOfLocalDay(auditList.filters.created_from),
+      created_to: endOfLocalDay(auditList.filters.created_to),
     },
     { enabled: canReadAudit, keepPreviousData: true }
   );
@@ -80,16 +179,16 @@ export default function SystemPage() {
     },
     {
       key: "action",
-      header: "Hành động (Action)",
-      render: (a) => <Code className="text-xs font-semibold text-primary">{a.action}</Code>,
+      header: "Hành động",
+      render: (a) => <Cell2 top={actionLabel(a.action)} bottom={<Code>{a.action}</Code>} />,
     },
     {
       key: "resource",
       header: "Tài nguyên",
       render: (a) => (
         <Cell2
-          top={a.resourceType}
-          bottom={a.resourceId}
+          top={RESOURCE_LABELS[a.resourceType] ?? a.resourceType}
+          bottom={<><Code>{a.resourceType}</Code> · {a.resourceId}</>}
         />
       ),
     },
@@ -105,7 +204,7 @@ export default function SystemPage() {
           className="h-8 text-xs"
           onClick={() => setDetailEvent(a)}
         >
-          <Eye className="h-3.5 w-3.5 mr-1" />
+          <Eye className="h-3.5 w-3.5" />
           Chi tiết
         </Button>
       ),
@@ -127,7 +226,7 @@ export default function SystemPage() {
               if (canReadAudit) auditQuery.refetch();
             }}
           >
-            <RefreshCw className="h-4 w-4 mr-1" />
+            <RefreshCw className="h-4 w-4" />
             Làm mới
           </Button>
         }
@@ -204,7 +303,7 @@ export default function SystemPage() {
 
         {/* Audit Log Section */}
         <div className="bg-card rounded-2xl border border-border/70 shadow-sm overflow-hidden p-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-primary" />
@@ -214,13 +313,83 @@ export default function SystemPage() {
                 Ghi nhận tự động mọi thay đổi cấu hình, định tuyến và phân quyền trong toàn tổ chức.
               </p>
             </div>
-            <SearchInput
-              placeholder="Lọc theo hành động..."
-              value={auditList.search}
-              onChange={auditList.setSearch}
-              className="w-64"
-            />
+            {auditList.hasActiveFilters && (
+              <Button type="button" variant="ghost" size="sm" onClick={auditList.reset}>
+                <X className="size-3.5" />
+                Xóa bộ lọc
+              </Button>
+            )}
           </div>
+
+          {canReadAudit && (
+            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                <Field label="Hành động">
+                  <OptionSelect
+                    value={auditList.filters.action}
+                    onChange={(value) => auditList.setFilter("action", value)}
+                    options={ACTION_OPTIONS}
+                    allLabel="Tất cả hành động"
+                    placeholder="Chọn hành động"
+                    searchable
+                    searchPlaceholder="Tìm tên hành động..."
+                  />
+                </Field>
+                <Field label="Loại tài nguyên">
+                  <OptionSelect
+                    value={auditList.filters.resource_type}
+                    onChange={(value) => auditList.setFilter("resource_type", value)}
+                    options={RESOURCE_OPTIONS}
+                    allLabel="Tất cả tài nguyên"
+                    placeholder="Chọn loại tài nguyên"
+                    searchable
+                    searchPlaceholder="Tìm loại tài nguyên..."
+                  />
+                </Field>
+                <Field label="Người thực hiện" hint="Tìm theo họ tên hoặc tên đăng nhập.">
+                  <SearchInput
+                    value={auditList.filters.actor}
+                    onChange={(value) => auditList.setFilter("actor", value)}
+                    placeholder="VD: Nguyễn Văn An hoặc nguyenvana"
+                    className="max-w-none sm:max-w-none"
+                  />
+                </Field>
+                <Field label="Từ ngày">
+                  <DateTimePicker
+                    mode="date"
+                    value={auditList.filters.created_from}
+                    onChange={(value) => auditList.setFilter("created_from", value)}
+                    max={auditList.filters.created_to || undefined}
+                    placeholder="Chọn ngày bắt đầu"
+                  />
+                </Field>
+                <Field label="Đến ngày">
+                  <DateTimePicker
+                    mode="date"
+                    value={auditList.filters.created_to}
+                    onChange={(value) => auditList.setFilter("created_to", value)}
+                    min={auditList.filters.created_from || undefined}
+                    placeholder="Chọn ngày kết thúc"
+                  />
+                </Field>
+                <Field
+                  label="Mã cần tra cứu"
+                  hint="Tìm theo mã tài nguyên, Request ID hoặc mã hành động."
+                >
+                  <SearchInput
+                    value={auditList.search}
+                    onChange={auditList.setSearch}
+                    placeholder="Dán mã tài nguyên hoặc Request ID..."
+                    className="max-w-none sm:max-w-none"
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3 text-[11px] text-muted-foreground">
+                <span>{auditQuery.data?.meta?.total ?? 0} sự kiện phù hợp</span>
+                <span>Các ô chữ tự tìm sau 350 ms.</span>
+              </div>
+            </div>
+          )}
 
           {!canReadAudit ? (
             <div className="p-8 text-center text-xs text-muted-foreground border border-dashed rounded-xl">
@@ -259,12 +428,28 @@ export default function SystemPage() {
               <InfoGrid
                 columns={2}
                 items={[
-                  { label: "Hành động", value: <Code>{detailEvent.action}</Code> },
+                  {
+                    label: "Hành động",
+                    value: (
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        <span>{actionLabel(detailEvent.action)}</span>
+                        <Code>{detailEvent.action}</Code>
+                      </span>
+                    ),
+                  },
                   {
                     label: "Người thực hiện",
                     value: detailEvent.actor?.displayName ?? "Hệ thống",
                   },
-                  { label: "Loại tài nguyên", value: detailEvent.resourceType },
+                  {
+                    label: "Loại tài nguyên",
+                    value: (
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        <span>{RESOURCE_LABELS[detailEvent.resourceType] ?? detailEvent.resourceType}</span>
+                        <Code>{detailEvent.resourceType}</Code>
+                      </span>
+                    ),
+                  },
                   { label: "Mã tài nguyên", value: <Code>{detailEvent.resourceId}</Code> },
                   { label: "Mã yêu cầu (Request ID)", value: <Code>{detailEvent.requestId}</Code> },
                   { label: "Thời điểm ghi nhận", value: formatDateTime(detailEvent.createdAt) },

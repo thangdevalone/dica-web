@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
@@ -175,7 +175,7 @@ function RequestEditor({
           />
         </Field>
         <Field label="Ngày cần hàng" required>
-          <Input type="date" value={requiredDate} onChange={(e) => setRequiredDate(e.target.value)} className="h-9 text-xs" />
+          <DateTimePicker value={requiredDate} onChange={setRequiredDate} clearable={false} />
         </Field>
       </div>
       <Field label="Ghi chú">

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Field } from "@/components/shared/form";
 import { PageHeader } from "@/components/shared/page-header";
+import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -125,11 +126,11 @@ function ProfileForms({ user }: { user: MeProfile }) {
                 />
               </Field>
               <Field label="Ngày sinh">
-                <Input
-                  type="date"
+                <DateTimePicker
                   max={today}
                   value={dateOfBirth}
-                  onChange={(event) => setDateOfBirth(event.target.value)}
+                  onChange={setDateOfBirth}
+                  placeholder="Chọn ngày sinh"
                 />
               </Field>
             </div>
@@ -145,7 +146,7 @@ function ProfileForms({ user }: { user: MeProfile }) {
               <Textarea value={address} onChange={(event) => setAddress(event.target.value)} maxLength={500} />
             </Field>
             <Button type="submit" disabled={profile.isPending}>
-              <Save className="mr-2 size-4" />
+              <Save className="size-4" />
               {profile.isPending ? "Đang lưu..." : "Lưu thông tin"}
             </Button>
           </form>
@@ -177,7 +178,7 @@ function ProfileForms({ user }: { user: MeProfile }) {
               />
             </Field>
             <Button type="submit" variant="outline" disabled={!usernameValid || account.isPending}>
-              <UserCircle className="mr-2 size-4" />
+              <UserCircle className="size-4" />
               {account.isPending ? "Đang đổi..." : "Đổi tên đăng nhập"}
             </Button>
           </form>
@@ -229,7 +230,7 @@ function ProfileForms({ user }: { user: MeProfile }) {
               <p className="text-xs text-destructive">Mật khẩu xác nhận chưa khớp.</p>
             )}
             <Button type="submit" variant="outline" disabled={!passwordValid || password.isPending}>
-              <KeyRound className="mr-2 size-4" />
+              <KeyRound className="size-4" />
               {password.isPending ? "Đang đổi..." : "Đổi mật khẩu"}
             </Button>
           </form>

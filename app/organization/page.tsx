@@ -183,26 +183,29 @@ function FacilitiesTab() {
                     </div>
                   </div>
                   {canManage && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-1">
                       <Button
                         variant="outline"
-                        size="xs"
-                        className="flex-1 text-[11px]"
+                        size="sm"
+                        className="h-9 flex-1 gap-1.5 text-xs font-medium"
                         onClick={() => {
                           setEditing(fac);
                           setOpen(true);
                         }}
                       >
-                        <Pencil /> Sửa
+                        <Pencil className="size-3.5" /> Sửa
                       </Button>
                       <Button
                         variant={fac.active ? "destructive" : "outline"}
-                        size="xs"
-                        className="flex-1 text-[11px]"
+                        size="sm"
+                        className={cn(
+                          "h-9 flex-1 gap-1.5 text-xs font-medium",
+                          !fac.active && "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                        )}
                         disabled={toggle.isPending}
                         onClick={() => toggle.mutate(fac)}
                       >
-                        <Power /> {fac.active ? "Ngừng hoạt động" : "Kích hoạt"}
+                        <Power className="size-3.5" /> {fac.active ? "Ngừng hoạt động" : "Kích hoạt"}
                       </Button>
                     </div>
                   )}
