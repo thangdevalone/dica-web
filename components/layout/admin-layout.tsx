@@ -637,12 +637,12 @@ export function AdminLayout({
 
       {/* 3. Main Column */}
       <div className="flex flex-1 flex-col h-full min-w-0 overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-background px-4 sm:px-6">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-2 sm:h-16 sm:px-4 lg:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden size-9 shrink-0 text-muted-foreground hover:text-foreground"
+              className="size-9 shrink-0 text-muted-foreground hover:text-foreground lg:hidden"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Mở menu điều hướng"
             >
@@ -652,12 +652,12 @@ export function AdminLayout({
               <span>Hệ thống</span>
               <ChevronRight className="size-3.5 text-muted-foreground/60" />
             </div>
-            <span className="font-heading text-sm sm:text-base font-bold text-foreground truncate">
+            <span className="truncate font-heading text-sm font-bold text-foreground sm:text-base">
               {pageTitle}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-2 lg:gap-3">
             {permissions.includes("facility.read") && <FacilityScopeMenu />}
             <HealthPopover />
 
@@ -687,46 +687,48 @@ export function AdminLayout({
 
             <NotificationsPopover />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-9 text-muted-foreground hover:text-foreground"
-                  title="Tùy chỉnh giao diện: Sáng / Tối / Hệ thống"
-                >
-                  <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  <span className="sr-only">Chuyển đổi giao diện</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40 text-xs">
-                <DropdownMenuLabel>Chế độ hiển thị</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {[
-                  { key: "light", label: "Sáng (Light)", icon: Sun },
-                  { key: "dark", label: "Tối (Dark)", icon: Moon },
-                  { key: "system", label: "Hệ thống (Auto)", icon: Monitor },
-                ].map((opt) => (
-                  <DropdownMenuItem
-                    key={opt.key}
-                    onClick={() => setTheme(opt.key)}
-                    className="flex items-center justify-between cursor-pointer"
+            <div className="hidden sm:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 text-muted-foreground hover:text-foreground"
+                    title="Tùy chỉnh giao diện: Sáng / Tối / Hệ thống"
                   >
-                    <div className="flex items-center gap-2">
-                      <opt.icon className="size-3.5 text-muted-foreground" />
-                      <span>{opt.label}</span>
-                    </div>
-                    {theme === opt.key && <Check className="size-3.5 text-foreground" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">Chuyển đổi giao diện</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40 text-xs">
+                  <DropdownMenuLabel>Chế độ hiển thị</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {[
+                    { key: "light", label: "Sáng (Light)", icon: Sun },
+                    { key: "dark", label: "Tối (Dark)", icon: Moon },
+                    { key: "system", label: "Hệ thống (Auto)", icon: Monitor },
+                  ].map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.key}
+                      onClick={() => setTheme(opt.key)}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <opt.icon className="size-3.5 text-muted-foreground" />
+                        <span>{opt.label}</span>
+                      </div>
+                      {theme === opt.key && <Check className="size-3.5 text-foreground" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl space-y-6">
+        <main className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-4 lg:p-6">
+          <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
             {allowed ? (
               children
             ) : (
