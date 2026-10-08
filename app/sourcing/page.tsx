@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { GitBranch, History, ListChecks, Plus, Power, Upload } from "lucide-react";
+import { GitBranch, History, Pencil, Plus, Power, Upload } from "lucide-react";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -199,10 +199,22 @@ function GroupEligibilityTab() {
   const list = useListState({ department_id: "" });
   const query = usePagedQuery<GroupEligibility>("/group-eligibility", { ...list.params, facility_id: facilityId });
   const { data: groups = [] } = useIngredientGroups();
+  const [editing, setEditing] = React.useState<GroupEligibility | null>(null);
   const [open, setOpen] = React.useState(false);
   const [form, setForm] = React.useState({ facility_id: "", department_id: "", ingredient_group_id: "", max_quantity_per_request: "" });
   const openCreate = () => {
+    setEditing(null);
     setForm({ facility_id: facilityId ?? "", department_id: "", ingredient_group_id: "", max_quantity_per_request: "" });
+    setOpen(true);
+  };
+  const openEdit = (item: GroupEligibility) => {
+    setEditing(item);
+    setForm({
+      facility_id: item.facilityId,
+      department_id: item.departmentId,
+      ingredient_group_id: item.ingredientGroupId,
+      max_quantity_per_request: item.maxQuantityPerRequest ?? "",
+    });
     setOpen(true);
   };
   const save = useApiMutation({
@@ -210,7 +222,7 @@ function GroupEligibilityTab() {
       api.post("/group-eligibility", {
         ...form,
         max_quantity_per_request: form.max_quantity_per_request.trim() || null,
-        active: true,
+        active: editing?.active ?? true,
       }),
     invalidate: ["/group-eligibility", "/item-eligibility"],
     onSuccess: () => setOpen(false),
@@ -236,9 +248,14 @@ function GroupEligibilityTab() {
       header: "",
       className: "text-right",
       cell: (item) => canManage && (
-        <Button variant="ghost" size="icon-xs" title={item.active ? "Ngừng cho phép" : "Cho phép lại"} onClick={() => toggle.mutate(item)}>
-          <Power className={item.active ? "text-destructive" : ""} />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="icon-xs" title="Sửa hạn mức" onClick={() => openEdit(item)}>
+            <Pencil />
+          </Button>
+          <Button variant="ghost" size="icon-xs" title={item.active ? "Ngừng cho phép" : "Cho phép lại"} onClick={() => toggle.mutate(item)}>
+            <Power className={item.active ? "text-destructive" : ""} />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -266,19 +283,19 @@ function GroupEligibilityTab() {
           )}
           <FormDialog
             open={open}
-            onOpenChange={setOpen}
-            title="Cấp nhóm hàng cho bộ phận"
-            description="Các nguyên liệu hiện tại và được thêm sau này vào nhóm đều được phép xin. Cấu hình từng nguyên liệu sẽ được ưu tiên nếu có."
+            onOpenChange={(next) => { setOpen(next); if (!next) setEditing(null); }}
+            title={editing ? "Sửa quyền theo nhóm hàng" : "Cấp nhóm hàng cho bộ phận"}
+            description={editing ? "Điều chỉnh số lượng tối đa cho từng mặt hàng trong nhóm." : "Các nguyên liệu hiện tại và được thêm sau này vào nhóm đều được phép xin. Cấu hình từng nguyên liệu sẽ được ưu tiên nếu có."}
             onSubmit={() => save.mutate()}
             submitting={save.isPending}
             submitDisabled={!form.facility_id || !form.department_id || !form.ingredient_group_id}
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Cơ sở" required>
-                <FacilitySelect value={form.facility_id} onChange={(value) => setForm({ ...form, facility_id: value, department_id: "" })} activeOnly />
+                <FacilitySelect value={form.facility_id} onChange={(value) => setForm({ ...form, facility_id: value, department_id: "" })} disabled={Boolean(editing)} activeOnly />
               </Field>
               <Field label="Bộ phận" required>
-                <DepartmentSelect value={form.department_id} onChange={(department_id) => setForm({ ...form, department_id })} facilityId={form.facility_id || undefined} disabled={!form.facility_id} activeOnly />
+                <DepartmentSelect value={form.department_id} onChange={(department_id) => setForm({ ...form, department_id })} facilityId={form.facility_id || undefined} disabled={Boolean(editing) || !form.facility_id} activeOnly />
               </Field>
             </div>
             <Field label="Nhóm hàng" required>
@@ -287,6 +304,7 @@ function GroupEligibilityTab() {
                 onChange={(ingredient_group_id) => setForm({ ...form, ingredient_group_id })}
                 options={groups.filter((group) => group.active).map((group) => ({ value: group.id, label: `${group.code} · ${group.name}` }))}
                 placeholder="Chọn nhóm hàng"
+                disabled={Boolean(editing)}
               />
             </Field>
             <Field label="Số lượng tối đa cho từng mặt hàng/lần xin" hint="Không bắt buộc; mỗi mặt hàng dùng đơn vị cơ sở riêng.">
@@ -571,12 +589,12 @@ function RulesTab() {
 export default function SourcingPage() {
   const canEligibility = useCan("eligibility.read");
   const canRules = useCan("source_rule.read");
-  const defaultTab = canRules ? "rules" : "group-eligibility";
-  const [tab, setTab] = useTabSync(defaultTab, SOURCING_TABS);
-  React.useEffect(() => {
-    if (!canRules && canEligibility && tab === "rules") setTab("group-eligibility");
-    if (!canEligibility && canRules && tab !== "rules") setTab("rules");
-  }, [canRules, canEligibility, setTab, tab]);
+  const validTabs = React.useMemo(
+    () => SOURCING_TABS.filter((candidate) => candidate === "rules" ? canRules : canEligibility),
+    [canRules, canEligibility],
+  );
+  const defaultTab = validTabs[0] ?? "rules";
+  const [tab, setTab] = useTabSync(defaultTab, validTabs);
   return (
     <AdminLayout permission={["source_rule.read", "eligibility.read"]}>
       <div className="space-y-6">
@@ -584,7 +602,7 @@ export default function SourcingPage() {
           title="Nguồn hàng & hàng được xin"
           description="Chọn nơi cấp nguyên liệu và quy định từng bộ phận được phép xin những mặt hàng nào."
         />
-        <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof SOURCING_TABS)[number])} className="space-y-4">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof validTabs)[number])} className="space-y-4">
           {canRules && (
             <TabsContent value="rules">
               <RulesTab />

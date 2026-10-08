@@ -676,8 +676,10 @@ function SupplierLinksTab() {
             </div>
             <Field label="Nhà cung cấp ưu tiên" hint="Khi bật, nhà cung cấp đang được ưu tiên của nguyên liệu này sẽ tự động được bỏ đánh dấu.">
               <div className="flex h-9 items-center gap-3">
-                <Switch checked={form.is_preferred} onCheckedChange={(is_preferred) => setForm({ ...form, is_preferred })} />
-                <span className="text-xs text-muted-foreground">{form.is_preferred ? "Đang được ưu tiên" : "Không ưu tiên"}</span>
+                <Switch checked={form.is_preferred} disabled={editing?.active === false} onCheckedChange={(is_preferred) => setForm({ ...form, is_preferred })} />
+                <span className="text-xs text-muted-foreground">
+                  {editing?.active === false ? "Kích hoạt liên kết trước khi chọn ưu tiên" : form.is_preferred ? "Đang được ưu tiên" : "Không ưu tiên"}
+                </span>
               </div>
             </Field>
           </FormDialog>
