@@ -130,7 +130,7 @@ function toApiError(error: AxiosError<ErrorBody>): ApiError {
     message:
       error.code === "ECONNABORTED"
         ? "Máy chủ phản hồi quá lâu. Vui lòng thử lại."
-        : `Không kết nối được tới máy chủ API (${API_BASE_URL}).`,
+        : `Không kết nối được tới máy chủ (${API_BASE_URL}).`,
     code: "NETWORK_ERROR",
     status: 0,
   });

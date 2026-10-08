@@ -79,7 +79,7 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/",
         label: "Tổng quan vận hành",
         icon: LayoutDashboard,
-        badge: "Live",
+        badge: "Trực tiếp",
         permission: "dashboard.read",
       },
       {
@@ -118,7 +118,7 @@ export const NAV_SECTIONS: NavSection[] = [
           {
             href: "/reports?tab=variance",
             tabKey: "variance",
-            label: "Đối soát iPOS",
+            label: "So sánh tiêu hao iPOS",
             icon: Scale,
             permission: "report.variance",
           },
@@ -226,7 +226,7 @@ export const NAV_SECTIONS: NavSection[] = [
           {
             href: "/catalog?tab=links",
             tabKey: "links",
-            label: "Giá & SKU NCC",
+            label: "Hàng & giá nhà cung cấp",
             icon: Link2,
             permission: "supplier_ingredient.read",
           },
@@ -234,21 +234,21 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         href: "/sourcing",
-        label: "Định tuyến nguồn hàng",
+        label: "Nguồn hàng & quyền yêu cầu",
         icon: GitBranch,
         permission: ["eligibility.read", "source_rule.read"],
         children: [
           {
             href: "/sourcing?tab=rules",
             tabKey: "rules",
-            label: "Nguồn cấp",
+            label: "Nguồn cấp hàng",
             icon: GitBranch,
             permission: "source_rule.read",
           },
           {
             href: "/sourcing?tab=eligibility",
             tabKey: "eligibility",
-            label: "Hàng được phép xin",
+            label: "Hàng được phép yêu cầu",
             icon: ListChecks,
             permission: "eligibility.read",
           },
@@ -268,7 +268,7 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         href: "/orders",
-        label: "Đơn thực hiện",
+        label: "Đơn cấp hàng",
         icon: ShoppingCart,
         countKey: "openOrders",
         permission: "order.read",
@@ -287,7 +287,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         href: "/delivery",
-        label: "Xuất - Nhập & Sai lệch",
+        label: "Giao nhận hàng",
         icon: Truck,
         countKey: "openDiscrepancies",
         permission: ["dispatch.read", "receipt.read", "discrepancy.read"],
@@ -302,14 +302,14 @@ export const NAV_SECTIONS: NavSection[] = [
           {
             href: "/delivery?tab=receipts",
             tabKey: "receipts",
-            label: "Phiếu nhập nhận hàng",
+            label: "Phiếu nhận hàng",
             icon: PackageCheck,
             permission: "receipt.read",
           },
           {
             href: "/delivery?tab=discrepancies",
             tabKey: "discrepancies",
-            label: "Sai lệch giao nhận",
+            label: "Chênh lệch giao nhận",
             icon: AlertTriangle,
             countKey: "openDiscrepancies",
             permission: "discrepancy.read",
@@ -323,7 +323,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         href: "/inventory",
-        label: "Tồn kho & Sổ cái",
+        label: "Tồn kho & lịch sử kho",
         icon: Warehouse,
         countKey: "lowStock",
         permission: [
@@ -345,7 +345,7 @@ export const NAV_SECTIONS: NavSection[] = [
           {
             href: "/inventory?tab=ledger",
             tabKey: "ledger",
-            label: "Sổ cái kho",
+            label: "Lịch sử nhập xuất",
             icon: FileText,
             permission: "stock_ledger.read",
           },
@@ -375,11 +375,11 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: "iPOS & ĐỊNH LƯỢNG",
+    title: "iPOS & ĐỊNH MỨC",
     items: [
       {
         href: "/operations",
-        label: "Công thức & Hao hụt",
+        label: "iPOS & định mức",
         icon: Utensils,
         permission: [
           "ipos_mapping.read",
@@ -392,14 +392,14 @@ export const NAV_SECTIONS: NavSection[] = [
           {
             href: "/operations?tab=mappings",
             tabKey: "mappings",
-            label: "Ánh xạ món iPOS",
+            label: "Liên kết món iPOS",
             icon: Utensils,
             permission: "ipos_mapping.read",
           },
           {
             href: "/operations?tab=recipes",
             tabKey: "recipes",
-            label: "Công thức (BOM)",
+            label: "Định mức nguyên liệu",
             icon: ChefHat,
             permission: "recipe.read",
           },
@@ -413,7 +413,7 @@ export const NAV_SECTIONS: NavSection[] = [
           {
             href: "/operations?tab=variance",
             tabKey: "variance",
-            label: "Đối soát chênh lệch",
+            label: "So sánh tiêu hao",
             icon: Scale,
             permission: "variance.read",
           },
@@ -467,7 +467,7 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         href: "/system",
-        label: "Nhật ký & Trạng thái API",
+        label: "Nhật ký & tình trạng hệ thống",
         icon: Sliders,
       },
     ],

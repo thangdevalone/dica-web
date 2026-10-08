@@ -70,23 +70,23 @@ const PERMISSION_RESOURCE_LABELS: Record<string, string> = {
   conversion: "Quy đổi",
   supplier: "Nhà cung cấp",
   supplier_ingredient: "Hàng nhà cung cấp",
-  eligibility: "Danh mục được yêu cầu",
-  source_rule: "Định tuyến nguồn",
+  eligibility: "Hàng được phép yêu cầu",
+  source_rule: "Nguồn cấp hàng",
   request: "Yêu cầu cấp hàng",
-  order: "Đơn thực hiện",
+  order: "Đơn cấp hàng",
   transfer: "Điều chuyển",
   dispatch: "Xuất hàng",
   receipt: "Nhận hàng",
-  discrepancy: "Sai lệch",
+  discrepancy: "Chênh lệch giao nhận",
   stock: "Tồn kho",
-  stock_ledger: "Sổ kho",
+  stock_ledger: "Lịch sử nhập xuất",
   adjustment: "Điều chỉnh kho",
   stocktake: "Kiểm kê",
   damage: "Báo hỏng",
   variance: "Hao hụt",
   alert_rule: "Cảnh báo",
   recipe: "Định lượng",
-  ipos_mapping: "Ánh xạ iPOS",
+  ipos_mapping: "Liên kết món iPOS",
   sales_import: "Dữ liệu bán hàng",
   payment_tracking: "Thanh toán",
   report: "Báo cáo",
@@ -225,7 +225,7 @@ function ManageRoleDialog({
       description={
         role?.system
           ? "Vai trò gốc: có thể điều chỉnh bộ quyền nhưng mã, tên và trạng thái được bảo vệ."
-          : "Chọn chính xác các thao tác mà người mang vai trò này được thực hiện. Phạm vi dữ liệu được gán riêng ở tab Phân quyền theo phạm vi."
+          : "Chọn chính xác các thao tác mà người mang vai trò này được thực hiện. Phạm vi dữ liệu được gán riêng ở mục Phân quyền."
       }
       submitLabel={role ? "Lưu vai trò" : "Tạo vai trò"}
       size="xl"
@@ -246,7 +246,7 @@ function ManageRoleDialog({
           <Input
             value={code}
             onChange={(event) => setCode(event.target.value.toUpperCase())}
-            placeholder="VD: KITCHEN_MANAGER"
+            placeholder="Ví dụ: QUAN_LY_BEP"
             maxLength={80}
             disabled={Boolean(role)}
           />
@@ -255,7 +255,7 @@ function ManageRoleDialog({
           <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="VD: Quản lý bếp"
+            placeholder="Ví dụ: Quản lý bếp"
             maxLength={150}
             disabled={Boolean(role?.system)}
           />
@@ -486,7 +486,7 @@ function CreateUserDialog({
           hint="Tối thiểu 3 ký tự (viết liền không dấu)"
         >
           <Input
-            placeholder="VD: nguyenvanan"
+            placeholder="Ví dụ: nguyenvanan"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
@@ -497,7 +497,7 @@ function CreateUserDialog({
           hint="Không bắt buộc, nhân viên có thể cập nhật sau"
         >
           <Input
-            placeholder="VD: Nguyễn Văn An"
+            placeholder="Ví dụ: Nguyễn Văn An"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
           />
@@ -719,8 +719,8 @@ function AssignGrantDialog({
       tourId="users-grant-form"
       open={open}
       onOpenChange={onOpenChange}
-      title="Phân quyền tài khoản (Assign Grant)"
-      description="Gán vai trò cùng phạm vi truy cập dữ liệu (Cơ sở, Kho hoặc Bộ phận)."
+      title="Phân quyền tài khoản"
+      description="Chọn vai trò và giới hạn dữ liệu tài khoản được phép truy cập theo cơ sở, kho hoặc bộ phận."
       submitLabel="Gán quyền"
       loading={assign.isPending}
       disabled={!isValid}
@@ -746,13 +746,13 @@ function AssignGrantDialog({
             options={(usersQuery.data?.items ?? []).map((u) => ({
               value: u.id,
               label: `${u.displayName} (@${u.username})`,
-              hint: u.kind,
+              hint: u.kind === "INTERNAL" ? "Nhân viên nội bộ" : "Nhà cung cấp",
             }))}
             placeholder="Chọn tài khoản..."
           />
         </Field>
 
-        <Field label="Chọn vai trò (Role)" required>
+        <Field label="Chọn vai trò" required>
           <OptionSelect
             value={roleId}
             onChange={setRoleId}
@@ -761,7 +761,7 @@ function AssignGrantDialog({
           />
         </Field>
 
-        <Field label="Phạm vi truy cập (Scope)" required>
+        <Field label="Phạm vi truy cập" required>
           <OptionSelect
             value={scopeType}
             onChange={(v) => {
@@ -1263,8 +1263,8 @@ export default function UsersPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Tài Khoản & Phân Quyền (RBAC)"
-        description="Quản lý định danh người dùng, danh mục vai trò và chính sách phân quyền dữ liệu theo phạm vi."
+        title="Tài khoản & phân quyền"
+        description="Quản lý tài khoản, vai trò và phạm vi dữ liệu mỗi người được phép truy cập."
         icon={Users}
         actions={
           <div className="flex items-center gap-2">
@@ -1302,7 +1302,7 @@ export default function UsersPage() {
             {activeTab === "grants" && canAssignGrant && (
               <Button data-tour="users-create-grant" size="sm" onClick={() => setOpenAssignGrant(true)}>
                 <Plus className="h-4 w-4" />
-                Gán quyền (Grant)
+                Gán quyền
               </Button>
             )}
           </div>

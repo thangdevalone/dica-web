@@ -62,7 +62,7 @@ function EligibilityTab() {
       }
       return last!;
     },
-    successMessage: () => `Đã cấp quyền xin ${form.ingredient_ids.length} nguyên liệu.`,
+    successMessage: () => `Đã thêm ${form.ingredient_ids.length} nguyên liệu vào danh sách được phép yêu cầu.`,
     invalidate: ["/item-eligibility"],
     onSuccess: () => setOpen(false),
   });
@@ -81,7 +81,7 @@ function EligibilityTab() {
     { key: "facility", header: "Cơ sở", cell: (e) => e.facility?.name ?? "—" },
     { key: "department", header: "Bộ phận", cell: (e) => <Cell2 title={e.department?.name ?? "—"} sub={e.department?.code} /> },
     { key: "ingredient", header: "Nguyên liệu", cell: (e) => <Cell2 title={e.ingredient?.name ?? "—"} sub={`${e.ingredient?.code ?? ""}${e.ingredient?.baseUnit ? ` · ${e.ingredient.baseUnit.code}` : ""}`} /> },
-    { key: "maxQuantityPerRequest", header: "Tối đa/lần gọi", className: "text-right", headClassName: "text-right", cell: (e) => e.maxQuantityPerRequest ? `${e.maxQuantityPerRequest} ${e.ingredient?.baseUnit?.code ?? ""}` : "Không giới hạn" },
+    { key: "maxQuantityPerRequest", header: "Tối đa/lần yêu cầu", className: "text-right", headClassName: "text-right", cell: (e) => e.maxQuantityPerRequest ? `${e.maxQuantityPerRequest} ${e.ingredient?.baseUnit?.code ?? ""}` : "Không giới hạn" },
     { key: "active", header: "Trạng thái", cell: (e) => <ActiveBadge active={e.active} /> },
     {
       key: "actions",
@@ -89,7 +89,7 @@ function EligibilityTab() {
       className: "text-right",
       cell: (e) =>
         canManage && (
-          <Button variant="ghost" size="icon-xs" title={e.active ? "Thu hồi" : "Cấp lại"} onClick={() => toggle.mutate(e)}>
+          <Button variant="ghost" size="icon-xs" title={e.active ? "Ngừng cho phép" : "Cho phép lại"} onClick={() => toggle.mutate(e)}>
             <Power className={e.active ? "text-destructive" : ""} />
           </Button>
         ),
@@ -107,7 +107,7 @@ function EligibilityTab() {
       error={query.error}
       meta={query.data?.meta}
       onPageChange={list.setPage}
-      emptyText="Chưa cấu hình nguyên liệu được phép xin."
+      emptyText="Chưa có nguyên liệu nào được phép yêu cầu."
       toolbar={
         <>
           <div className="flex flex-1 flex-col gap-2 sm:flex-row">
@@ -122,15 +122,15 @@ function EligibilityTab() {
           </div>
           {canManage && (
             <Button data-tour="sourcing-create-eligibility" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setOpen(true)}>
-              <Plus className="size-3.5" /> Cấp quyền xin hàng
+              <Plus className="size-3.5" /> Thêm hàng được phép yêu cầu
             </Button>
           )}
           <FormDialog
             tourId="sourcing-eligibility-form"
             open={open}
             onOpenChange={setOpen}
-            title="Cấp quyền xin hàng cho bộ phận"
-            description="Chỉ nguyên liệu được cấp quyền mới có thể đưa vào yêu cầu hàng của bộ phận."
+            title="Thêm hàng bộ phận được phép yêu cầu"
+            description="Chọn những nguyên liệu bộ phận này có thể đưa vào phiếu yêu cầu hàng."
             onSubmit={() => save.mutate()}
             submitting={save.isPending}
             submitDisabled={!form.facility_id || !form.department_id || form.ingredient_ids.length === 0}
@@ -157,7 +157,7 @@ function EligibilityTab() {
                 activeOnly
               />
             </Field>
-            <Field label="Số lượng tối đa mỗi lần gọi" hint="Không bắt buộc; tính theo đơn vị cơ sở và áp dụng cho các nguyên liệu đang chọn.">
+            <Field label="Số lượng tối đa mỗi lần yêu cầu" hint="Không bắt buộc; tính theo đơn vị cơ sở và áp dụng cho các nguyên liệu đang chọn.">
               <Input
                 type="number"
                 min="0.001"
@@ -227,7 +227,7 @@ function RuleDialog({ open, onOpenChange, rule }: { open: boolean; onOpenChange:
       open={open}
       onOpenChange={onOpenChange}
       title={rule ? "Đổi nguồn cấp" : "Cấu hình nguồn cấp"}
-      description="Mỗi cơ sở – nguyên liệu có một nguồn cấp; mỗi lần thay đổi tạo revision mới để truy vết."
+      description="Mỗi nguyên liệu tại một cơ sở chỉ có một nguồn cấp đang áp dụng. Mỗi lần đổi nguồn sẽ được lưu thành một phiên bản để tra cứu lại."
       onSubmit={() => save.mutate()}
       submitting={save.isPending}
       submitDisabled={!ready}
@@ -255,7 +255,7 @@ function RuleDialog({ open, onOpenChange, rule }: { open: boolean; onOpenChange:
           <LocationSelect value={form.source_stock_location_id} onChange={(v) => setForm({ ...form, source_stock_location_id: v })} physicalOnly activeOnly />
         </Field>
       ) : (
-        <Field label="Nhà cung cấp" required hint="Nhà cung cấp phải được liên kết với nguyên liệu (Danh mục → Giá & SKU NCC).">
+        <Field label="Nhà cung cấp" required hint="Nhà cung cấp phải có nguyên liệu này trong mục Danh mục → Hàng & giá nhà cung cấp.">
           <SupplierSelect value={form.supplier_id} onChange={(v) => setForm({ ...form, supplier_id: v })} activeOnly />
         </Field>
       )}
@@ -286,14 +286,14 @@ function HistorySheet({ rule, onOpenChange }: { rule: SourceRule | null; onOpenC
       error={query.error}
     >
       <MiniTable
-        headers={[{ label: "Rev" }, { label: "Thời điểm" }, { label: "Trước" }, { label: "Sau" }]}
+        headers={[{ label: "Phiên bản" }, { label: "Thời điểm" }, { label: "Trước" }, { label: "Sau" }]}
         rows={(query.data?.items ?? []).map((h) => [`#${h.revision}`, formatDateTime(h.changedAt), describe(h.beforeData), describe(h.afterData)])}
       />
     </DetailSheet>
   );
 }
 
-const CSV_HINT = "Mỗi dòng: MÃ_CƠ_SỞ,MÃ_NGUYÊN_LIỆU,STOCK|SUPPLIER,MÃ_KHO hoặc MÃ_NCC";
+const CSV_HINT = "Mỗi dòng gồm: mã cơ sở, mã nguyên liệu, loại nguồn (STOCK = kho hoặc SUPPLIER = nhà cung cấp), mã kho hoặc mã nhà cung cấp.";
 
 function BulkDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const [text, setText] = React.useState("");
@@ -389,7 +389,7 @@ function RulesTab() {
           <Cell2 title={r.supplier?.name ?? "—"} sub={r.supplier?.code} />
         ),
     },
-    { key: "rev", header: "Revision", cell: (r) => <Code>#{r.revision}</Code> },
+    { key: "rev", header: "Phiên bản", cell: (r) => <Code>#{r.revision}</Code> },
     { key: "from", header: "Hiệu lực từ", cell: (r) => formatDateTime(r.effectiveFrom) },
     { key: "active", header: "Trạng thái", cell: (r) => <ActiveBadge active={r.active} /> },
     {
@@ -434,14 +434,14 @@ function RulesTab() {
                   { value: "STOCK", label: SOURCE_TYPE_LABELS.STOCK! },
                   { value: "SUPPLIER", label: SOURCE_TYPE_LABELS.SUPPLIER! },
                 ]}
-                allLabel="Mọi loại nguồn"
+                allLabel="Tất cả loại nguồn"
                 className="sm:w-44"
               />
             </div>
             <div className="flex gap-2">
               {canBulk && (
                 <Button data-tour="sourcing-bulk" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setBulk(true)}>
-                  <Upload className="size-3.5" /> Hàng loạt
+                  <Upload className="size-3.5" /> Nhập danh sách
                 </Button>
               )}
               {canManage && (
@@ -473,8 +473,8 @@ export default function SourcingPage() {
     <AdminLayout permission={["source_rule.read", "eligibility.read"]}>
       <div className="space-y-6">
         <PageHeader
-          title="Nguồn Cấp & Quyền Xin Hàng"
-          description="Định tuyến nguồn cấp cho từng cơ sở – nguyên liệu và cấu hình nguyên liệu mỗi bộ phận được phép xin."
+          title="Nguồn hàng & quyền yêu cầu"
+          description="Chọn nơi cấp từng nguyên liệu và quy định mỗi bộ phận được phép yêu cầu những mặt hàng nào."
         />
         <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof validTabs)[number])} className="space-y-4">
           {canRules && (

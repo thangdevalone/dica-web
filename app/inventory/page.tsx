@@ -131,17 +131,17 @@ function CreateAdjustmentDialog({
         <Field
           label="Số lượng điều chỉnh (+ hoặc -)"
           required
-          hint="VD: +5 hoặc -2.5 (dấu trừ nếu hao hụt, dấu cộng nếu nhập thêm ngoài luồng)"
+          hint="Ví dụ: +5 để tăng tồn hoặc -2.5 để giảm tồn."
         >
           <Input
-            placeholder="VD: -2.5"
+            placeholder="Ví dụ: -2.5"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
           />
         </Field>
         <Field label="Lý do điều chỉnh" required hint="Tối thiểu 3 ký tự">
           <Textarea
-            placeholder="VD: Kiểm đếm bù trừ chênh lệch đầu ca..."
+            placeholder="Ví dụ: Điều chỉnh chênh lệch sau khi kiểm đếm đầu ca..."
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={2}
@@ -226,7 +226,7 @@ function CreateDamageDialog({
         </Field>
         <Field label="Lý do chung" required hint="Lý do lập biên bản hủy hỏng">
           <Textarea
-            placeholder="VD: Hàng hỏng do mất điện kho lạnh..."
+            placeholder="Ví dụ: Hàng hỏng do mất điện kho lạnh..."
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={2}
@@ -241,14 +241,14 @@ function CreateDamageDialog({
               type="number"
               step="any"
               min="0"
-              placeholder="VD: 3.5"
+              placeholder="Ví dụ: 3.5"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
             />
           </Field>
           <Field label="Ghi chú chi tiết mặt hàng">
             <Input
-              placeholder="VD: Bao bì rách vỡ..."
+              placeholder="Ví dụ: Bao bì rách vỡ..."
               value={lineReason}
               onChange={(e) => setLineReason(e.target.value)}
             />
@@ -393,7 +393,7 @@ export default function InventoryPage() {
         { idempotencyKey: `web:adjustment:${adj.id}:v${adj.version}` }
       ),
     invalidate: INVALIDATE,
-    successMessage: "Đã ghi sổ điều chỉnh tồn kho vào sổ cái.",
+    successMessage: "Đã áp dụng phiếu điều chỉnh vào số lượng tồn kho.",
   });
 
   // Action mutations for damage
@@ -439,7 +439,7 @@ export default function InventoryPage() {
     },
     {
       key: "unit",
-      header: "ĐVT",
+      header: "Đơn vị",
       width: "80px",
       render: (b) => <span className="text-xs">{b.ingredient?.baseUnit?.code ?? "—"}</span>,
     },
@@ -475,7 +475,7 @@ export default function InventoryPage() {
   const ledgerColumns: Column<StockLedgerEntry>[] = [
     {
       key: "time",
-      header: "Thời điểm ghi sổ",
+      header: "Thời điểm cập nhật",
       width: "160px",
       render: (l) => (
         <span className="text-xs text-muted-foreground">{formatDateTime(l.postedAt)}</span>
@@ -483,7 +483,7 @@ export default function InventoryPage() {
     },
     {
       key: "location",
-      header: "Kho ghi sổ",
+      header: "Kho",
       render: (l) => (
         <Cell2
           top={l.stockLocation?.name ?? l.stockLocationId}
@@ -625,7 +625,7 @@ export default function InventoryPage() {
               disabled={postAdjustMutation.isPending}
             >
               <FileCheck2 className="h-3.5 w-3.5" />
-              Ghi sổ
+              Cập nhật tồn
             </Button>
           )}
         </div>
@@ -755,8 +755,8 @@ export default function InventoryPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Kho & Quản Lý Tồn Kho"
-        description="Tra cứu tồn kho tức thời, theo dõi sổ cái biến động, điều chỉnh, kiểm kê và xử lý hao hụt."
+        title="Kho & quản lý tồn kho"
+        description="Tra cứu số lượng tồn, theo dõi lịch sử nhập xuất, điều chỉnh, kiểm kê và xử lý hàng hỏng."
         icon={Warehouse}
         actions={
           <div className="flex items-center gap-2">
@@ -877,7 +877,7 @@ export default function InventoryPage() {
               onPageChange={ledgerList.setPage}
               onPageSizeChange={ledgerList.setPageSize}
               loading={ledgerQuery.isLoading}
-              emptyMessage="Không có bản ghi sổ cái nào."
+              emptyMessage="Chưa có lịch sử nhập xuất kho."
             />
           </TabsContent>
 

@@ -167,7 +167,7 @@ function TransferEditor({
               placeholder="Chọn kho xuất..."
             />
           </Field>
-          <Field label="Kho nhận đích" required hint="Kho tiếp nhận">
+          <Field label="Kho nhận hàng" required hint="Kho sẽ tiếp nhận hàng điều chuyển">
             <OptionSelect
               value={toLocId}
               onChange={setToLocId}
@@ -248,7 +248,7 @@ export default function TransfersPage() {
     invalidate: INVALIDATE,
     successMessage: (updated) =>
       updated.status === "APPROVED"
-        ? "Đã tự duyệt điều chuyển Kho tổng/Bếp tổng và tạo đơn thực hiện."
+        ? "Đã tự duyệt điều chuyển giữa Kho tổng và Bếp tổng, đồng thời tạo đơn cấp hàng."
         : "Đã gửi phiếu điều chuyển chờ Quản lý tổng duyệt.",
     onSuccess: () => {
       if (detailId) detailQuery.refetch();
@@ -263,7 +263,7 @@ export default function TransfersPage() {
         { idempotencyKey: `web:transfer:${t.id}:v${t.version}` }
       ),
     invalidate: INVALIDATE,
-    successMessage: "Đã phê duyệt phiếu điều chuyển. Đơn thực hiện đã được khởi tạo tự động.",
+    successMessage: "Đã phê duyệt phiếu điều chuyển. Đơn cấp hàng đã được tạo tự động.",
     onSuccess: () => {
       if (detailId) detailQuery.refetch();
     },
@@ -290,11 +290,11 @@ export default function TransfersPage() {
       if (!cancelTarget) throw new Error("No target");
       return api.post(`/transfers/${cancelTarget.id}/cancel`, {
         expected_version: cancelTarget.version,
-        note: reason || "Huỷ phiếu điều chuyển",
+        note: reason || "Hủy phiếu điều chuyển",
       });
     },
     invalidate: INVALIDATE,
-    successMessage: "Đã huỷ phiếu điều chuyển.",
+    successMessage: "Đã hủy phiếu điều chuyển.",
     onSuccess: () => {
       setCancelTarget(null);
       if (detailId) detailQuery.refetch();
@@ -393,8 +393,8 @@ export default function TransfersPage() {
     <AdminLayout permission="transfer.read">
       <div className="space-y-6">
         <PageHeader
-          title="Điều Chuyển Kho Nội Bộ"
-          description="Lập phiếu, phê duyệt và giám sát luồng điều chuyển nguyên vật liệu giữa các kho vật lý."
+          title="Điều chuyển kho nội bộ"
+          description="Lập phiếu, phê duyệt và theo dõi việc chuyển nguyên vật liệu giữa các kho."
           actions={
             canCreate && (
               <Button data-tour="transfers-create" size="sm" className="gap-1.5 text-xs" onClick={() => setEditorMode({ kind: "create" })}>
@@ -499,7 +499,7 @@ export default function TransfersPage() {
                     className="text-destructive hover:bg-destructive/10 text-xs"
                     onClick={() => setCancelTarget(detail)}
                   >
-                    <Ban className="size-3.5" /> Huỷ phiếu
+                    <Ban className="size-3.5" /> Hủy phiếu
                   </Button>
                 )}
               </div>
@@ -527,7 +527,7 @@ export default function TransfersPage() {
               <MiniTable
                 headers={[
                   { label: "Nguyên liệu" },
-                  { label: "ĐVT" },
+                  { label: "Đơn vị" },
                   { label: "Số lượng", className: "text-right" },
                 ]}
                 rows={(detail.lines ?? []).map((l) => [
@@ -539,7 +539,7 @@ export default function TransfersPage() {
             </Section>
 
             {(detail.orders?.length ?? 0) > 0 && (
-              <Section title="Đơn thực hiện phát sinh">
+              <Section title="Đơn cấp hàng đã tạo">
                 <MiniTable
                   headers={[{ label: "Mã đơn" }, { label: "Trạng thái" }, { label: "" }]}
                   rows={(detail.orders ?? []).map((ord) => [
@@ -575,11 +575,11 @@ export default function TransfersPage() {
       <ConfirmDialog
         open={Boolean(cancelTarget)}
         onOpenChange={(o) => !o && setCancelTarget(null)}
-        title="Huỷ phiếu điều chuyển?"
-        description={`Phiếu ${cancelTarget?.code}: Thao tác huỷ không thể hoàn tác.`}
-        confirmLabel="Huỷ phiếu"
+        title="Hủy phiếu điều chuyển?"
+        description={`Phiếu ${cancelTarget?.code}: Thao tác hủy không thể hoàn tác.`}
+        confirmLabel="Hủy phiếu"
         destructive
-        reason={{ label: "Lý do huỷ", required: true }}
+        reason={{ label: "Lý do hủy", required: true }}
         loading={cancelMutation.isPending}
         onConfirm={(reason) => cancelMutation.mutate(reason ?? "")}
       />

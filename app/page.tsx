@@ -51,7 +51,7 @@ export default function DashboardPage() {
     <AdminLayout permission="dashboard.read">
       <div className="space-y-6">
         <PageHeader
-          title="Trung Tâm Điều Hành Cung Ứng & Tồn Kho"
+          title="Tổng quan cung ứng & tồn kho"
           description={
             summary
               ? `Số liệu trực tiếp từ hệ thống · cập nhật ${formatDateTime(summary.generated_at)}`

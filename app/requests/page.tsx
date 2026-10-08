@@ -149,7 +149,7 @@ function RequestEditor({
       open={open}
       onOpenChange={onOpenChange}
       title={title}
-      description="Yêu cầu được lưu dạng nháp; gửi duyệt để hệ thống định tuyến nguồn cấp (kho/nhà cung cấp) theo cấu hình."
+      description="Yêu cầu được lưu dạng nháp. Sau khi duyệt, hệ thống tự chọn kho hoặc nhà cung cấp theo cấu hình nguồn hàng."
       onSubmit={submit}
       submitting={save.isPending}
       submitLabel={mode?.kind === "create" ? "Tạo bản nháp" : "Lưu thay đổi"}
@@ -183,13 +183,13 @@ function RequestEditor({
         <Textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-16 text-xs" maxLength={1000} />
       </Field>
       <Field
-        label="Dòng hàng"
+        label="Danh sách hàng yêu cầu"
         required
         hint={
           allowed
             ? allowed.size
-              ? `Bộ phận được phép xin ${allowed.size} nguyên liệu.`
-              : "Bộ phận chưa được cấu hình nguyên liệu được phép xin (Nguồn cấp → Hàng được phép xin)."
+              ? `Bộ phận được phép yêu cầu ${allowed.size} nguyên liệu.`
+              : "Bộ phận chưa có nguyên liệu được phép yêu cầu (Nguồn hàng & quyền yêu cầu → Hàng được phép yêu cầu)."
             : "Đơn vị khác đơn vị cơ sở cần có quy đổi đang hiệu lực."
         }
       >
@@ -263,7 +263,7 @@ function RequestDetail({
       )}
       {(status === "DRAFT" || status === "SUBMITTED" || status === "REJECTED") && can.cancel && (
         <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive" onClick={() => setAction("cancel")}>
-          <Ban className="size-3.5" /> Huỷ
+          <Ban className="size-3.5" /> Hủy
         </Button>
       )}
       {status === "SUBMITTED" && can.reject && (
@@ -285,10 +285,10 @@ function RequestDetail({
   );
 
   const confirmCopy: Record<ActionKind, { title: string; description: string; label: string; reason?: { label: string; required?: boolean } }> = {
-    submit: { title: "Gửi duyệt yêu cầu?", description: "Hệ thống sẽ chốt nguồn cấp cho từng dòng theo cấu hình hiện hành.", label: "Gửi duyệt", reason: { label: "Ghi chú (tuỳ chọn)" } },
-    approve: { title: "Duyệt yêu cầu?", description: "Duyệt sẽ tạo đơn thực hiện (xuất kho hoặc đặt nhà cung cấp) cho các dòng.", label: "Duyệt", reason: { label: "Ghi chú duyệt (tuỳ chọn)" } },
+    submit: { title: "Gửi duyệt yêu cầu?", description: "Hệ thống sẽ xác định nguồn cấp cho từng mặt hàng theo cấu hình hiện tại.", label: "Gửi duyệt", reason: { label: "Ghi chú (không bắt buộc)" } },
+    approve: { title: "Duyệt yêu cầu?", description: "Sau khi duyệt, hệ thống sẽ tạo đơn cấp hàng từ kho hoặc nhà cung cấp cho các mặt hàng.", label: "Duyệt", reason: { label: "Ghi chú duyệt (không bắt buộc)" } },
     reject: { title: "Từ chối yêu cầu?", description: "Người tạo có thể chỉnh sửa và gửi lại.", label: "Từ chối", reason: { label: "Lý do từ chối", required: true } },
-    cancel: { title: "Huỷ yêu cầu?", description: "Yêu cầu bị huỷ sẽ không thể khôi phục.", label: "Huỷ yêu cầu", reason: { label: "Lý do huỷ", required: true } },
+    cancel: { title: "Hủy yêu cầu?", description: "Yêu cầu bị hủy sẽ không thể khôi phục.", label: "Hủy yêu cầu", reason: { label: "Lý do hủy", required: true } },
     refresh: { title: "Cập nhật nguồn cấp?", description: "Tính lại quy đổi và nguồn cấp của các dòng theo cấu hình mới nhất.", label: "Cập nhật" },
   };
   const copy = action ? confirmCopy[action] : null;
@@ -324,7 +324,7 @@ function RequestDetail({
           {r.note && (
             <p className="rounded-xl border border-border/70 bg-muted/20 p-3 text-xs text-muted-foreground">{r.note}</p>
           )}
-          <Section title={`Dòng hàng (${r.lines?.length ?? 0})`}>
+          <Section title={`Hàng yêu cầu (${r.lines?.length ?? 0})`}>
             <MiniTable
               headers={[
                 { label: "Nguyên liệu" },
@@ -339,16 +339,16 @@ function RequestDetail({
                 l.sourceTypeSnapshot ? (
                   <span key="s">
                     {labelOf(SOURCE_TYPE_LABELS, l.sourceTypeSnapshot)}
-                    {l.sourceRuleRevision ? <span className="text-muted-foreground"> · rev {l.sourceRuleRevision}</span> : null}
+                    {l.sourceRuleRevision ? <span className="text-muted-foreground"> · phiên bản {l.sourceRuleRevision}</span> : null}
                   </span>
                 ) : (
-                  <span key="s" className="text-muted-foreground">Chưa định tuyến</span>
+                  <span key="s" className="text-muted-foreground">Chưa xác định nguồn cấp</span>
                 ),
               ])}
             />
           </Section>
           {(r.orders?.length ?? 0) > 0 && (
-            <Section title="Đơn thực hiện đã tạo">
+            <Section title="Đơn cấp hàng đã tạo">
               <MiniTable
                 headers={[{ label: "Mã đơn" }, { label: "Loại" }, { label: "Số dòng", className: "text-right" }, { label: "Trạng thái" }, { label: "" }]}
                 rows={(r.orders ?? []).map((o) => [
@@ -435,7 +435,7 @@ export default function RequestsPage() {
     <AdminLayout permission="request.read">
       <div className="space-y-6">
         <PageHeader
-          title="Yêu Cầu Hàng"
+          title="Yêu cầu hàng"
           description="Bộ phận lập yêu cầu, gửi duyệt; khi duyệt hệ thống tự tạo đơn xuất kho hoặc đặt nhà cung cấp."
           actions={
             canCreate && (

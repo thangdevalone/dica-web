@@ -125,7 +125,7 @@ function CreateDispatchDialog({
       open={open}
       onOpenChange={onOpenChange}
       title="Lập phiếu xuất kho mới"
-      description="Tạo phiếu xuất kho cho đơn thực hiện đang mở."
+      description="Tạo phiếu xuất kho cho đơn cấp hàng đang mở."
       submitLabel="Tạo phiếu xuất"
       submitting={createMutation.isPending}
       submitDisabled={!isValid}
@@ -133,7 +133,7 @@ function CreateDispatchDialog({
       size="lg"
     >
       <div className="space-y-4">
-        <Field label="Đơn thực hiện" required hint="Chọn đơn thực hiện cần xuất kho">
+        <Field label="Đơn cấp hàng" required hint="Chọn đơn cần xuất kho">
           <OptionSelect
             value={orderId}
             onChange={setOrderId}
@@ -165,7 +165,7 @@ function CreateDispatchDialog({
                 <thead className="bg-muted/50 border-b border-border/60">
                   <tr>
                     <th className="p-2 text-left font-medium">Nguyên liệu</th>
-                    <th className="p-2 text-left font-medium w-16">ĐVT</th>
+                    <th className="p-2 text-left font-medium w-16">Đơn vị</th>
                     <th className="p-2 text-right font-medium w-20">Đã duyệt</th>
                     <th className="p-2 text-right font-medium w-20">Đã xuất</th>
                     <th className="p-2 text-right font-medium w-28">Xuất đợt này</th>
@@ -277,7 +277,7 @@ function CreateReceiptDialog({
       });
     },
     invalidate: INVALIDATE,
-    successMessage: "Đã tạo phiếu nhập nhận hàng.",
+    successMessage: "Đã tạo phiếu nhận hàng.",
     onSuccess: (res) => {
       onOpenChange(false);
       setOrderId("");
@@ -297,7 +297,7 @@ function CreateReceiptDialog({
       tourId="delivery-receipt-form"
       open={open}
       onOpenChange={onOpenChange}
-      title="Lập phiếu nhập nhận hàng mới"
+      title="Lập phiếu nhận hàng mới"
       description="Ghi nhận hàng thực nhập vào kho đích từ xe giao hoặc nhà cung cấp."
       submitLabel="Tạo phiếu nhập"
       submitting={createMutation.isPending}
@@ -306,7 +306,7 @@ function CreateReceiptDialog({
       size="lg"
     >
       <div className="space-y-4">
-        <Field label="Đơn thực hiện" required hint="Chọn đơn hàng đang giao">
+        <Field label="Đơn cấp hàng" required hint="Chọn đơn hàng đang giao">
           <OptionSelect
             value={orderId}
             onChange={(val) => {
@@ -323,7 +323,7 @@ function CreateReceiptDialog({
         </Field>
 
         {postedDispatches.length > 0 && (
-          <Field label="Phiếu xuất kho liên quan" hint="Tuỳ chọn liên kết phiếu xuất tương ứng">
+          <Field label="Phiếu xuất kho liên quan" hint="Không bắt buộc; dùng để liên kết với phiếu xuất tương ứng.">
             <OptionSelect
               value={dispatchId}
               onChange={setDispatchId}
@@ -356,7 +356,7 @@ function CreateReceiptDialog({
                 <thead className="bg-muted/50 border-b border-border/60">
                   <tr>
                     <th className="p-2 text-left font-medium">Nguyên liệu</th>
-                    <th className="p-2 text-left font-medium w-16">ĐVT</th>
+                    <th className="p-2 text-left font-medium w-16">Đơn vị</th>
                     <th className="p-2 text-right font-medium w-20">Đã xuất</th>
                     <th className="p-2 text-right font-medium w-20">Đã nhận</th>
                     <th className="p-2 text-right font-medium w-28">Nhận đợt này</th>
@@ -473,7 +473,7 @@ export default function DeliveryPage() {
       }, { idempotencyKey: `web:dispatch:${postDispatchTarget.id}:v${postDispatchTarget.version}` });
     },
     invalidate: INVALIDATE,
-    successMessage: "Đã ghi sổ phiếu xuất kho và trừ tồn kho thực tế.",
+    successMessage: "Đã xác nhận xuất hàng và trừ số lượng tồn kho.",
     onSuccess: () => {
       setPostDispatchTarget(null);
       if (detailDispatchId) dispatchDetailQuery.refetch();
@@ -488,7 +488,7 @@ export default function DeliveryPage() {
       }, { idempotencyKey: `web:receipt:${postReceiptTarget.id}:v${postReceiptTarget.version}` });
     },
     invalidate: INVALIDATE,
-    successMessage: "Đã ghi sổ phiếu nhập và cộng tồn kho thực tế.",
+    successMessage: "Đã xác nhận nhận hàng và cộng số lượng vào kho đích.",
     onSuccess: () => {
       setPostReceiptTarget(null);
       if (detailReceiptId) receiptDetailQuery.refetch();
@@ -503,7 +503,7 @@ export default function DeliveryPage() {
       });
     },
     invalidate: INVALIDATE,
-    successMessage: "Đã đánh dấu xử lý sai lệch giao nhận.",
+    successMessage: "Đã đánh dấu xử lý chênh lệch giao nhận.",
     onSuccess: () => setResolveTarget(null),
   });
 
@@ -520,7 +520,7 @@ export default function DeliveryPage() {
     },
     {
       key: "order",
-      header: "Đơn thực hiện",
+      header: "Đơn cấp hàng",
       cell: (d) => (
         <Cell2
           title={d.order?.code ?? d.orderId}
@@ -542,10 +542,10 @@ export default function DeliveryPage() {
     },
     {
       key: "postedAt",
-      header: "Ghi sổ lúc",
+      header: "Xác nhận xuất lúc",
       cell: (d) => (
         <span className="text-xs text-muted-foreground">
-          {d.postedAt ? formatDateTime(d.postedAt) : "Chưa ghi sổ"}
+          {d.postedAt ? formatDateTime(d.postedAt) : "Chưa xác nhận xuất"}
         </span>
       ),
     },
@@ -562,7 +562,7 @@ export default function DeliveryPage() {
               className="h-7 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50"
               onClick={() => setPostDispatchTarget(d)}
             >
-              <FileCheck2 className="size-3.5" /> Ghi sổ
+              <FileCheck2 className="size-3.5" /> Xác nhận xuất
             </Button>
           )}
         </div>
@@ -593,7 +593,7 @@ export default function DeliveryPage() {
     },
     {
       key: "discrepancies",
-      header: "Sai lệch",
+      header: "Chênh lệch",
       className: "text-center",
       headClassName: "text-center",
       cell: (r) => {
@@ -614,10 +614,10 @@ export default function DeliveryPage() {
     },
     {
       key: "postedAt",
-      header: "Ghi sổ lúc",
+      header: "Xác nhận nhận lúc",
       cell: (r) => (
         <span className="text-xs text-muted-foreground">
-          {r.postedAt ? formatDateTime(r.postedAt) : "Chưa ghi sổ"}
+          {r.postedAt ? formatDateTime(r.postedAt) : "Chưa xác nhận nhận"}
         </span>
       ),
     },
@@ -634,7 +634,7 @@ export default function DeliveryPage() {
               className="h-7 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50"
               onClick={() => setPostReceiptTarget(r)}
             >
-              <FileCheck2 className="size-3.5" /> Ghi sổ
+              <FileCheck2 className="size-3.5" /> Xác nhận nhận
             </Button>
           )}
         </div>
@@ -645,7 +645,7 @@ export default function DeliveryPage() {
   const discrepancyColumns: Column<DiscrepancyCase>[] = [
     {
       key: "type",
-      header: "Loại sai lệch",
+      header: "Loại chênh lệch",
       cell: (c) => {
         const labels: Record<string, string> = {
           SHORTAGE: "Thiếu hàng",
@@ -657,7 +657,7 @@ export default function DeliveryPage() {
     },
     {
       key: "receipt",
-      header: "Phiếu nhập",
+      header: "Phiếu nhận hàng",
       cell: (c) => (
         <Cell2
           title={c.receipt?.code ?? c.receiptId}
@@ -709,8 +709,8 @@ export default function DeliveryPage() {
     <AdminLayout permission={["dispatch.read", "receipt.read", "discrepancy.read"]}>
       <div className="space-y-6">
         <PageHeader
-          title="Giao Nhận & Vận Chuyển"
-          description="Quản lý phiếu xuất kho, phiếu nhập hàng và đối soát sai lệch trong chuỗi cung ứng."
+          title="Giao nhận & vận chuyển"
+          description="Quản lý phiếu xuất kho, phiếu nhận hàng và xử lý chênh lệch khi giao nhận."
           actions={
             <div className="flex items-center gap-2">
               {activeTab === "dispatches" && canCreateDispatch && (
@@ -761,7 +761,7 @@ export default function DeliveryPage() {
               meta={receiptsQuery.data?.meta}
               onPageChange={receiptList.setPage}
               onRowClick={(r) => setDetailReceiptId(r.id)}
-              emptyText="Không có phiếu nhập nhận hàng nào."
+              emptyText="Không có phiếu nhận hàng nào."
             />
           </TabsContent>
 
@@ -775,7 +775,7 @@ export default function DeliveryPage() {
               error={discrepanciesQuery.error}
               meta={discrepanciesQuery.data?.meta}
               onPageChange={discrepancyList.setPage}
-              emptyText="Không có trường hợp sai lệch nào."
+              emptyText="Không có trường hợp chênh lệch nào."
             />
           </TabsContent>
         </Tabs>
@@ -811,7 +811,7 @@ export default function DeliveryPage() {
                   onClick={() => setPostDispatchTarget(dispatchDetailQuery.data!)}
                   className="bg-emerald-600 hover:bg-emerald-700 text-xs"
                 >
-                  <FileCheck2 className="size-3.5" /> Ghi sổ xuất kho
+                  <FileCheck2 className="size-3.5" /> Xác nhận xuất kho
                 </Button>
               )}
             </div>
@@ -825,7 +825,7 @@ export default function DeliveryPage() {
               items={[
                 { label: "Mã phiếu", value: <Code>{dispatchDetailQuery.data.code}</Code> },
                 {
-                  label: "Đơn thực hiện",
+                  label: "Đơn cấp hàng",
                   value: dispatchDetailQuery.data.order ? (
                     <Link
                       href={`/orders?id=${dispatchDetailQuery.data.order.id}`}
@@ -839,18 +839,18 @@ export default function DeliveryPage() {
                   ),
                 },
                 {
-                  label: "Ghi sổ lúc",
-                  value: dispatchDetailQuery.data.postedAt ? formatDateTime(dispatchDetailQuery.data.postedAt) : "Chưa ghi sổ",
+                  label: "Xác nhận xuất lúc",
+                  value: dispatchDetailQuery.data.postedAt ? formatDateTime(dispatchDetailQuery.data.postedAt) : "Chưa xác nhận xuất",
                 },
                 { label: "Ghi chú", value: dispatchDetailQuery.data.note || "—" },
               ]}
             />
 
-            <Section title={`Dòng hàng xuất (${dispatchDetailQuery.data.lines?.length ?? 0})`}>
+            <Section title={`Hàng xuất (${dispatchDetailQuery.data.lines?.length ?? 0})`}>
               <MiniTable
                 headers={[
                   { label: "Nguyên liệu" },
-                  { label: "ĐVT" },
+                  { label: "Đơn vị" },
                   { label: "Số lượng xuất", className: "text-right" },
                 ]}
                 rows={(dispatchDetailQuery.data.lines ?? []).map((l) => [
@@ -868,7 +868,7 @@ export default function DeliveryPage() {
       <DetailSheet
         open={Boolean(detailReceiptId)}
         onOpenChange={(open) => !open && setDetailReceiptId(null)}
-        title={receiptDetailQuery.data ? `Phiếu nhập ${receiptDetailQuery.data.code}` : "Chi tiết phiếu nhập"}
+        title={receiptDetailQuery.data ? `Phiếu nhận ${receiptDetailQuery.data.code}` : "Chi tiết phiếu nhận hàng"}
         badge={receiptDetailQuery.data && <StatusBadge status={receiptDetailQuery.data.status} />}
         description={receiptDetailQuery.data ? `Tạo lúc ${formatDateTime(receiptDetailQuery.data.createdAt)}` : undefined}
         wide
@@ -882,7 +882,7 @@ export default function DeliveryPage() {
                   onClick={() => setPostReceiptTarget(receiptDetailQuery.data!)}
                   className="bg-emerald-600 hover:bg-emerald-700 text-xs"
                 >
-                  <FileCheck2 className="size-3.5" /> Ghi sổ nhập kho
+                  <FileCheck2 className="size-3.5" /> Xác nhận nhập kho
                 </Button>
               )}
             </div>
@@ -896,7 +896,7 @@ export default function DeliveryPage() {
               items={[
                 { label: "Mã phiếu", value: <Code>{receiptDetailQuery.data.code}</Code> },
                 {
-                  label: "Đơn thực hiện",
+                  label: "Đơn cấp hàng",
                   value: receiptDetailQuery.data.order ? (
                     <Link
                       href={`/orders?id=${receiptDetailQuery.data.order.id}`}
@@ -918,18 +918,18 @@ export default function DeliveryPage() {
                   ),
                 },
                 {
-                  label: "Ghi sổ lúc",
-                  value: receiptDetailQuery.data.postedAt ? formatDateTime(receiptDetailQuery.data.postedAt) : "Chưa ghi sổ",
+                  label: "Xác nhận nhận lúc",
+                  value: receiptDetailQuery.data.postedAt ? formatDateTime(receiptDetailQuery.data.postedAt) : "Chưa xác nhận nhận",
                 },
                 { label: "Ghi chú", value: receiptDetailQuery.data.note || "—" },
               ]}
             />
 
-            <Section title={`Dòng hàng thực nhận (${receiptDetailQuery.data.lines?.length ?? 0})`}>
+            <Section title={`Hàng thực nhận (${receiptDetailQuery.data.lines?.length ?? 0})`}>
               <MiniTable
                 headers={[
                   { label: "Nguyên liệu" },
-                  { label: "ĐVT" },
+                  { label: "Đơn vị" },
                   { label: "Khai báo", className: "text-right" },
                   { label: "Chấp nhận", className: "text-right" },
                 ]}
@@ -948,9 +948,9 @@ export default function DeliveryPage() {
       <ConfirmDialog
         open={Boolean(postDispatchTarget)}
         onOpenChange={(o) => !o && setPostDispatchTarget(null)}
-        title="Ghi sổ phiếu xuất kho?"
+        title="Xác nhận hàng đã rời kho?"
         description={`Phiếu ${postDispatchTarget?.code}: Hệ thống sẽ trừ tồn kho thực tế và chuyển hàng sang trạng thái trung chuyển.`}
-        confirmLabel="Ghi sổ xuất"
+        confirmLabel="Xác nhận xuất kho"
         loading={postDispatchMutation.isPending}
         onConfirm={() => postDispatchMutation.mutate()}
       />
@@ -958,9 +958,9 @@ export default function DeliveryPage() {
       <ConfirmDialog
         open={Boolean(postReceiptTarget)}
         onOpenChange={(o) => !o && setPostReceiptTarget(null)}
-        title="Ghi sổ phiếu nhập kho?"
+        title="Xác nhận hàng đã nhập kho?"
         description={`Phiếu ${postReceiptTarget?.code}: Hệ thống sẽ cộng tồn kho thực tế vào kho đích.`}
-        confirmLabel="Ghi sổ nhập"
+        confirmLabel="Xác nhận nhập kho"
         loading={postReceiptMutation.isPending}
         onConfirm={() => postReceiptMutation.mutate()}
       />
@@ -968,7 +968,7 @@ export default function DeliveryPage() {
       <ConfirmDialog
         open={Boolean(resolveTarget)}
         onOpenChange={(o) => !o && setResolveTarget(null)}
-        title="Xử lý sai lệch giao nhận"
+        title="Xử lý chênh lệch giao nhận"
         description="Ghi nhận phương án xử lý (bù hàng, trừ công nợ, xử lý hao hụt)."
         confirmLabel="Xác nhận xử lý"
         reason={{ label: "Phương án giải quyết", required: true }}

@@ -74,7 +74,7 @@ function FacilityDialog({
             value={form.code}
             disabled={Boolean(facility)}
             onChange={(e) => setForm({ ...form, code: e.target.value })}
-            placeholder="VD: BR01"
+            placeholder="Ví dụ: CN01"
             className="h-9 text-xs uppercase"
           />
         </Field>
@@ -266,7 +266,7 @@ function LocationDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={location ? `Sửa kho ${location.code}` : "Thêm điểm lưu kho"}
-      description="Kho trung chuyển (IN_TRANSIT) dùng cho hàng đang vận chuyển giữa các cơ sở."
+      description="Kho trung chuyển dùng để theo dõi hàng đang vận chuyển giữa các cơ sở."
       onSubmit={() => save.mutate()}
       submitting={save.isPending}
       submitDisabled={!location && !form.facility_id}
@@ -546,7 +546,7 @@ export default function OrganizationPage() {
     <AdminLayout permission={["facility.read", "stock_location.read", "department.read"]}>
       <div className="space-y-6">
         <PageHeader
-          title="Cơ Cấu Tổ Chức & Chi Nhánh"
+          title="Cơ cấu tổ chức & chi nhánh"
           description="Thiết lập mạng lưới kho tổng, bếp trung tâm, chi nhánh, điểm lưu kho và bộ phận vận hành."
         />
         <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof validTabs)[number])} className="space-y-6">

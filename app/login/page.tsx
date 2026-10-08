@@ -156,7 +156,7 @@ export default function LoginPage() {
                   <Input
                     id="login-org"
                     autoComplete="organization"
-                    placeholder="VD: DICA"
+                    placeholder="Ví dụ: DICA"
                     className="pl-9 text-xs rounded-xl h-10 border-border bg-background uppercase"
                     {...register("organization_code")}
                   />
@@ -256,10 +256,10 @@ export default function LoginPage() {
             )}
           />
           {health?.status === "ready"
-            ? "Máy chủ API sẵn sàng"
+            ? "Máy chủ sẵn sàng"
             : health
-              ? "Không kết nối được máy chủ API"
-              : "Đang kiểm tra máy chủ API..."}
+              ? "Không kết nối được máy chủ"
+              : "Đang kiểm tra máy chủ..."}
           <span>· © 2026 DICA</span>
         </div>
       </div>

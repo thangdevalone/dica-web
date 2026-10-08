@@ -104,7 +104,7 @@ export function ActivityChart({ summary }: { summary: DashboardSummary }) {
             </AreaChart>
           </ChartContainer>
         ) : (
-          <EmptyChart text="Chưa có bút toán nhập/xuất trong khoảng thời gian này." />
+          <EmptyChart text="Chưa có giao dịch nhập hoặc xuất kho trong khoảng thời gian này." />
         )
       ) : requestData.some((d) => d.created || d.approved || d.rejected) ? (
         <ChartContainer config={requestConfig} className="aspect-auto h-64 w-full">

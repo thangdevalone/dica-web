@@ -101,9 +101,9 @@ export function RecentOrdersPanel({ summary }: { summary: DashboardSummary }) {
   const orders = summary.orders;
   if (!orders) return null;
   return (
-    <Panel title="Đơn thực hiện gần đây" description={`${orders.total} đơn · ${orders.open} đang mở`} href="/orders">
+    <Panel title="Đơn cấp hàng gần đây" description={`${orders.total} đơn · ${orders.open} đang mở`} href="/orders">
       {orders.recent.length === 0 ? (
-        <Empty text="Chưa có đơn thực hiện nào." />
+        <Empty text="Chưa có đơn cấp hàng nào." />
       ) : (
         <div className="space-y-3">
           {orders.recent.slice(0, 6).map((o) => (
@@ -144,7 +144,7 @@ export function LowStockPanel({ summary }: { summary: DashboardSummary }) {
       description={
         inventory.threshold_rules > 0
           ? `${inventory.low_stock_total} mặt hàng dưới ngưỡng cảnh báo`
-          : "Chưa có quy tắc ngưỡng — cấu hình tại Công thức & Hao hụt › Cảnh báo"
+          : "Chưa có mức cảnh báo — cấu hình tại iPOS & Định lượng › Cảnh báo tự động"
       }
       href="/inventory"
     >
@@ -184,7 +184,7 @@ export function OperationsPanel({ summary }: { summary: DashboardSummary }) {
   if (!ops && !transfers && !delivery) return null;
   const items: { label: string; value: number | null | undefined; href: string }[] = [
     { label: "Điều chỉnh nháp", value: ops?.adjustments_draft, href: "/inventory?tab=adjustments" },
-    { label: "Điều chỉnh chờ ghi sổ", value: ops?.adjustments_awaiting_post, href: "/inventory?tab=adjustments" },
+    { label: "Điều chỉnh chờ cập nhật tồn", value: ops?.adjustments_awaiting_post, href: "/inventory?tab=adjustments" },
     { label: "Phiếu kiểm kê đang mở", value: ops?.stocktakes_open, href: "/inventory?tab=stocktakes" },
     { label: "Báo hỏng chờ xác nhận", value: ops?.damage_awaiting_confirm, href: "/inventory?tab=damage" },
     { label: "Điều chuyển chờ duyệt", value: transfers?.by_status.SUBMITTED, href: "/transfers" },
@@ -275,8 +275,8 @@ const ACTION_LABELS: Record<string, string> = {
   submit: "Gửi duyệt",
   approve: "Duyệt",
   reject: "Từ chối",
-  cancel: "Huỷ",
-  post: "Ghi sổ",
+  cancel: "Hủy",
+  post: "Cập nhật tồn kho",
   login: "Đăng nhập",
 };
 

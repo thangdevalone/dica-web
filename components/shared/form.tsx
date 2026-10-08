@@ -437,7 +437,7 @@ export function FormDialog({
               className="text-xs"
               onClick={() => onOpenChange(false)}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button
               type="submit"

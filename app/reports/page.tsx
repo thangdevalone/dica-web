@@ -35,6 +35,7 @@ import { useFacilityFilter } from "@/stores/use-app-store";
 import { useCan } from "@/stores/use-auth-store";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import { formatMoney, formatQty } from "@/lib/num";
+import { SOURCE_TYPE_LABELS, labelOf } from "@/constants/labels";
 
 export default function ReportsPage() {
   const globalFacility = useFacilityFilter();
@@ -130,7 +131,7 @@ export default function ReportsPage() {
     },
     {
       key: "unit",
-      header: "ĐVT",
+      header: "Đơn vị",
       width: "80px",
       render: (b) => <span className="text-xs">{b.ingredient?.baseUnit?.code ?? "—"}</span>,
     },
@@ -172,7 +173,7 @@ export default function ReportsPage() {
       render: (o) => (
         <Cell2
           top={o.sourceType === "SUPPLIER" ? o.supplier?.name : o.sourceStockLocation?.name}
-          bottom={o.sourceType}
+          bottom={labelOf(SOURCE_TYPE_LABELS, o.sourceType)}
         />
       ),
     },
@@ -231,7 +232,7 @@ export default function ReportsPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Trung Tâm Báo Cáo & Đối Soát"
+        title="Báo cáo & đối soát"
         description="Tổng hợp dữ liệu tồn kho, đối soát tỷ lệ hoàn tất đơn, báo cáo hao hụt và thanh toán theo từng cơ sở."
         icon={BarChart3}
         actions={

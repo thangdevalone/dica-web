@@ -40,13 +40,13 @@ interface AuditFilters extends Record<string, string> {
 
 const ACTION_LABELS: Record<string, string> = {
   "adjustment.approve": "Duyệt điều chỉnh tồn",
-  "adjustment.post": "Ghi sổ điều chỉnh tồn",
+  "adjustment.post": "Cập nhật phiếu vào tồn kho",
   "damage.confirm": "Xác nhận báo hỏng",
   "discrepancy.resolve": "Xử lý chênh lệch giao nhận",
   "dispatch.post": "Ghi nhận xuất hàng",
   "grant.assign": "Cấp quyền người dùng",
   "grant.revoke": "Thu hồi quyền người dùng",
-  "order.cancel": "Hủy đơn thực hiện",
+  "order.cancel": "Hủy đơn cấp hàng",
   "order.close_outstanding": "Đóng số lượng còn thiếu",
   "payment_tracking.update": "Cập nhật thanh toán",
   "receipt.post": "Ghi nhận nhận hàng",
@@ -78,7 +78,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   DamageReport: "Báo hỏng",
   DiscrepancyCase: "Chênh lệch giao nhận",
   Dispatch: "Phiếu xuất hàng",
-  FulfillmentOrder: "Đơn thực hiện",
+  FulfillmentOrder: "Đơn cấp hàng",
   InventoryAdjustment: "Điều chỉnh tồn",
   Receipt: "Phiếu nhận hàng",
   RoleGrant: "Phân quyền",
@@ -178,7 +178,7 @@ export default function SystemPage() {
     },
     {
       key: "resource",
-      header: "Tài nguyên",
+      header: "Dữ liệu thay đổi",
       render: (a) => (
         <Cell2
           top={RESOURCE_LABELS[a.resourceType] ?? a.resourceType}
@@ -208,8 +208,8 @@ export default function SystemPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="Nhật Ký & Trạng Thái Hệ Thống"
-        description="Kiểm tra kết nối trực tiếp với DICA Backend API, cơ sở dữ liệu và theo dõi nhật ký kiểm toán (Audit Trail)."
+        title="Nhật ký & tình trạng hệ thống"
+        description="Kiểm tra kết nối máy chủ, cơ sở dữ liệu và tra cứu lịch sử thay đổi trong hệ thống."
         icon={Sliders}
         actions={
           <Button
@@ -244,16 +244,16 @@ export default function SystemPage() {
               )}
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">Kết nối API Backend</div>
+              <div className="text-xs font-medium text-muted-foreground">Kết nối máy chủ DICA</div>
               <div className="text-base font-bold text-foreground">
                 {healthQuery.isLoading
                   ? "Đang kiểm tra..."
                   : healthQuery.isSuccess
-                  ? "Hoạt động (Healthy)"
-                  : "Mất kết nối API"}
+                  ? "Hoạt động bình thường"
+                  : "Mất kết nối máy chủ"}
               </div>
               <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                Target: {process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"}
+                Địa chỉ: {process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"}
               </div>
             </div>
           </div>
@@ -269,9 +269,9 @@ export default function SystemPage() {
               <Database className="h-6 w-6" />
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">PostgreSQL Database</div>
+              <div className="text-xs font-medium text-muted-foreground">Cơ sở dữ liệu PostgreSQL</div>
               <div className="text-base font-bold text-foreground">
-                {healthQuery.data?.database === "connected" ? "Đã kết nối (Ready)" : "Chưa sẵn sàng"}
+                {healthQuery.data?.database === "connected" ? "Đã kết nối" : "Chưa sẵn sàng"}
               </div>
               <div className="text-[11px] text-muted-foreground mt-0.5">
                 Prisma 7 • Transaction Safe
@@ -284,7 +284,7 @@ export default function SystemPage() {
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">Phiên xác thực</div>
+              <div className="text-xs font-medium text-muted-foreground">Tài khoản đang đăng nhập</div>
               <div className="text-base font-bold text-foreground">
                 {user ? user.display_name : "Chưa đăng nhập"}
               </div>
@@ -301,7 +301,7 @@ export default function SystemPage() {
             <div>
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-primary" />
-                Nhật ký kiểm toán hệ thống (Audit Trail)
+                Lịch sử thay đổi trong hệ thống
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Ghi nhận tự động mọi thay đổi cấu hình, định tuyến và phân quyền trong toàn tổ chức.
@@ -329,22 +329,22 @@ export default function SystemPage() {
                     searchPlaceholder="Tìm tên hành động..."
                   />
                 </Field>
-                <Field label="Loại tài nguyên">
+                <Field label="Loại dữ liệu">
                   <OptionSelect
                     value={auditList.filters.resource_type}
                     onChange={(value) => auditList.setFilter("resource_type", value)}
                     options={RESOURCE_OPTIONS}
-                    allLabel="Tất cả tài nguyên"
-                    placeholder="Chọn loại tài nguyên"
+                    allLabel="Tất cả loại dữ liệu"
+                    placeholder="Chọn loại dữ liệu"
                     searchable
-                    searchPlaceholder="Tìm loại tài nguyên..."
+                    searchPlaceholder="Tìm loại dữ liệu..."
                   />
                 </Field>
                 <Field label="Người thực hiện" hint="Tìm theo họ tên hoặc tên đăng nhập.">
                   <SearchInput
                     value={auditList.filters.actor}
                     onChange={(value) => auditList.setFilter("actor", value)}
-                    placeholder="VD: Nguyễn Văn An hoặc nguyenvana"
+                    placeholder="Ví dụ: Nguyễn Văn An hoặc nguyenvana"
                     className="max-w-none sm:max-w-none"
                   />
                 </Field>
@@ -368,12 +368,12 @@ export default function SystemPage() {
                 </Field>
                 <Field
                   label="Mã cần tra cứu"
-                  hint="Tìm theo mã tài nguyên, Request ID hoặc mã hành động."
+                  hint="Tìm theo mã dữ liệu, mã truy vết hoặc mã hành động."
                 >
                   <SearchInput
                     value={auditList.search}
                     onChange={auditList.setSearch}
-                    placeholder="Dán mã tài nguyên hoặc Request ID..."
+                    placeholder="Dán mã dữ liệu hoặc mã truy vết..."
                     className="max-w-none sm:max-w-none"
                   />
                 </Field>
@@ -387,7 +387,7 @@ export default function SystemPage() {
 
           {!canReadAudit ? (
             <div className="p-8 text-center text-xs text-muted-foreground border border-dashed rounded-xl">
-              Bạn không có quyền <Code>audit.read</Code> cấp tổ chức để xem nhật ký kiểm toán.
+              Tài khoản chưa được cấp quyền xem lịch sử thay đổi ở phạm vi toàn tổ chức.
             </div>
           ) : (
             <DataTable
@@ -400,7 +400,7 @@ export default function SystemPage() {
               onPageSizeChange={auditList.setPageSize}
               loading={auditQuery.isLoading}
               onRowClick={(row) => setDetailEvent(row)}
-              emptyMessage="Chưa có bản ghi kiểm toán nào."
+              emptyMessage="Chưa có lịch sử thay đổi nào."
             />
           )}
         </div>
@@ -412,7 +412,7 @@ export default function SystemPage() {
         onOpenChange={(open) => {
           if (!open) setDetailEvent(null);
         }}
-        title={`Chi tiết sự kiện kiểm toán`}
+        title="Chi tiết thay đổi"
         description={detailEvent ? formatDateTime(detailEvent.createdAt) : ""}
         width="w-full sm:max-w-2xl"
       >
@@ -436,7 +436,7 @@ export default function SystemPage() {
                     value: detailEvent.actor?.displayName ?? "Hệ thống",
                   },
                   {
-                    label: "Loại tài nguyên",
+                    label: "Loại dữ liệu",
                     value: (
                       <span className="inline-flex flex-wrap items-center gap-1.5">
                         <span>{RESOURCE_LABELS[detailEvent.resourceType] ?? detailEvent.resourceType}</span>
@@ -444,20 +444,20 @@ export default function SystemPage() {
                       </span>
                     ),
                   },
-                  { label: "Mã tài nguyên", value: <Code>{detailEvent.resourceId}</Code> },
-                  { label: "Mã yêu cầu (Request ID)", value: <Code>{detailEvent.requestId}</Code> },
+                  { label: "Mã dữ liệu", value: <Code>{detailEvent.resourceId}</Code> },
+                  { label: "Mã truy vết", value: <Code>{detailEvent.requestId}</Code> },
                   { label: "Thời điểm ghi nhận", value: formatDateTime(detailEvent.createdAt) },
                 ]}
               />
             </Section>
 
-            <Section title="Dữ liệu trước thay đổi (Before)">
+            <Section title="Dữ liệu trước khi thay đổi">
               <div className="rounded-lg bg-muted/60 p-3 font-mono text-xs overflow-x-auto max-h-60 border border-border/50">
                 <pre>{JSON.stringify(detailEvent.beforeData ?? {}, null, 2)}</pre>
               </div>
             </Section>
 
-            <Section title="Dữ liệu sau thay đổi (After)">
+            <Section title="Dữ liệu sau khi thay đổi">
               <div className="rounded-lg bg-muted/60 p-3 font-mono text-xs overflow-x-auto max-h-60 border border-border/50">
                 <pre>{JSON.stringify(detailEvent.afterData ?? {}, null, 2)}</pre>
               </div>

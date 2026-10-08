@@ -108,7 +108,7 @@ function CreateMappingDialog({
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo liên kết món ăn iPOS"
-      description="Ánh xạ mã món trên máy POS iPOS với công thức chế biến trong hệ thống."
+      description="Liên kết mã món trên iPOS với định mức nguyên liệu trong hệ thống."
       submitLabel="Tạo liên kết"
       loading={create.isPending}
       disabled={!isValid}
@@ -118,19 +118,19 @@ function CreateMappingDialog({
         <Field label="Cơ sở áp dụng" required>
           <FacilitySelect value={facilityId} onChange={setFacilityId} />
         </Field>
-        <Field label="Nguồn POS" required>
+        <Field label="Tên nguồn dữ liệu" required hint="Tên hệ thống gửi dữ liệu bán hàng, thường là IPOS.">
           <Input value={source} onChange={(e) => setSource(e.target.value)} />
         </Field>
-        <Field label="Mã món bên iPOS (External Key)" required hint="Mã hàng hoặc ID trên hệ thống iPOS">
+        <Field label="Mã món trên iPOS" required hint="Nhập đúng mã món trong dữ liệu xuất từ iPOS.">
           <Input
-            placeholder="VD: MON_CAFE_SUA"
+            placeholder="Ví dụ: MON_CAFE_SUA"
             value={externalKey}
             onChange={(e) => setExternalKey(e.target.value)}
           />
         </Field>
         <Field label="Tên món hiển thị" required>
           <Input
-            placeholder="VD: Cà phê sữa đá Sài Gòn"
+            placeholder="Ví dụ: Cà phê sữa đá Sài Gòn"
             value={menuItemName}
             onChange={(e) => setMenuItemName(e.target.value)}
           />
@@ -212,17 +212,17 @@ function CreateAlertRuleDialog({
             value={thresholdType}
             onChange={setThresholdType}
             options={[
-              { value: "QUANTITY", label: "Theo số lượng cố định (ĐVT gốc)" },
+              { value: "QUANTITY", label: "Theo số lượng cố định (đơn vị gốc)" },
               { value: "PERCENT", label: "Theo tỷ lệ phần trăm an toàn (%)" },
             ]}
           />
         </Field>
-        <Field label="Giá trị ngưỡng" required hint="VD: 10 (cho 10kg) hoặc 15 (cho 15%)">
+        <Field label="Giá trị ngưỡng" required hint="Ví dụ: 10 cho 10 kg hoặc 15 cho 15%">
           <Input
             type="number"
             step="any"
             min="0"
-            placeholder="VD: 10"
+            placeholder="Ví dụ: 10"
             value={thresholdValue}
             onChange={(e) => setThresholdValue(e.target.value)}
           />
@@ -281,9 +281,9 @@ function CreateSalesImportDialog({ open, onOpenChange, onCreated }: { open: bool
     invalidate: INVALIDATE,
     onSuccess: () => { onOpenChange(false); setRecordsText(""); onCreated(); },
   });
-  return <FormDialog tourId="operations-sales-form" open={open} onOpenChange={onOpenChange} title="Tạo đợt nhập bán hàng" description="Mỗi dòng: mã giao dịch, mã món iPOS, thời gian ISO, số lượng." submitLabel="Tạo đợt nhập" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
-    <div className="grid gap-4 sm:grid-cols-2"><Field label="Cơ sở" required><FacilitySelect value={facilityId} onChange={setFacilityId} /></Field><Field label="Nguồn" required><Input value={source} onChange={(event) => setSource(event.target.value)} /></Field><Field label="Mã đợt nhập" required><Input value={batchKey} onChange={(event) => setBatchKey(event.target.value)} placeholder="BATCH-20261006-01" /></Field></div>
-    <Field label="Dữ liệu bán hàng CSV" required hint="Ví dụ: SALE-001,ITEM-001,2026-10-06T12:30:00+07:00,2"><Textarea rows={8} value={recordsText} onChange={(event) => setRecordsText(event.target.value)} /></Field>
+  return <FormDialog tourId="operations-sales-form" open={open} onOpenChange={onOpenChange} title="Tạo đợt nhập bán hàng" description="Mỗi dòng gồm mã giao dịch, mã món iPOS, thời gian có múi giờ và số lượng bán." submitLabel="Tạo đợt nhập" loading={create.isPending} disabled={!valid} onSubmit={() => create.mutate()} size="lg">
+    <div className="grid gap-4 sm:grid-cols-2"><Field label="Cơ sở" required><FacilitySelect value={facilityId} onChange={setFacilityId} /></Field><Field label="Tên nguồn dữ liệu" required><Input value={source} onChange={(event) => setSource(event.target.value)} /></Field><Field label="Mã đợt dữ liệu" required><Input value={batchKey} onChange={(event) => setBatchKey(event.target.value)} placeholder="BANHANG-20261006-01" /></Field></div>
+    <Field label="Dữ liệu bán hàng" required hint="Mỗi dòng theo mẫu: SALE-001,ITEM-001,2026-10-06T12:30:00+07:00,2"><Textarea rows={8} value={recordsText} onChange={(event) => setRecordsText(event.target.value)} /></Field>
     <p className="text-xs text-muted-foreground">Đã đọc {records.length} dòng dữ liệu.</p>
   </FormDialog>;
 }
@@ -517,7 +517,7 @@ export default function OperationsPage() {
   const salesColumns: Column<SalesImportBatch>[] = [
     {
       key: "batch",
-      header: "Mã đợt nhập",
+      header: "Mã đợt dữ liệu",
       width: "180px",
       render: (s) => (
         <div className="flex flex-col">
@@ -528,7 +528,7 @@ export default function OperationsPage() {
     },
     {
       key: "facility",
-      header: "Cơ sở POS",
+      header: "Cơ sở bán hàng",
       render: (s) => (
         <Cell2
           top={s.facility?.name ?? s.facilityId}
@@ -538,7 +538,7 @@ export default function OperationsPage() {
     },
     {
       key: "records",
-      header: "Số hóa đơn/dòng",
+      header: "Số dòng bán hàng",
       width: "130px",
       align: "center",
       render: (s) => <span className="text-xs font-semibold">{s._count?.records ?? 0}</span>,
@@ -608,7 +608,7 @@ export default function OperationsPage() {
     },
     {
       key: "expected",
-      header: "Lý thuyết tồn",
+      header: "Tồn dự kiến",
       width: "120px",
       align: "right",
       render: (v) => (
@@ -708,8 +708,8 @@ export default function OperationsPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="iPOS, Định Mức & Hao Hụt"
-        description="Đồng bộ dữ liệu bán hàng từ máy POS, tính toán hao hụt nguyên liệu lý thuyết và cảnh báo ngưỡng an toàn."
+        title="iPOS, định mức & tiêu hao"
+        description="Nhập dữ liệu bán hàng từ iPOS, tính lượng nguyên liệu dự kiến sử dụng và phát hiện chênh lệch."
         icon={Utensils}
         actions={
           <div className="flex items-center gap-2">
@@ -809,9 +809,9 @@ export default function OperationsPage() {
           <TabsContent data-tour="operations-sales-list" value="sales" className="space-y-4">
             {adapterQuery.data && (
               <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 p-3 text-xs">
-                <span>Adapter: <strong>{adapterQuery.data.adapter}</strong></span>
+                <span>Bộ kết nối: <strong>{adapterQuery.data.adapter}</strong></span>
                 <span className={adapterQuery.data.real_ipos_api_connected ? "text-emerald-600" : "text-amber-600"}>
-                  {adapterQuery.data.real_ipos_api_connected ? "Đã kết nối iPOS" : "Chưa kết nối API iPOS — đang nhập thủ công"}
+                  {adapterQuery.data.real_ipos_api_connected ? "Đã kết nối iPOS" : "Chưa kết nối tự động với iPOS — đang nhập thủ công"}
                 </span>
               </div>
             )}
@@ -839,7 +839,7 @@ export default function OperationsPage() {
               onPageChange={varianceList.setPage}
               onPageSizeChange={varianceList.setPageSize}
               loading={varianceQuery.isLoading}
-              emptyMessage="Không có kết quả hao hụt nào."
+              emptyMessage="Không có kết quả so sánh tiêu hao nào."
             />
           </TabsContent>
 

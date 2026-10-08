@@ -131,7 +131,7 @@ export function KpiCards({ summary }: { summary: DashboardSummary }) {
       {orders && (
         <KpiCard
           title="Đơn đang thực hiện"
-          subtitle={`NCC: ${orders.by_source_type.SUPPLIER} · Kho: ${orders.by_source_type.STOCK}`}
+          subtitle={`Nhà cung cấp: ${orders.by_source_type.SUPPLIER} · Kho nội bộ: ${orders.by_source_type.STOCK}`}
           value={`${orders.open} đơn`}
           icon={ShoppingCart}
           href="/orders"
@@ -154,7 +154,7 @@ export function KpiCards({ summary }: { summary: DashboardSummary }) {
       )}
       {delivery && (
         <KpiCard
-          title="Sai lệch giao nhận"
+          title="Chênh lệch giao nhận"
           subtitle="Đang mở cần xử lý"
           value={delivery.open_discrepancies != null ? `${delivery.open_discrepancies} ca` : "—"}
           icon={AlertTriangle}

@@ -53,7 +53,7 @@ function downloadSupplierOrder(order: FulfillmentOrder) {
     ["Kho nhận", order.destinationStockLocation?.name ?? ""],
     ["Cơ sở", order.destinationStockLocation?.facility?.name ?? ""],
     [],
-    ["Mã hàng", "Tên hàng", "ĐVT", "Số lượng", "Đơn giá tham chiếu"],
+    ["Mã hàng", "Tên hàng", "Đơn vị", "Số lượng", "Đơn giá tham chiếu"],
     ...(order.lines ?? []).map((line) => [
       line.ingredient?.code ?? "",
       line.ingredient?.name ?? "",
@@ -151,7 +151,7 @@ export default function OrdersPage() {
       });
     },
     invalidate: INVALIDATE,
-    successMessage: "Đã đóng phần chưa giao của đơn thực hiện.",
+    successMessage: "Đã đóng phần chưa giao của đơn cấp hàng.",
     onSuccess: () => {
       setCloseTarget(null);
       if (detailId) detailQuery.refetch();
@@ -163,11 +163,11 @@ export default function OrdersPage() {
       if (!cancelTarget) throw new Error("No target");
       return api.post(`/orders/${cancelTarget.id}/cancel`, {
         expected_version: cancelTarget.version,
-        reason: reason || "Huỷ đơn thực hiện",
+        reason: reason || "Hủy đơn cấp hàng",
       });
     },
     invalidate: INVALIDATE,
-    successMessage: "Đã huỷ đơn thực hiện.",
+    successMessage: "Đã hủy đơn cấp hàng.",
     onSuccess: () => {
       setCancelTarget(null);
       if (detailId) detailQuery.refetch();
@@ -200,7 +200,7 @@ export default function OrdersPage() {
     },
     {
       key: "destination",
-      header: "Kho nhận đích",
+      header: "Kho nhận hàng",
       cell: (row) => (
         <Cell2
           title={row.destinationStockLocation?.name ?? "Kho đích"}
@@ -278,10 +278,10 @@ export default function OrdersPage() {
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                title="Huỷ đơn"
+                title="Hủy đơn"
                 onClick={() => setCancelTarget(row)}
               >
-                <Ban className="size-3.5" /> Huỷ
+                <Ban className="size-3.5" /> Hủy
               </Button>
             )}
           </div>
@@ -294,8 +294,8 @@ export default function OrdersPage() {
     <AdminLayout permission="order.read">
       <div className="space-y-6">
         <PageHeader
-          title="Đơn Thực Hiện Cung Ứng"
-          description="Theo dõi xuất kho, giao hàng NCC và nhập nhận hàng phát sinh từ yêu cầu cấp hàng hoặc điều chuyển kho."
+          title="Đơn cấp hàng"
+          description="Theo dõi việc xuất kho, nhà cung cấp giao hàng và nơi nhận xác nhận hàng từ các yêu cầu hoặc phiếu điều chuyển."
         />
 
         <DataTable
@@ -308,7 +308,7 @@ export default function OrdersPage() {
           meta={query.data?.meta}
           onPageChange={list.setPage}
           onRowClick={(r) => setDetailId(r.id)}
-          emptyText="Chưa có đơn thực hiện nào."
+          emptyText="Chưa có đơn cấp hàng nào."
           toolbar={
             <div data-tour="orders-list" className="flex flex-1 flex-col gap-2 sm:flex-row">
               <SearchInput
@@ -339,7 +339,7 @@ export default function OrdersPage() {
       <DetailSheet
         open={Boolean(detailId)}
         onOpenChange={(open) => !open && setDetailId(null)}
-        title={detail ? `Đơn thực hiện ${detail.code}` : "Chi tiết đơn"}
+        title={detail ? `Đơn cấp hàng ${detail.code}` : "Chi tiết đơn"}
         badge={detail && <StatusBadge status={detail.status} />}
         description={detail ? `Tạo lúc ${formatDateTime(detail.createdAt)}` : undefined}
         wide
@@ -350,7 +350,7 @@ export default function OrdersPage() {
               <div className="flex items-center gap-2">
                 {canExport && detail.sourceType === "SUPPLIER" && (
                   <Button variant="outline" size="sm" className="text-xs" onClick={() => downloadSupplierOrder(detail)}>
-                    <Download className="size-3.5" /> Xuất phiếu NCC
+                    <Download className="size-3.5" /> Tải phiếu gửi nhà cung cấp
                   </Button>
                 )}
                 {canClose && (detail.status === "PARTIAL" || detail.status === "RELEASED") && (
@@ -370,7 +370,7 @@ export default function OrdersPage() {
                     className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs"
                     onClick={() => setCancelTarget(detail)}
                   >
-                    <Ban className="size-3.5" /> Huỷ đơn
+                    <Ban className="size-3.5" /> Hủy đơn
                   </Button>
                 )}
               </div>
@@ -450,7 +450,7 @@ export default function OrdersPage() {
               <MiniTable
                 headers={[
                   { label: "Nguyên liệu" },
-                  { label: "ĐVT" },
+                  { label: "Đơn vị" },
                   { label: "Duyệt cấp", className: "text-right" },
                   { label: "Đã xuất", className: "text-right" },
                   { label: "Đã nhận", className: "text-right" },
@@ -486,7 +486,7 @@ export default function OrdersPage() {
                         <StatusBadge status={dsp.status} />
                       </div>
                       <span className="text-muted-foreground">
-                        {dsp.postedAt ? `Ghi sổ lúc ${formatDateTime(dsp.postedAt)}` : formatDateTime(dsp.createdAt)}
+                        {dsp.postedAt ? `Xác nhận xuất lúc ${formatDateTime(dsp.postedAt)}` : formatDateTime(dsp.createdAt)}
                       </span>
                     </div>
                   ))}
@@ -496,7 +496,7 @@ export default function OrdersPage() {
 
             {/* Receipts */}
             {(detail.receipts?.length ?? 0) > 0 && (
-              <Section title={`Phiếu nhập nhận hàng (${detail.receipts?.length})`}>
+              <Section title={`Phiếu nhận hàng (${detail.receipts?.length})`}>
                 <div className="space-y-2">
                   {detail.receipts?.map((rcp) => (
                     <div
@@ -509,7 +509,7 @@ export default function OrdersPage() {
                         <StatusBadge status={rcp.status} />
                       </div>
                       <span className="text-muted-foreground">
-                        {rcp.postedAt ? `Ghi sổ lúc ${formatDateTime(rcp.postedAt)}` : formatDateTime(rcp.createdAt)}
+                        {rcp.postedAt ? `Xác nhận nhận lúc ${formatDateTime(rcp.postedAt)}` : formatDateTime(rcp.createdAt)}
                       </span>
                     </div>
                   ))}
@@ -534,11 +534,11 @@ export default function OrdersPage() {
       <ConfirmDialog
         open={Boolean(cancelTarget)}
         onOpenChange={(o) => !o && setCancelTarget(null)}
-        title="Huỷ đơn thực hiện?"
-        description={`Đơn ${cancelTarget?.code}: Thao tác huỷ không thể hoàn tác.`}
-        confirmLabel="Huỷ đơn"
+        title="Hủy đơn cấp hàng?"
+        description={`Đơn ${cancelTarget?.code}: Thao tác hủy không thể hoàn tác.`}
+        confirmLabel="Hủy đơn"
         destructive
-        reason={{ label: "Lý do huỷ", required: true }}
+        reason={{ label: "Lý do hủy", required: true }}
         loading={cancelMutation.isPending}
         onConfirm={(reason) => cancelMutation.mutate(reason ?? "")}
       />

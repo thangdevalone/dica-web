@@ -10,6 +10,10 @@ interface AppState {
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
+
+  // Keep sidebar groups stable while navigating between pages/tabs.
+  expandedNavItems: Record<string, boolean>;
+  setNavItemExpanded: (href: string, expanded: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -22,6 +26,18 @@ export const useAppStore = create<AppState>()(
       setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       toggleSidebar: () =>
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+
+      expandedNavItems: {},
+      setNavItemExpanded: (href, expanded) =>
+        set((state) => {
+          if (state.expandedNavItems[href] === expanded) return state;
+          return {
+            expandedNavItems: {
+              ...state.expandedNavItems,
+              [href]: expanded,
+            },
+          };
+        }),
     }),
     {
       name: "dica_app_settings",

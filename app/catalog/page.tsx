@@ -456,7 +456,7 @@ function ConversionsTab() {
               <Field label="Đơn vị quy đổi" required>
                 <UnitSelect value={form.unit_id} onChange={(unit_id) => setForm({ ...form, unit_id })} activeOnly />
               </Field>
-              <Field label="Hệ số về đơn vị cơ sở" required hint="VD: 1 THÙNG = 24 (CHAI).">
+              <Field label="Hệ số quy đổi về đơn vị cơ sở" required hint="Ví dụ: 1 THÙNG = 24 CHAI.">
                 <Input value={form.factor_to_base} onChange={(e) => setForm({ ...form, factor_to_base: e.target.value })} inputMode="decimal" className="h-9 text-xs" />
               </Field>
             </div>
@@ -501,7 +501,7 @@ function SuppliersTab() {
     invalidate: ["/suppliers"],
   });
   const columns: Column<Supplier>[] = [
-    { key: "code", header: "Mã NCC", cell: (s) => <Code>{s.code}</Code>, className: "w-28" },
+    { key: "code", header: "Mã nhà cung cấp", cell: (s) => <Code>{s.code}</Code>, className: "w-28" },
     { key: "name", header: "Tên nhà cung cấp", cell: (s) => <span className="font-medium">{s.name}</span> },
     { key: "contact", header: "Liên hệ", cell: (s) => <Cell2 title={s.phone || "—"} sub={s.email || undefined} /> },
     { key: "active", header: "Trạng thái", cell: (s) => <ActiveBadge active={s.active} /> },
@@ -539,7 +539,7 @@ function SuppliersTab() {
             submitting={save.isPending}
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Mã NCC" required>
+              <Field label="Mã nhà cung cấp" required>
                 <Input value={form.code} disabled={Boolean(editing)} onChange={(e) => setForm({ ...form, code: e.target.value })} className="h-9 text-xs uppercase" />
               </Field>
               <Field label="Điện thoại">
@@ -604,7 +604,7 @@ function SupplierLinksTab() {
   const columns: Column<SupplierIngredient>[] = [
     { key: "supplier", header: "Nhà cung cấp", cell: (l) => <Cell2 title={l.supplier?.name ?? "—"} sub={l.supplier?.code} /> },
     { key: "ingredient", header: "Nguyên liệu", cell: (l) => <Cell2 title={l.ingredient?.name ?? "—"} sub={l.ingredient?.code} /> },
-    { key: "sku", header: "Mã SKU NCC", cell: (l) => (l.supplierSku ? <Code>{l.supplierSku}</Code> : "—") },
+    { key: "sku", header: "Mã hàng của nhà cung cấp", cell: (l) => (l.supplierSku ? <Code>{l.supplierSku}</Code> : "—") },
     {
       key: "price",
       header: "Giá tham chiếu",
@@ -636,7 +636,7 @@ function SupplierLinksTab() {
       toolbar={
         <>
           <div className="flex flex-1 flex-col gap-2 sm:flex-row">
-            <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo NCC, nguyên liệu, SKU..." />
+            <SearchInput value={search} onChange={setSearch} placeholder="Tìm nhà cung cấp, nguyên liệu hoặc mã hàng..." />
             <SupplierSelect value={supplierId} onChange={setSupplierId} allLabel="Tất cả nhà cung cấp" className="sm:w-56" />
           </div>
           {canManage && (
@@ -649,7 +649,7 @@ function SupplierLinksTab() {
             open={open}
             onOpenChange={setOpen}
             title={editing ? "Sửa liên kết nhà cung cấp" : "Liên kết nguyên liệu với nhà cung cấp"}
-            description="Giá tham chiếu (theo đơn vị cơ sở) dùng để định giá đơn đặt NCC và ước tính giá trị tồn."
+            description="Giá tham chiếu theo đơn vị cơ sở được dùng để ước tính giá trị đơn đặt hàng và hàng tồn kho."
             onSubmit={() => save.mutate()}
             submitting={save.isPending}
             submitDisabled={!editing && (!form.supplier_id || !form.ingredient_id)}
@@ -661,7 +661,7 @@ function SupplierLinksTab() {
               <IngredientSelect value={form.ingredient_id} onChange={(ingredient_id) => setForm({ ...form, ingredient_id })} disabled={Boolean(editing)} activeOnly />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Mã SKU của NCC">
+              <Field label="Mã hàng của nhà cung cấp">
                 <Input value={form.supplier_sku} onChange={(e) => setForm({ ...form, supplier_sku: e.target.value })} className="h-9 text-xs" />
               </Field>
               <Field label="Giá tham chiếu (₫)">
@@ -696,7 +696,7 @@ export default function CatalogPage() {
     <AdminLayout permission={["ingredient.read", "unit.read", "supplier.read", "conversion.read"]}>
       <div className="space-y-6">
         <PageHeader
-          title="Danh Mục Nguyên Liệu & Nhà Cung Cấp"
+          title="Danh mục nguyên liệu & nhà cung cấp"
           description="Quản lý nguyên liệu, nhóm, đơn vị tính, quy đổi đơn vị, nhà cung cấp và giá tham chiếu."
         />
         <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof validTabs)[number])} className="space-y-4">

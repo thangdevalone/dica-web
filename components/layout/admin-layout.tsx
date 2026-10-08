@@ -100,58 +100,43 @@ interface NavigationListProps {
 }
 
 function NavigationList({ pathname, onNavigate }: NavigationListProps) {
-  const router = useRouter();
   const permissions = useAuthStore((state) => state.permissions);
   const { data: summary } = useDashboardSummary();
   const counts = navCounts(summary);
   const currentTab = useCurrentTab();
 
-  // Manage expanded state for items with children
-  const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    for (const section of NAV_SECTIONS) {
-      for (const item of section.items) {
-        if (item.children && item.children.length > 0) {
-          if (pathname === item.href || pathname.startsWith(item.href + "/")) {
-            initial[item.href] = true;
-          }
-        }
-      }
-    }
-    return initial;
-  });
+  const expandedItems = useAppStore((state) => state.expandedNavItems);
+  const setNavItemExpanded = useAppStore((state) => state.setNavItemExpanded);
 
-  // Automatically expand active item when pathname changes
+  // A direct/deep link reveals its group, without closing any group the user opened.
   React.useEffect(() => {
     for (const section of NAV_SECTIONS) {
       for (const item of section.items) {
         if (item.children && item.children.length > 0) {
           if (pathname === item.href || pathname.startsWith(item.href + "/")) {
-            setExpandedItems((prev) => (prev[item.href] ? prev : { ...prev, [item.href]: true }));
+            setNavItemExpanded(item.href, true);
           }
         }
       }
     }
-  }, [pathname]);
+  }, [pathname, setNavItemExpanded]);
 
   React.useEffect(() => {
     const handleExpand = (e: Event) => {
       const detail = (e as CustomEvent<{ route: string }>).detail;
       if (detail && detail.route) {
-        setExpandedItems((prev) => ({ ...prev, [detail.route]: true }));
+        setNavItemExpanded(detail.route, true);
       }
     };
     window.addEventListener("dica:expand-sidebar", handleExpand);
     return () => window.removeEventListener("dica:expand-sidebar", handleExpand);
-  }, []);
+  }, [setNavItemExpanded]);
 
   const toggleExpand = (href: string, e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
-    setExpandedItems((prev) => ({
-      ...prev,
-      [href]: !prev[href],
-    }));
+    const isExpanded = expandedItems[href] ?? (pathname === href || pathname.startsWith(href + "/"));
+    setNavItemExpanded(href, !isExpanded);
   };
 
   const handleChildClick = (itemHref: string, child: NavChildItem, e: React.MouseEvent) => {
@@ -537,7 +522,7 @@ function HealthPopover() {
   const { data: health, refetch, isFetching } = useHealth();
   const status = health?.status ?? "checking";
   const label =
-    status === "ready" ? "API sẵn sàng" : status === "degraded" ? "API lỗi CSDL" : status === "down" ? "Mất kết nối" : "Đang kiểm tra";
+    status === "ready" ? "Máy chủ sẵn sàng" : status === "degraded" ? "Lỗi cơ sở dữ liệu" : status === "down" ? "Mất kết nối" : "Đang kiểm tra";
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -563,7 +548,7 @@ function HealthPopover() {
       <PopoverContent align="end" className="w-80 p-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="font-heading text-sm font-semibold">Trạng thái kết nối API</h4>
+            <h4 className="font-heading text-sm font-semibold">Tình trạng kết nối hệ thống</h4>
             <Badge variant={status === "ready" ? "default" : "destructive"}>{label}</Badge>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">{health?.message ?? "Đang kiểm tra kết nối..."}</p>

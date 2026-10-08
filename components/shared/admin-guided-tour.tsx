@@ -34,7 +34,7 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/",
     title: "Bắt đầu ngày làm việc",
     content:
-      "Đọc các thẻ chờ xử lý trước: yêu cầu chờ duyệt, đơn đang mở, điều chuyển, sai lệch giao nhận và cảnh báo tồn kho. Bấm vào từng thẻ để đi thẳng tới danh sách cần xử lý.",
+      "Đọc các thẻ chờ xử lý trước: yêu cầu chờ duyệt, đơn đang mở, điều chuyển, chênh lệch giao nhận và cảnh báo tồn kho. Bấm vào từng thẻ để đi thẳng tới danh sách cần xử lý.",
   },
   {
     id: "dashboard-period",
@@ -50,7 +50,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "dashboard-kpis",
     title: "Đọc thẻ KPI như một hàng đợi",
     content:
-      "Mỗi thẻ là một tín hiệu cần hành động, không chỉ là thống kê. Ưu tiên yêu cầu chờ duyệt, đơn đang mở, điều chuyển đang chờ, sai lệch chưa xử lý và nguyên liệu dưới ngưỡng; bấm thẻ để sang đúng danh sách đã lọc.",
+      "Mỗi thẻ là một việc cần xử lý, không chỉ là con số thống kê. Ưu tiên yêu cầu chờ duyệt, đơn đang mở, điều chuyển đang chờ, chênh lệch chưa xử lý và nguyên liệu dưới mức cảnh báo; bấm thẻ để sang đúng danh sách đã lọc.",
   },
   {
     id: "dashboard-work-queues",
@@ -58,7 +58,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "dashboard-work-queues",
     title: "Đi từ tổng quan tới chứng từ",
     content:
-      "Các khối Yêu cầu chờ xử lý, Đơn gần đây và Vận hành cho biết bản ghi cụ thể. Mở bản ghi để xử lý; sau khi duyệt, ghi sổ hoặc giải quyết sai lệch, quay lại và bấm Làm mới để kiểm tra hàng đợi đã giảm.",
+      "Các khối Yêu cầu chờ xử lý, Đơn gần đây và Vận hành cho biết những việc cụ thể cần làm. Mở từng mục để xử lý; sau khi duyệt, cập nhật tồn kho hoặc giải quyết chênh lệch, quay lại và bấm Làm mới để kiểm tra số việc chờ đã giảm.",
   },
   {
     id: "organization-overview",
@@ -73,7 +73,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "organization-tabs",
     title: "Ba lớp dữ liệu phải khai báo",
     content:
-      "Cơ sở là chi nhánh/bếp/kho tổng. Sau khi có cơ sở, tạo kho vật lý trong tab Kho & điểm lưu trữ, rồi tạo Bộ phận và chọn kho nhận hàng. Thiếu một lớp thì các form xin hàng sẽ không có đủ lựa chọn.",
+      "Cơ sở là chi nhánh, bếp hoặc kho tổng. Sau khi có cơ sở, tạo kho vật lý trong mục Điểm lưu kho, rồi tạo Bộ phận và chọn kho nhận hàng. Thiếu một bước thì biểu mẫu yêu cầu hàng sẽ không có đủ lựa chọn.",
   },
   {
     id: "organization-create-facility",
@@ -91,9 +91,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "organization-tab-facilities",
     openViaMarker: "organization-create-facility",
     closeDialogMarker: "organization-facility-form",
-    title: "Điền form cơ sở như thế nào?",
+    title: "Điền biểu mẫu cơ sở như thế nào?",
     content:
-      "Mã cơ sở: viết ngắn, duy nhất và không đổi sau khi tạo, ví dụ BR01. Loại hình: chọn đúng Chi nhánh/Bếp trung tâm/Kho tổng. Tên cơ sở là tên nhân sự sẽ nhìn thấy. Điền đủ trường có dấu * thì nút lưu mới khả dụng; tour chỉ mở form minh họa và sẽ không tự lưu.",
+      "Mã cơ sở cần ngắn, duy nhất và không đổi sau khi tạo, ví dụ CN01. Chọn đúng loại hình Chi nhánh, Bếp trung tâm hoặc Kho tổng. Tên cơ sở là tên nhân sự sẽ nhìn thấy. Điền đủ các trường có dấu * thì nút lưu mới dùng được; hướng dẫn chỉ mở biểu mẫu minh họa và không tự lưu.",
     allPermissions: ["facility.manage"],
   },
   {
@@ -103,14 +103,14 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "organization-tab-locations",
     title: "Tiếp theo: tạo kho vật lý",
     content:
-      "Tour đã mở tab Điểm lưu kho. Mỗi nơi có tồn thực tế phải là một kho vật lý thuộc cơ sở; địa điểm logic chỉ dùng để phân loại và không giữ số dư.",
+      "Hướng dẫn đã mở mục Điểm lưu kho. Mỗi nơi có tồn thực tế phải là một kho vật lý thuộc cơ sở; địa điểm logic chỉ dùng để phân loại và không giữ số lượng tồn.",
     allPermissions: ["stock_location.read"],
   },
   {
     id: "organization-create-location",
     route: "/organization",
     marker: "organization-create-location",
-    title: "Mở form thêm kho",
+    title: "Mở biểu mẫu thêm kho",
     content: "Bấm Thêm kho để khai báo kho nhận/xuất thực tế cho cơ sở.",
     allPermissions: ["stock_location.read", "stock_location.manage"],
   },
@@ -121,7 +121,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "organization-tab-locations",
     openViaMarker: "organization-create-location",
     closeDialogMarker: "organization-location-form",
-    title: "Điền form kho",
+    title: "Điền biểu mẫu kho",
     content:
       "Chọn Cơ sở sở hữu, nhập Mã kho duy nhất, Loại kho và Tên kho. Chọn loại vật lý cho nơi có nhập/xuất/tồn thực; kho phải có trước khi gán làm kho nhận cho bộ phận.",
     allPermissions: ["stock_location.read", "stock_location.manage"],
@@ -133,14 +133,14 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "organization-tab-departments",
     title: "Cuối cùng: tạo bộ phận",
     content:
-      "Tour đã mở tab Bộ phận. Bộ phận đại diện Bếp/Bàn/nhóm vận hành tại một cơ sở và là chủ thể lập yêu cầu hàng.",
+      "Hướng dẫn đã mở mục Bộ phận. Bộ phận đại diện cho bếp, bàn hoặc nhóm vận hành tại một cơ sở và là nơi lập yêu cầu hàng.",
     allPermissions: ["department.read"],
   },
   {
     id: "organization-create-department",
     route: "/organization",
     marker: "organization-create-department",
-    title: "Mở form thêm bộ phận",
+    title: "Mở biểu mẫu thêm bộ phận",
     content: "Bấm Thêm bộ phận sau khi cơ sở và kho nhận đã tồn tại.",
     allPermissions: ["department.read", "department.manage"],
   },
@@ -151,9 +151,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "organization-tab-departments",
     openViaMarker: "organization-create-department",
     closeDialogMarker: "organization-department-form",
-    title: "Điền form bộ phận",
+    title: "Điền biểu mẫu bộ phận",
     content:
-      "Chọn Cơ sở, nhập Mã, Phân loại và Tên bộ phận; quan trọng nhất là Kho nhận hàng thuộc cùng cơ sở. Không gắn kho nhận thì bộ phận chưa thể tạo yêu cầu cấp hàng đúng flow.",
+      "Chọn cơ sở, nhập mã, phân loại và tên bộ phận; quan trọng nhất là kho nhận hàng phải thuộc cùng cơ sở. Nếu chưa gắn kho nhận, bộ phận sẽ không thể tạo yêu cầu cấp hàng đúng quy trình.",
     allPermissions: ["department.read", "department.manage"],
   },
   {
@@ -167,9 +167,9 @@ const FLOW_STEPS: FlowStep[] = [
     id: "catalog-tabs",
     route: "/catalog",
     marker: "catalog-tabs",
-    title: "Các tab danh mục liên kết với nhau",
+    title: "Các mục danh mục liên kết với nhau",
     content:
-      "Đơn vị và nhóm dùng khi tạo nguyên liệu; Quy đổi dùng khi mua/xin khác đơn vị gốc; Nhà cung cấp và bảng hàng cung cấp dùng cho nguồn SUPPLIER và giá tham chiếu.",
+      "Đơn vị và nhóm được dùng khi tạo nguyên liệu; quy đổi áp dụng khi mua hoặc yêu cầu hàng bằng đơn vị khác đơn vị gốc; danh sách hàng nhà cung cấp dùng để chọn nguồn mua và giá tham chiếu.",
   },
   {
     id: "catalog-unit-tab",
@@ -178,14 +178,14 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-units",
     title: "1. Tạo đơn vị tính",
     content:
-      "Tour đã mở tab Đơn vị tính. Tạo đơn vị cơ sở trước vì form nguyên liệu bắt buộc phải chọn một đơn vị.",
+      "Hướng dẫn đã mở mục Đơn vị tính. Tạo đơn vị cơ sở trước vì biểu mẫu nguyên liệu bắt buộc phải chọn một đơn vị.",
     allPermissions: ["unit.read"],
   },
   {
     id: "catalog-create-unit",
     route: "/catalog",
     marker: "catalog-create-unit",
-    title: "Mở form đơn vị tính",
+    title: "Mở biểu mẫu đơn vị tính",
     content:
       "Bấm Thêm đơn vị để khai báo KG, G, LÍT, CHAI, THÙNG… theo cách doanh nghiệp đang kiểm kho.",
     allPermissions: ["unit.read", "unit.manage"],
@@ -197,7 +197,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-units",
     openViaMarker: "catalog-create-unit",
     closeDialogMarker: "catalog-unit-form",
-    title: "Điền form đơn vị tính",
+    title: "Điền biểu mẫu đơn vị tính",
     content:
       "Mã đơn vị viết ngắn và duy nhất, Tên đơn vị để hiển thị; Số chữ số thập phân quyết định độ chính xác số lượng. Chọn phù hợp ngay từ đầu vì đơn vị sẽ được dùng trong sổ kho và quy đổi.",
     allPermissions: ["unit.read", "unit.manage"],
@@ -209,14 +209,14 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-groups",
     title: "2. Tạo nhóm nguyên liệu",
     content:
-      "Nhóm giúp phân loại, lọc danh mục và tổng hợp báo cáo. Quyền xin hàng hiện được cấp chi tiết theo từng nguyên liệu ở màn hình Nguồn cấp.",
+      "Nhóm giúp phân loại, lọc danh mục và tổng hợp báo cáo. Danh sách hàng mỗi bộ phận được phép yêu cầu được cấu hình chi tiết theo từng nguyên liệu ở màn hình Nguồn hàng & quyền yêu cầu.",
     allPermissions: ["ingredient.read"],
   },
   {
     id: "catalog-create-group",
     route: "/catalog",
     marker: "catalog-create-group",
-    title: "Mở form nhóm nguyên liệu",
+    title: "Mở biểu mẫu nhóm nguyên liệu",
     content:
       "Bấm Thêm nhóm để tạo các nhóm như Thịt, Rau, Gia vị, Bia/Nước ngọt.",
     allPermissions: ["ingredient.read", "ingredient_group.manage"],
@@ -228,9 +228,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-groups",
     openViaMarker: "catalog-create-group",
     closeDialogMarker: "catalog-group-form",
-    title: "Điền form nhóm",
+    title: "Điền biểu mẫu nhóm",
     content:
-      "Nhập Mã nhóm duy nhất và Tên nhóm dễ hiểu với người vận hành. Sau khi tạo, nhóm sẽ xuất hiện trong form nguyên liệu và cấu hình mặt hàng được phép xin.",
+      "Nhập mã nhóm duy nhất và tên nhóm dễ hiểu với người vận hành. Sau khi tạo, nhóm sẽ xuất hiện trong biểu mẫu nguyên liệu và mục Hàng được phép yêu cầu.",
     allPermissions: ["ingredient.read", "ingredient_group.manage"],
   },
   {
@@ -239,7 +239,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "catalog-tab-ingredients",
     activateMarker: "catalog-tab-ingredients",
     title: "3. Tạo nguyên liệu",
-    content: "Tour đã trở về tab Nguyên liệu sau khi chuẩn bị đơn vị và nhóm.",
+    content: "Hướng dẫn đã trở về mục Nguyên liệu sau khi chuẩn bị đơn vị và nhóm.",
     allPermissions: ["ingredient.read"],
   },
   {
@@ -258,9 +258,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-ingredients",
     openViaMarker: "catalog-create-ingredient",
     closeDialogMarker: "catalog-ingredient-form",
-    title: "Điền form nguyên liệu",
+    title: "Điền biểu mẫu nguyên liệu",
     content:
-      "Mã nguyên liệu phải duy nhất; Đơn vị cơ sở là đơn vị sổ kho và không đổi sau khi tạo; Tên dùng để tìm kiếm; Nhóm giúp phân quyền xin hàng và báo cáo. Nếu chưa chọn được đơn vị/nhóm, đóng form và tạo chúng ở các tab tương ứng trước.",
+      "Mã nguyên liệu phải duy nhất; đơn vị cơ sở là đơn vị dùng để theo dõi tồn kho và không đổi sau khi tạo; tên dùng để tìm kiếm; nhóm giúp phân loại quyền yêu cầu hàng và báo cáo. Nếu chưa chọn được đơn vị hoặc nhóm, đóng biểu mẫu và tạo chúng ở các mục tương ứng trước.",
     allPermissions: ["ingredient.manage"],
   },
   {
@@ -277,7 +277,7 @@ const FLOW_STEPS: FlowStep[] = [
     id: "catalog-create-conversion",
     route: "/catalog",
     marker: "catalog-create-conversion",
-    title: "Mở form quy đổi",
+    title: "Mở biểu mẫu quy đổi",
     content:
       "Bấm Thêm quy đổi sau khi nguyên liệu và cả hai đơn vị đã tồn tại.",
     allPermissions: ["conversion.read", "conversion.manage"],
@@ -289,7 +289,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-conversions",
     openViaMarker: "catalog-create-conversion",
     closeDialogMarker: "catalog-conversion-form",
-    title: "Điền form quy đổi",
+    title: "Điền biểu mẫu quy đổi",
     content:
       "Chọn Nguyên liệu, Đơn vị quy đổi và Hệ số về đơn vị cơ sở. Ví dụ nguyên liệu có đơn vị cơ sở CHAI thì THÙNG với hệ số 24 nghĩa là 1 thùng bằng 24 chai. Ngày hiệu lực cho phép giữ đúng lịch sử khi hệ số thay đổi.",
     allPermissions: ["conversion.read", "conversion.manage"],
@@ -301,14 +301,14 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-suppliers",
     title: "5. Tạo nhà cung cấp",
     content:
-      "Nhà cung cấp phải tồn tại trước khi dùng nguồn SUPPLIER hoặc liên kết giá/SKU.",
+      "Cần tạo nhà cung cấp trước khi chọn họ làm nguồn hàng hoặc khai báo mặt hàng và giá tham chiếu.",
     allPermissions: ["supplier.read"],
   },
   {
     id: "catalog-create-supplier",
     route: "/catalog",
     marker: "catalog-create-supplier",
-    title: "Mở form nhà cung cấp",
+    title: "Mở biểu mẫu nhà cung cấp",
     content: "Bấm Thêm nhà cung cấp để lưu thông tin đối tác mua hàng.",
     allPermissions: ["supplier.read", "supplier.manage"],
   },
@@ -319,9 +319,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-suppliers",
     openViaMarker: "catalog-create-supplier",
     closeDialogMarker: "catalog-supplier-form",
-    title: "Điền form nhà cung cấp",
+    title: "Điền biểu mẫu nhà cung cấp",
     content:
-      "Nhập Mã NCC và Tên bắt buộc; Điện thoại và Email giúp tra cứu/liên hệ. Tài khoản loại SUPPLIER sẽ được liên kết với một nhà cung cấp đã tạo tại đây.",
+      "Nhập mã và tên nhà cung cấp; số điện thoại và email giúp tra cứu, liên hệ. Tài khoản loại Nhà cung cấp sẽ được liên kết với một nhà cung cấp đã tạo tại đây.",
     allPermissions: ["supplier.read", "supplier.manage"],
   },
   {
@@ -331,15 +331,15 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-links",
     title: "6. Liên kết hàng của nhà cung cấp",
     content:
-      "Liên kết xác định nhà cung cấp bán nguyên liệu nào, SKU bên họ và giá tham chiếu.",
+      "Liên kết này xác định nhà cung cấp bán nguyên liệu nào, mã hàng họ sử dụng và giá tham chiếu.",
     allPermissions: ["supplier_ingredient.read"],
   },
   {
     id: "catalog-create-supplier-link",
     route: "/catalog",
     marker: "catalog-create-supplier-link",
-    title: "Mở form liên kết NCC – nguyên liệu",
-    content: "Bấm Liên kết mới trước khi cấu hình nguồn cấp loại SUPPLIER.",
+    title: "Mở biểu mẫu liên kết nhà cung cấp – nguyên liệu",
+    content: "Bấm Liên kết mới trước khi chọn nhà cung cấp làm nguồn hàng.",
     allPermissions: ["supplier_ingredient.read", "supplier_ingredient.manage"],
   },
   {
@@ -349,9 +349,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "catalog-tab-links",
     openViaMarker: "catalog-create-supplier-link",
     closeDialogMarker: "catalog-supplier-link-form",
-    title: "Điền form liên kết nhà cung cấp",
+    title: "Điền biểu mẫu liên kết nhà cung cấp",
     content:
-      "Chọn Nhà cung cấp và Nguyên liệu, thêm SKU của NCC nếu có và Giá tham chiếu. Một nguyên liệu có thể có nhiều nhà cung cấp; liên kết này là điều kiện để nhà cung cấp xuất hiện trong form nguồn cấp.",
+      "Chọn nhà cung cấp và nguyên liệu, thêm mã hàng của nhà cung cấp nếu có cùng giá tham chiếu. Một nguyên liệu có thể có nhiều nhà cung cấp; liên kết này giúp nhà cung cấp xuất hiện trong biểu mẫu nguồn cấp.",
     allPermissions: ["supplier_ingredient.read", "supplier_ingredient.manage"],
   },
   {
@@ -359,15 +359,15 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/sourcing",
     title: "Bước 3 — Xác định hàng lấy từ đâu",
     content:
-      "Mỗi cặp cơ sở nhận + nguyên liệu cần một nguồn cấp. Chọn STOCK khi lấy từ kho nội bộ, hoặc SUPPLIER khi mua từ nhà cung cấp.",
+      "Mỗi nguyên liệu tại một cơ sở nhận cần có nguồn cấp. Chọn Xuất từ kho khi lấy từ kho nội bộ, hoặc Nhà cung cấp khi mua bên ngoài.",
   },
   {
     id: "sourcing-tabs",
     route: "/sourcing",
     marker: "sourcing-tabs",
-    title: "Nguồn cấp và quyền xin hàng",
+    title: "Nguồn hàng và quyền yêu cầu",
     content:
-      "Tab Nguồn cấp quyết định tuyến thực hiện đơn. Tab Hàng được phép xin quyết định bộ phận nào nhìn thấy và được yêu cầu nguyên liệu nào.",
+      "Mục Nguồn cấp hàng xác định hàng sẽ lấy từ đâu. Mục Hàng được phép yêu cầu xác định mỗi bộ phận có thể chọn những nguyên liệu nào.",
   },
   {
     id: "sourcing-create-rule",
@@ -375,7 +375,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "sourcing-create-rule",
     title: "Thêm quy tắc nguồn cấp",
     content:
-      "Bấm Thêm nguồn cấp, chọn cơ sở nhận, nguyên liệu và loại nguồn. Với STOCK phải chọn kho xuất; với SUPPLIER phải chọn nhà cung cấp. Sau đó qua tab quyền xin hàng để mở mặt hàng cho đúng bộ phận.",
+      "Bấm Thêm nguồn cấp, chọn cơ sở nhận, nguyên liệu và loại nguồn. Nếu xuất từ kho, chọn kho xuất; nếu mua bên ngoài, chọn nhà cung cấp. Sau đó mở mục Hàng được phép yêu cầu để thêm mặt hàng cho đúng bộ phận.",
     allPermissions: ["source_rule.manage"],
   },
   {
@@ -385,9 +385,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "sourcing-tab-rules",
     openViaMarker: "sourcing-create-rule",
     closeDialogMarker: "sourcing-rule-form",
-    title: "Điền form nguồn cấp",
+    title: "Điền biểu mẫu nguồn cấp",
     content:
-      "Chọn Cơ sở nhận và Nguyên liệu trước. Loại STOCK yêu cầu Kho xuất vật lý; loại SUPPLIER yêu cầu Nhà cung cấp đã liên kết với nguyên liệu. Mỗi cặp cơ sở–nguyên liệu chỉ có một nguồn hiệu lực; đổi nguồn sẽ tạo revision để truy vết.",
+      "Chọn cơ sở nhận và nguyên liệu trước. Nguồn kho nội bộ cần có kho xuất; nguồn mua ngoài cần có nhà cung cấp đã liên kết với nguyên liệu. Mỗi cặp cơ sở – nguyên liệu chỉ có một nguồn đang áp dụng; mỗi lần đổi nguồn được lưu thành một phiên bản để tra cứu lại.",
     allPermissions: ["source_rule.manage"],
   },
   {
@@ -409,7 +409,7 @@ const FLOW_STEPS: FlowStep[] = [
     closeDialogMarker: "sourcing-bulk-form",
     title: "Nhập nguồn cấp hàng loạt",
     content:
-      "Mỗi dòng theo mẫu MÃ_CƠ_SỞ,MÃ_NGUYÊN_LIỆU,STOCK|SUPPLIER,MÃ_NGUỒN. Với STOCK, cột cuối là mã kho vật lý; với SUPPLIER là mã nhà cung cấp. Có thể dùng dấu phẩy, chấm phẩy hoặc tab; kiểm tra mã viết đúng rồi mới Áp dụng.",
+      "Mỗi dòng theo mẫu MÃ_CƠ_SỞ,MÃ_NGUYÊN_LIỆU,STOCK|SUPPLIER,MÃ_NGUỒN. STOCK nghĩa là kho nội bộ, SUPPLIER nghĩa là nhà cung cấp; cột cuối lần lượt là mã kho hoặc mã nhà cung cấp. Có thể ngăn các cột bằng dấu phẩy, chấm phẩy hoặc phím Tab; kiểm tra mã trước khi áp dụng.",
     allPermissions: ["source_rule.read", "source_rule.bulk_update"],
   },
   {
@@ -417,17 +417,17 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/sourcing",
     marker: "sourcing-tab-eligibility",
     activateMarker: "sourcing-tab-eligibility",
-    title: "Cấp mặt hàng được phép xin",
+    title: "Thêm hàng được phép yêu cầu",
     content:
-      "Tour đã mở tab Hàng được phép xin. Đây là bước nối bộ phận với danh sách nguyên liệu họ nhìn thấy khi lập yêu cầu.",
+      "Hướng dẫn đã mở mục Hàng được phép yêu cầu. Đây là nơi chọn danh sách nguyên liệu mỗi bộ phận nhìn thấy khi lập yêu cầu.",
     allPermissions: ["eligibility.read"],
   },
   {
     id: "sourcing-create-eligibility",
     route: "/sourcing",
     marker: "sourcing-create-eligibility",
-    title: "Mở form cấp quyền xin hàng",
-    content: "Bấm Cấp quyền xin hàng để cấu hình cho một bộ phận.",
+    title: "Mở biểu mẫu thêm hàng được phép yêu cầu",
+    content: "Bấm Thêm hàng được phép yêu cầu để cấu hình cho một bộ phận.",
     allPermissions: ["eligibility.read", "eligibility.manage"],
   },
   {
@@ -437,9 +437,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "sourcing-tab-eligibility",
     openViaMarker: "sourcing-create-eligibility",
     closeDialogMarker: "sourcing-eligibility-form",
-    title: "Điền form quyền xin hàng",
+    title: "Chọn hàng bộ phận được phép yêu cầu",
     content:
-      "Chọn Cơ sở rồi Bộ phận, thêm một hoặc nhiều nguyên liệu và đặt số lượng tối đa mỗi lần gọi nếu cần. Chỉ các nguyên liệu được cấp ở đây mới xuất hiện trong form yêu cầu của bộ phận đó.",
+      "Chọn cơ sở rồi bộ phận, thêm một hoặc nhiều nguyên liệu và đặt số lượng tối đa mỗi lần yêu cầu nếu cần. Chỉ các nguyên liệu được thêm ở đây mới xuất hiện trong biểu mẫu yêu cầu hàng của bộ phận đó.",
     allPermissions: ["eligibility.read", "eligibility.manage"],
   },
   {
@@ -447,16 +447,16 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/users",
     title: "Bước 4 — Tạo vai trò, người dùng và phạm vi",
     content:
-      "Đúng trình tự là Vai trò & Quyền hạn → Người dùng & Tài khoản → Grants. Quyền cho biết được làm gì; Grant giới hạn được làm ở cơ sở, kho hoặc bộ phận nào.",
+      "Thực hiện theo thứ tự: Vai trò & quyền hạn → Người dùng & tài khoản → Phân quyền. Vai trò xác định người dùng được làm gì; phạm vi truy cập giới hạn họ được thao tác tại cơ sở, kho hoặc bộ phận nào.",
   },
   {
     id: "users-role-tab",
     route: "/users",
     marker: "users-tab-roles",
     activateMarker: "users-tab-roles",
-    title: "Mở tab Vai trò & Quyền hạn",
+    title: "Mở mục Vai trò & quyền hạn",
     content:
-      "Tour đã chuyển sang tab vai trò. Hãy tạo vai trò theo công việc thực tế và chỉ chọn các quyền cần thiết; vai trò gốc vẫn có thể chỉnh bộ quyền nhưng mã, tên và trạng thái được bảo vệ.",
+      "Hướng dẫn đã chuyển sang mục Vai trò. Hãy tạo vai trò theo công việc thực tế và chỉ chọn các quyền cần thiết; vai trò gốc vẫn có thể chỉnh bộ quyền nhưng mã, tên và trạng thái được bảo vệ.",
     allPermissions: ["role.read"],
   },
   {
@@ -475,9 +475,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "users-tab-roles",
     openViaMarker: "users-create-role",
     closeDialogMarker: "users-role-form",
-    title: "Cấu hình vai trò trong form",
+    title: "Cấu hình vai trò trong biểu mẫu",
     content:
-      "Mã vai trò viết liền, không dấu và không đổi sau khi tạo; Tên hiển thị mô tả công việc. Trong Bộ quyền, tìm theo tên/mã, chọn đúng các thao tác cần dùng rồi rà lại trước khi lưu. Quyền chỉ quyết định được làm gì; phạm vi dữ liệu sẽ cấu hình ở Grant.",
+      "Mã vai trò viết liền, không dấu và không đổi sau khi tạo; tên hiển thị nên mô tả công việc. Trong Bộ quyền, tìm theo tên hoặc mã, chọn đúng các thao tác cần dùng rồi rà lại trước khi lưu. Phạm vi dữ liệu được cấu hình riêng ở mục Phân quyền.",
     allPermissions: ["role.read", "role.manage"],
   },
   {
@@ -487,7 +487,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "users-tab-users",
     title: "Chuyển sang Người dùng",
     content:
-      "Sau khi có vai trò, tạo tài khoản cho nhân sự. Tour đã chuyển về tab Người dùng để nút tạo tài khoản xuất hiện.",
+      "Sau khi có vai trò, tạo tài khoản cho nhân sự. Hướng dẫn đã chuyển về mục Người dùng để nút tạo tài khoản xuất hiện.",
     allPermissions: ["user.read", "user.create", "grant.assign"],
   },
   {
@@ -506,9 +506,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "users-tab-users",
     openViaMarker: "users-create-user",
     closeDialogMarker: "users-user-form",
-    title: "Điền form tài khoản",
+    title: "Điền biểu mẫu tài khoản",
     content:
-      "Chọn INTERNAL cho nhân sự hoặc SUPPLIER cho tài khoản đại diện nhà cung cấp. Nhập tên đăng nhập, họ tên và mật khẩu khởi tạo; chọn vai trò rồi chọn Scope. ORGANIZATION thấy toàn tổ chức, FACILITY theo cơ sở, STOCK_LOCATION theo kho, DEPARTMENT theo bộ phận, OWN chỉ dữ liệu của chính người dùng.",
+      "Chọn Nhân viên nội bộ hoặc Tài khoản nhà cung cấp. Nhập tên đăng nhập, họ tên và mật khẩu khởi tạo; sau đó chọn vai trò và phạm vi truy cập. Có thể giới hạn theo toàn tổ chức, cơ sở, kho, bộ phận hoặc chỉ dữ liệu của chính người dùng.",
     allPermissions: ["user.read", "user.create", "grant.assign"],
   },
   {
@@ -516,9 +516,9 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/users",
     marker: "users-tab-grants",
     activateMarker: "users-tab-grants",
-    title: "Kiểm soát phạm vi bằng Grant",
+    title: "Giới hạn phạm vi truy cập",
     content:
-      "Mở tab Grants để cấp thêm hoặc thu hồi vai trò theo phạm vi. Chọn ORGANIZATION cho toàn hệ thống; FACILITY, STOCK_LOCATION hoặc DEPARTMENT khi chỉ được thao tác trong một khu vực.",
+      "Mở mục Phân quyền để cấp thêm hoặc thu hồi vai trò. Chọn Toàn tổ chức nếu cần truy cập toàn hệ thống; chọn Cơ sở, Kho hoặc Bộ phận nếu chỉ được thao tác trong một khu vực.",
     allPermissions: ["grant.read", "grant.assign"],
   },
   {
@@ -537,9 +537,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "users-tab-grants",
     openViaMarker: "users-create-grant",
     closeDialogMarker: "users-grant-form",
-    title: "Điền form Grant",
+    title: "Điền biểu mẫu phân quyền",
     content:
-      "Tìm người dùng, chọn vai trò và Scope. Với FACILITY chọn cơ sở; STOCK_LOCATION chọn cơ sở rồi kho; DEPARTMENT chọn cơ sở rồi bộ phận. Một người có thể có nhiều Grant, nhưng không nên cấp phạm vi rộng hơn nhu cầu thực tế.",
+      "Tìm người dùng, chọn vai trò và phạm vi truy cập. Với phạm vi Kho hoặc Bộ phận, cần chọn cơ sở trước rồi chọn kho hoặc bộ phận tương ứng. Một người có thể có nhiều phân quyền, nhưng không nên cấp phạm vi rộng hơn nhu cầu thực tế.",
     allPermissions: ["grant.read", "grant.assign"],
   },
   {
@@ -547,7 +547,7 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/requests",
     title: "Bước 5 — Bộ phận lập yêu cầu hàng",
     content:
-      "Người lập tạo nháp, kiểm tra ngày cần hàng và số lượng rồi Gửi duyệt. Người duyệt có thể duyệt, từ chối hoặc yêu cầu chỉnh sửa; khi duyệt hệ thống tự sinh đơn thực hiện theo nguồn cấp.",
+      "Người lập tạo nháp, kiểm tra ngày cần hàng và số lượng rồi gửi duyệt. Người duyệt có thể duyệt, từ chối hoặc yêu cầu chỉnh sửa; khi duyệt hệ thống tự tạo đơn cấp hàng theo nguồn cấp.",
   },
   {
     id: "requests-create",
@@ -564,7 +564,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "requests-create-form-fields",
     openViaMarker: "requests-create",
     closeDialogMarker: "requests-create-form",
-    title: "Điền form yêu cầu hàng",
+    title: "Điền biểu mẫu yêu cầu hàng",
     content:
       "Chọn Cơ sở rồi Bộ phận nhận; danh sách bộ phận chỉ hiện nơi đã gán kho nhận. Chọn ngày cần hàng, thêm ghi chú nếu cần, sau đó thêm từng nguyên liệu được cấp quyền và số lượng theo đơn vị hiển thị. Nút Tạo bản nháp chưa gửi duyệt; phải mở bản nháp và bấm Gửi duyệt ở bước sau.",
     allPermissions: ["request.create"],
@@ -575,23 +575,23 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "requests-list",
     title: "Hoàn tất vòng đời yêu cầu",
     content:
-      "Tìm theo mã/ghi chú hoặc lọc trạng thái, rồi bấm một dòng để mở chi tiết. DRAFT: người lập còn sửa và Gửi duyệt. SUBMITTED: người có quyền duyệt chọn Duyệt, Từ chối hoặc Yêu cầu sửa. APPROVED sẽ tự sinh đơn theo từng nguồn; không tạo lại yêu cầu để tránh trùng hàng.",
+      "Tìm theo mã hoặc ghi chú, lọc trạng thái rồi bấm một dòng để mở chi tiết. Phiếu Nháp còn có thể sửa và gửi duyệt. Phiếu Chờ duyệt có thể được duyệt, từ chối hoặc yêu cầu sửa. Sau khi duyệt, hệ thống tự tạo đơn theo từng nguồn; không tạo lại yêu cầu để tránh trùng hàng.",
     allPermissions: ["request.read"],
   },
   {
     id: "orders",
     route: "/orders",
-    title: "Bước 6 — Theo dõi đơn thực hiện",
+    title: "Bước 6 — Theo dõi đơn cấp hàng",
     content:
-      "Đơn được tạo tự động sau khi yêu cầu được duyệt, không tạo tay tại đây. Mở từng dòng để xem nguồn STOCK/SUPPLIER, lượng cần giao, đã giao, còn thiếu, chứng từ nhà cung cấp và trạng thái thanh toán.",
+      "Đơn được tạo tự động sau khi yêu cầu được duyệt, không tạo thủ công tại đây. Mở từng dòng để xem nguồn kho hoặc nhà cung cấp, lượng cần giao, đã giao, còn thiếu, chứng từ và trạng thái thanh toán.",
   },
   {
     id: "orders-list",
     route: "/orders",
     marker: "orders-list",
-    title: "Đọc và xử lý đơn thực hiện",
+    title: "Xem và xử lý đơn cấp hàng",
     content:
-      "Lọc theo trạng thái và loại nguồn rồi bấm dòng để xem chi tiết. Với STOCK, tiếp tục ở Giao nhận để lập phiếu xuất. Với SUPPLIER, có thể xuất phiếu gửi NCC và cập nhật số đã thanh toán. Chỉ Đóng phần chưa giao khi chắc chắn không nhận thêm; Hủy chỉ dùng trước khi phát sinh giao nhận không thể đảo ngược.",
+      "Lọc theo trạng thái và loại nguồn rồi bấm dòng để xem chi tiết. Với nguồn kho, tiếp tục ở Giao nhận để lập phiếu xuất. Với nguồn mua ngoài, có thể tải phiếu gửi nhà cung cấp và cập nhật số đã thanh toán. Chỉ đóng phần chưa giao khi chắc chắn không nhận thêm; chỉ hủy trước khi phát sinh giao nhận không thể hoàn tác.",
     allPermissions: ["order.read"],
   },
   {
@@ -616,7 +616,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "transfers-create-form-fields",
     openViaMarker: "transfers-create",
     closeDialogMarker: "transfers-create-form",
-    title: "Điền form điều chuyển",
+    title: "Điền biểu mẫu điều chuyển",
     content:
       "Kho xuất và Kho nhận phải khác nhau. Thời gian dự kiến nhận dùng để thông báo cho bên nhận; ghi chú nêu mục đích/chuyến xe. Thêm nguyên liệu và số lượng cần chuyển. Tạo phiếu nháp xong vẫn phải Gửi duyệt; tuyến Kho tổng ↔ Bếp trung tâm có thể tự duyệt theo chính sách.",
     allPermissions: ["transfer.create"],
@@ -627,15 +627,15 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "transfers-list",
     title: "Gửi duyệt và theo dõi điều chuyển",
     content:
-      "Bấm một dòng để mở chi tiết. DRAFT có thể sửa hoặc Gửi duyệt; SUBMITTED chờ người có quyền phê duyệt; APPROVED/RELEASED chuyển sang lập phiếu xuất ở Giao nhận. Sau khi nơi nhận ghi sổ phiếu nhập, kiểm tra lượng đã xuất, đã nhận và phần còn thiếu trước khi đóng hồ sơ.",
+      "Bấm một dòng để mở chi tiết. Phiếu Nháp có thể sửa hoặc gửi duyệt; phiếu Chờ duyệt cần người có quyền phê duyệt; sau khi duyệt hoặc phát hành, chuyển sang lập phiếu xuất ở Giao nhận. Khi nơi nhận đã xác nhận nhập kho, kiểm tra lượng đã xuất, đã nhận và phần còn thiếu trước khi đóng hồ sơ.",
     allPermissions: ["transfer.read"],
   },
   {
     id: "delivery-overview",
     route: "/delivery",
-    title: "Bước 7 — Xuất, nhận và xử lý sai lệch",
+    title: "Bước 7 — Xuất, nhận và xử lý chênh lệch",
     content:
-      "Kho nguồn tạo và ghi sổ phiếu xuất; nơi nhận kiểm đếm rồi ghi sổ phiếu nhập. Nếu thực nhận khác thực xuất, hệ thống tạo hồ sơ sai lệch để điều tra và xử lý.",
+      "Kho nguồn tạo phiếu và xác nhận xuất hàng; nơi nhận kiểm đếm rồi xác nhận nhập kho. Nếu lượng nhận khác lượng xuất, hệ thống tạo hồ sơ chênh lệch để kiểm tra và xử lý.",
   },
   {
     id: "delivery-dispatch-tab",
@@ -644,7 +644,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "delivery-tab-dispatches",
     title: "1. Phiếu xuất kho",
     content:
-      "Tour đã mở tab Phiếu xuất kho. Chọn đơn đang mở, nhập lượng xuất thực tế, lưu phiếu rồi ghi sổ khi hàng thật sự rời kho.",
+      "Hướng dẫn đã mở mục Phiếu xuất kho. Chọn đơn đang mở, nhập lượng xuất thực tế, lưu phiếu rồi xác nhận xuất khi hàng thật sự rời kho.",
     allPermissions: ["dispatch.read"],
   },
   {
@@ -653,7 +653,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "delivery-create-dispatch",
     title: "Lập phiếu xuất",
     content:
-      "Bấm Lập phiếu xuất, chọn đơn thực hiện và điền số lượng theo từng dòng. Không ghi sổ trước khi kho đã kiểm đủ hàng vì thao tác ghi sổ làm thay đổi tồn kho.",
+      "Bấm Lập phiếu xuất, chọn đơn cấp hàng và điền số lượng theo từng mặt hàng. Không xác nhận xuất trước khi kho đã kiểm đủ hàng vì thao tác này sẽ trừ số lượng tồn kho.",
     allPermissions: ["dispatch.read", "dispatch.create"],
   },
   {
@@ -665,7 +665,7 @@ const FLOW_STEPS: FlowStep[] = [
     closeDialogMarker: "delivery-dispatch-form",
     title: "Điền phiếu xuất kho",
     content:
-      "Chọn đơn thực hiện đang mở; hệ thống nạp các dòng đã duyệt, đã xuất và lượng còn lại. Nhập lượng xuất đợt này cho từng mặt hàng và ghi chú xe/niêm phong nếu có. Tạo phiếu mới chỉ là chứng từ; chỉ ghi sổ khi hàng đã thực sự rời kho.",
+      "Chọn đơn cấp hàng đang mở; hệ thống nạp các mặt hàng đã duyệt, đã xuất và lượng còn lại. Nhập lượng xuất đợt này cho từng mặt hàng và ghi chú xe hoặc niêm phong nếu có. Tạo phiếu mới chỉ lưu chứng từ; chỉ xác nhận xuất khi hàng đã thực sự rời kho.",
     allPermissions: ["dispatch.read", "dispatch.create"],
   },
   {
@@ -673,9 +673,9 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/delivery",
     marker: "delivery-tab-receipts",
     activateMarker: "delivery-tab-receipts",
-    title: "2. Phiếu nhập nhận hàng",
+    title: "2. Phiếu nhận hàng",
     content:
-      "Tour đã chuyển sang tab Phiếu nhập. Nơi nhận chọn phiếu xuất/đơn liên quan, nhập số lượng thực nhận và ghi chú tình trạng hàng.",
+      "Hướng dẫn đã chuyển sang mục Phiếu nhận hàng. Nơi nhận chọn phiếu xuất hoặc đơn liên quan, nhập số lượng thực nhận và ghi chú tình trạng hàng.",
     allPermissions: ["receipt.read"],
   },
   {
@@ -684,7 +684,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "delivery-create-receipt",
     title: "Lập phiếu nhập",
     content:
-      "Bấm Lập phiếu nhập, kiểm đếm từng dòng rồi lưu và ghi sổ. Chênh lệch giữa xuất và nhận phải phản ánh đúng thực tế; không sửa số để ép khớp.",
+      "Bấm Lập phiếu nhận, kiểm đếm từng dòng rồi lưu và xác nhận nhập kho. Chênh lệch giữa xuất và nhận phải phản ánh đúng thực tế; không sửa số để ép khớp.",
     allPermissions: ["receipt.read", "receipt.create"],
   },
   {
@@ -694,9 +694,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "delivery-tab-receipts",
     openViaMarker: "delivery-create-receipt",
     closeDialogMarker: "delivery-receipt-form",
-    title: "Điền phiếu nhập nhận hàng",
+    title: "Điền phiếu nhận hàng",
     content:
-      "Chọn đơn đang giao và, nếu có, phiếu xuất liên quan. Nhập số thực nhận sau khi kiểm đếm và ghi tình trạng bao bì/nhiệt độ. Ảnh xác nhận thuộc flow mobile; form web này tập trung vào số thực nhận. Thiếu/thừa phải ghi đúng để hệ thống tạo sai lệch, không sửa số để ép khớp.",
+      "Chọn đơn đang giao và phiếu xuất liên quan nếu có. Nhập số thực nhận sau khi kiểm đếm và ghi tình trạng bao bì hoặc nhiệt độ. Ứng dụng di động dùng để chụp ảnh xác nhận; biểu mẫu web này tập trung vào số thực nhận. Phải ghi đúng số thiếu hoặc thừa để hệ thống tạo chênh lệch, không sửa số để ép khớp.",
     allPermissions: ["receipt.read", "receipt.create"],
   },
   {
@@ -704,9 +704,9 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/delivery",
     marker: "delivery-tab-discrepancies",
     activateMarker: "delivery-tab-discrepancies",
-    title: "3. Xử lý sai lệch giao nhận",
+    title: "3. Xử lý chênh lệch giao nhận",
     content:
-      "Các ca thiếu/thừa xuất hiện tại đây. Mở hồ sơ, đối chiếu chứng từ và chọn cách xử lý có lý do rõ ràng để giữ Audit Trail đầy đủ.",
+      "Các trường hợp thiếu hoặc thừa xuất hiện tại đây. Mở hồ sơ, đối chiếu chứng từ và chọn cách xử lý có lý do rõ ràng để lưu đầy đủ lịch sử thay đổi.",
     allPermissions: ["discrepancy.read"],
   },
   {
@@ -714,7 +714,7 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/inventory",
     title: "Bước 8 — Kiểm soát tồn kho",
     content:
-      "Tồn tức thời là kết quả của chứng từ đã ghi sổ. Sổ cái giải thích mọi biến động; không chỉnh số trực tiếp ngoài phiếu điều chỉnh, kiểm kê hoặc biên bản báo hỏng.",
+      "Tồn hiện tại là kết quả của các chứng từ đã được xác nhận. Mục Lịch sử nhập xuất giải thích mọi biến động; không sửa số trực tiếp ngoài phiếu điều chỉnh, kiểm kê hoặc biên bản báo hỏng.",
   },
   {
     id: "inventory-balances-tab",
@@ -723,7 +723,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "inventory-tab-balances",
     title: "Kiểm tra tồn tức thời",
     content:
-      "Lọc theo cơ sở rồi kho, tìm nguyên liệu và đọc số dư hiện tại. Đây là số đã ghi sổ; phiếu xuất/nhập còn DRAFT chưa xuất hiện. Nếu số không đúng, mở Sổ cái trước để tìm chứng từ gây chênh lệch thay vì lập điều chỉnh ngay.",
+      "Lọc theo cơ sở rồi kho, tìm nguyên liệu và xem số lượng hiện tại. Phiếu xuất hoặc nhận còn ở trạng thái Nháp chưa làm thay đổi con số này. Nếu số liệu chưa đúng, mở Lịch sử nhập xuất để tìm chứng từ gây chênh lệch trước khi lập điều chỉnh.",
     allPermissions: ["stock.read"],
   },
   {
@@ -731,9 +731,9 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/inventory",
     marker: "inventory-tab-ledger",
     activateMarker: "inventory-tab-ledger",
-    title: "Truy vết bằng Sổ cái kho",
+    title: "Tra cứu lịch sử nhập xuất kho",
     content:
-      "Chọn kho và loại nghiệp vụ để xem từng bút toán tăng/giảm. Đối chiếu mã tham chiếu với phiếu xuất, nhập, điều chỉnh, kiểm kê hoặc báo hỏng; tổng các bút toán là căn cứ giải thích số tồn tức thời.",
+      "Chọn kho và loại nghiệp vụ để xem từng giao dịch tăng hoặc giảm tồn. Đối chiếu mã tham chiếu với phiếu xuất, nhận, điều chỉnh, kiểm kê hoặc báo hỏng; tổng các giao dịch này giải thích số lượng tồn hiện tại.",
     allPermissions: ["stock_ledger.read"],
   },
   {
@@ -743,7 +743,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "inventory-tab-stocktakes",
     title: "Kiểm kê định kỳ",
     content:
-      "Theo flow, nhân sự kho/cơ sở lập và nhập số đếm trên mobile; web admin dùng tab này để theo dõi các đợt kiểm kê và kết quả chênh lệch. Vì vậy web không hiển thị nút tạo kiểm kê tại đây.",
+      "Theo quy trình, nhân sự kho hoặc cơ sở lập phiếu và nhập số đếm trên ứng dụng di động; trang quản trị dùng mục này để theo dõi các đợt kiểm kê và kết quả chênh lệch. Vì vậy trang này không có nút tạo phiếu kiểm kê.",
     allPermissions: ["stocktake.read"],
   },
   {
@@ -753,7 +753,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "inventory-tab-adjustments",
     title: "Điều chỉnh tồn có chứng từ",
     content:
-      "Tour đã mở tab Điều chỉnh tồn. Dùng khi cần sửa chênh lệch đã xác minh; chọn kho, nguyên liệu, số lượng tăng/giảm và ghi lý do có thể kiểm toán.",
+      "Hướng dẫn đã mở mục Điều chỉnh tồn kho. Chỉ dùng khi cần sửa chênh lệch đã xác minh; chọn kho, nguyên liệu, số lượng tăng hoặc giảm và ghi rõ lý do.",
     allPermissions: ["adjustment.read"],
   },
   {
@@ -762,7 +762,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "inventory-create-adjustment",
     title: "Lập phiếu điều chỉnh",
     content:
-      "Bấm Lập phiếu điều chỉnh, lưu nháp để kiểm tra rồi ghi sổ theo đúng quyền hạn. Chỉ phiếu đã ghi sổ mới làm thay đổi tồn thực tế.",
+      "Bấm Lập phiếu điều chỉnh, lưu nháp để kiểm tra rồi cập nhật tồn kho theo đúng quyền hạn. Chỉ phiếu đã được cập nhật mới làm thay đổi số lượng tồn.",
     allPermissions: ["adjustment.read", "adjustment.create"],
   },
   {
@@ -774,7 +774,7 @@ const FLOW_STEPS: FlowStep[] = [
     closeDialogMarker: "inventory-adjustment-form",
     title: "Điền phiếu điều chỉnh tồn",
     content:
-      "Chọn kho và nguyên liệu, nhập số dương để tăng hoặc số âm để giảm, tối đa 3 chữ số thập phân. Lý do tối thiểu 3 ký tự và phải đủ để kiểm toán. Tạo phiếu chưa đổi tồn; chỉ bước ghi sổ có quyền mới làm thay đổi số dư.",
+      "Chọn kho và nguyên liệu, nhập số dương để tăng hoặc số âm để giảm, tối đa 3 chữ số thập phân. Lý do tối thiểu 3 ký tự và cần nêu rõ nguyên nhân. Tạo phiếu chưa làm thay đổi tồn; chỉ bước Cập nhật tồn mới thay đổi số lượng.",
     allPermissions: ["adjustment.read", "adjustment.create"],
   },
   {
@@ -784,7 +784,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "inventory-tab-damage",
     title: "Ghi nhận hao hụt và hủy hỏng",
     content:
-      "Tour đã mở tab Hao hụt & Hủy hỏng. Dùng biên bản riêng để giữ nguyên nhân, người xác nhận và lịch sử trừ kho minh bạch.",
+      "Hướng dẫn đã mở mục Hỏng & hao hụt. Dùng biên bản riêng để lưu nguyên nhân, người xác nhận và lịch sử trừ kho rõ ràng.",
     allPermissions: ["damage.read"],
   },
   {
@@ -805,7 +805,7 @@ const FLOW_STEPS: FlowStep[] = [
     closeDialogMarker: "inventory-damage-form",
     title: "Điền biên bản báo hỏng",
     content:
-      "Chọn kho, nhập lý do chung, nguyên liệu, số lượng hỏng lớn hơn 0 và ghi chú chi tiết như rách bao bì/hết hạn. Biên bản phải phản ánh số thực tế; quy trình xác nhận sau đó mới cho phép trừ kho và lưu Audit Trail.",
+      "Chọn kho, nhập lý do chung, nguyên liệu, số lượng hỏng lớn hơn 0 và ghi chú chi tiết như rách bao bì hoặc hết hạn. Biên bản phải phản ánh số thực tế; sau khi xác nhận, hệ thống mới trừ kho và lưu lịch sử thay đổi.",
     allPermissions: ["damage.read", "damage.create"],
   },
   {
@@ -813,16 +813,16 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/operations",
     title: "Bước 9 — iPOS, định mức và hao hụt",
     content:
-      "Đúng thứ tự là ánh xạ món iPOS → công thức BOM → nhập và commit doanh số → tính đối soát → xử lý cảnh báo. Thiếu ánh xạ hoặc công thức sẽ làm báo cáo tiêu hao không đầy đủ.",
+      "Thực hiện theo thứ tự: liên kết món iPOS → khai báo định mức nguyên liệu → nhập và chốt dữ liệu bán hàng → tính chênh lệch → xử lý cảnh báo. Thiếu liên kết món hoặc định mức sẽ làm báo cáo tiêu hao không đầy đủ.",
   },
   {
     id: "operations-mapping-tab",
     route: "/operations",
     marker: "operations-tab-mappings",
     activateMarker: "operations-tab-mappings",
-    title: "1. Ánh xạ món iPOS",
+    title: "1. Liên kết món iPOS",
     content:
-      "Tour đã mở tab Món ăn iPOS. Khai báo mã món đúng như dữ liệu xuất từ POS để hệ thống nhận diện doanh số.",
+      "Hướng dẫn đã mở mục Món iPOS. Khai báo mã món đúng như dữ liệu xuất từ iPOS để hệ thống nhận diện dữ liệu bán hàng.",
     allPermissions: ["ipos_mapping.read"],
   },
   {
@@ -831,7 +831,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "operations-create-mapping",
     title: "Thêm món iPOS",
     content:
-      "Bấm Thêm món iPOS, chọn cơ sở và nhập đúng mã/tên món từ iPOS. Mã sai sẽ khiến dòng bán hàng không ghép được khi import.",
+      "Bấm Thêm món iPOS, chọn cơ sở và nhập đúng mã, tên món từ iPOS. Mã sai sẽ khiến dữ liệu bán hàng không được liên kết với định mức nguyên liệu.",
     allPermissions: ["ipos_mapping.read", "ipos_mapping.manage"],
   },
   {
@@ -841,9 +841,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "operations-tab-mappings",
     openViaMarker: "operations-create-mapping",
     closeDialogMarker: "operations-mapping-form",
-    title: "Điền form ánh xạ iPOS",
+    title: "Điền biểu mẫu liên kết món iPOS",
     content:
-      "Chọn cơ sở, giữ nguồn IPOS nếu đúng hệ thống đang dùng, nhập External Key chính xác như file bán hàng và tên món dễ nhận biết. External Key là khóa ghép dữ liệu; sai một ký tự sẽ khiến doanh số không tìm thấy công thức.",
+      "Chọn cơ sở, nhập tên nguồn dữ liệu và mã món chính xác như tệp bán hàng, sau đó đặt tên món dễ nhận biết. Mã món dùng để ghép dữ liệu bán hàng với định mức; sai một ký tự sẽ khiến hệ thống không tìm thấy định mức tương ứng.",
     allPermissions: ["ipos_mapping.read", "ipos_mapping.manage"],
   },
   {
@@ -851,9 +851,9 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/operations",
     marker: "operations-tab-recipes",
     activateMarker: "operations-tab-recipes",
-    title: "2. Khai báo công thức BOM",
+    title: "2. Khai báo định mức nguyên liệu",
     content:
-      "Tour đã chuyển sang Công thức. Mỗi món cần các nguyên liệu và định lượng chuẩn theo một đơn vị bán để tính tiêu hao lý thuyết.",
+      "Hướng dẫn đã chuyển sang Định mức nguyên liệu. Mỗi món cần danh sách nguyên liệu và lượng dùng chuẩn cho một đơn vị bán để tính mức sử dụng dự kiến.",
     allPermissions: ["recipe.read"],
   },
   {
@@ -872,7 +872,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "operations-tab-recipes",
     openViaMarker: "operations-create-recipe",
     closeDialogMarker: "operations-recipe-form",
-    title: "Điền form định mức BOM",
+    title: "Điền biểu mẫu định mức nguyên liệu",
     content:
       "Chọn món iPOS đã ánh xạ, kho xuất nguyên liệu và thời điểm hiệu lực. Với từng dòng, chọn nguyên liệu và lượng tiêu hao theo đơn vị cơ sở cho một món bán; dùng Thêm dòng nếu công thức có nhiều thành phần. Phiên bản mới chỉ áp dụng từ thời điểm hiệu lực.",
     allPermissions: ["recipe.read", "recipe.manage"],
@@ -884,7 +884,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "operations-tab-sales",
     title: "3. Nhập dữ liệu bán hàng",
     content:
-      "Tour đã mở tab Đợt nhập bán hàng. Mỗi file/đợt cần khóa chống lặp Idempotency-Key; web tự sinh khóa cho lần gửi để tránh ghi doanh số hai lần.",
+      "Hướng dẫn đã mở mục Dữ liệu bán hàng. Mỗi tệp hoặc đợt nhập cần có mã duy nhất; hệ thống tự tạo khóa chống gửi lặp để tránh ghi dữ liệu bán hai lần.",
     allPermissions: ["sales_import.read"],
   },
   {
@@ -893,7 +893,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "operations-create-sales-import",
     title: "Tạo đợt nhập doanh số",
     content:
-      "Bấm Nhập dữ liệu bán, chọn cơ sở và kỳ dữ liệu rồi tải file đúng mẫu. Xem lỗi ánh xạ, sửa danh mục nếu cần; chỉ Commit khi tổng số dòng và doanh thu đã đúng.",
+      "Bấm Nhập dữ liệu bán, chọn cơ sở và kỳ dữ liệu rồi tải tệp đúng mẫu. Kiểm tra các món chưa được liên kết và sửa danh mục nếu cần; chỉ chốt khi tổng số dòng và số lượng bán đã đúng.",
     allPermissions: ["sales_import.read", "sales_import.create"],
   },
   {
@@ -903,9 +903,9 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "operations-tab-sales",
     openViaMarker: "operations-create-sales-import",
     closeDialogMarker: "operations-sales-form",
-    title: "Điền form đợt nhập doanh số",
+    title: "Điền biểu mẫu nhập dữ liệu bán hàng",
     content:
-      "Chọn cơ sở, nguồn IPOS và mã đợt duy nhất. Mỗi dòng CSV gồm mã giao dịch, mã món iPOS, thời gian ISO có múi giờ và số lượng. Form chỉ tạo đợt nhập để kiểm tra; sau khi sửa hết lỗi ánh xạ và đối chiếu tổng, mới Commit đợt dữ liệu.",
+      "Chọn cơ sở, tên nguồn và mã đợt duy nhất. Mỗi dòng dữ liệu gồm mã giao dịch, mã món iPOS, thời gian có múi giờ và số lượng. Biểu mẫu chỉ tạo đợt nhập để kiểm tra; sau khi sửa hết lỗi liên kết và đối chiếu tổng, mới chốt đợt dữ liệu.",
     allPermissions: ["sales_import.read", "sales_import.create"],
   },
   {
@@ -913,9 +913,9 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/operations",
     marker: "operations-sales-list",
     activateMarker: "operations-tab-sales",
-    title: "Validate, xem trước rồi Commit",
+    title: "Kiểm tra, xem trước rồi chốt dữ liệu",
     content:
-      "Đợt DRAFT phải Validate trước. Mở Xem trước để kiểm số dòng hợp lệ/lỗi và các mã món chưa ánh xạ; sửa ánh xạ rồi Validate lại. Chỉ Commit trạng thái VALIDATED sau khi đối chiếu kỳ, số giao dịch và số lượng vì commit đưa dữ liệu vào tính tiêu hao và không nên lặp lại.",
+      "Đợt Nháp phải được kiểm tra trước. Mở Xem trước để xem số dòng hợp lệ, dòng lỗi và các mã món chưa được liên kết; sửa liên kết rồi kiểm tra lại. Chỉ chốt dữ liệu sau khi đã đối chiếu kỳ, số giao dịch và số lượng vì dữ liệu đã chốt sẽ được dùng để tính tiêu hao.",
     allPermissions: ["sales_import.read"],
   },
   {
@@ -925,7 +925,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "operations-tab-variance",
     title: "4. Đối soát hao hụt",
     content:
-      "So sánh tiêu hao lý thuyết từ doanh số/BOM với biến động kho thực tế. Lọc theo cơ sở và kỳ; chỉ Tính lại khi dữ liệu bán hoặc công thức vừa được sửa.",
+      "So sánh lượng nguyên liệu dự kiến dùng theo dữ liệu bán hàng và định mức với biến động kho thực tế. Lọc theo cơ sở và kỳ; chỉ tính lại khi dữ liệu bán hoặc định mức vừa được sửa.",
     allPermissions: ["variance.read"],
   },
   {
@@ -935,7 +935,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "operations-tab-variance",
     title: "Chọn đúng kỳ cần tính lại",
     content:
-      "Bấm Tính lại khi doanh số đã commit, BOM đã có hiệu lực và phiếu kiểm kê của kỳ đã gửi. Tính lại không thay đổi tồn kho; nó dựng lại số tiêu hao lý thuyết và chênh lệch cho kỳ được chọn.",
+      "Bấm Tính lại khi dữ liệu bán hàng đã chốt, định mức đã có hiệu lực và phiếu kiểm kê của kỳ đã gửi. Thao tác này không thay đổi tồn kho; hệ thống chỉ tính lại mức sử dụng dự kiến và phần chênh lệch.",
     allPermissions: ["variance.read", "variance.recalculate"],
   },
   {
@@ -947,7 +947,7 @@ const FLOW_STEPS: FlowStep[] = [
     closeDialogMarker: "operations-recalculate-form",
     title: "Tính lại theo phiếu kiểm kê",
     content:
-      "Chọn phiếu kiểm kê đã gửi của đúng kho và ngày nghiệp vụ. Hệ thống dùng mốc kiểm kê, doanh số đã commit và BOM có hiệu lực để tính; nếu danh sách trống, cần hoàn tất/gửi phiếu kiểm kê trước.",
+      "Chọn phiếu kiểm kê đã gửi của đúng kho và ngày nghiệp vụ. Hệ thống dùng mốc kiểm kê, dữ liệu bán đã chốt và định mức đang có hiệu lực để tính; nếu danh sách trống, cần hoàn tất và gửi phiếu kiểm kê trước.",
     allPermissions: ["variance.read", "variance.recalculate"],
   },
   {
@@ -976,7 +976,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "operations-tab-alerts",
     openViaMarker: "operations-create-alert",
     closeDialogMarker: "operations-alert-form",
-    title: "Điền form cảnh báo tồn",
+    title: "Điền biểu mẫu cảnh báo tồn",
     content:
       "Để trống Cơ sở để áp dụng toàn tổ chức, để trống Nguyên liệu để áp dụng tất cả mặt hàng trong phạm vi. QUANTITY là số lượng theo đơn vị cơ sở; PERCENT là tỷ lệ phần trăm. Giá trị phải lớn hơn 0; nên bắt đầu bằng ngưỡng thực sự cần hành động rồi hiệu chỉnh theo dữ liệu vận hành.",
     allPermissions: ["alert_rule.manage"],
@@ -1002,7 +1002,7 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "reports-filters",
     title: "Đặt phạm vi báo cáo trước",
     content:
-      "Chọn một cơ sở để điều tra chi tiết hoặc Tất cả cơ sở để so sánh toàn tổ chức. Bộ lọc được dùng chung khi đổi tab; nếu kết quả trống, kiểm tra lại cơ sở và quyền dữ liệu trước khi kết luận chưa có phát sinh.",
+      "Chọn một cơ sở để xem chi tiết hoặc Tất cả cơ sở để so sánh toàn tổ chức. Bộ lọc được dùng chung khi đổi mục; nếu kết quả trống, kiểm tra lại cơ sở và quyền dữ liệu trước khi kết luận chưa có phát sinh.",
   },
   {
     id: "reports-stock",
@@ -1011,7 +1011,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "reports-tab-stock",
     title: "Báo cáo tồn kho",
     content:
-      "Đọc số lượng theo nguyên liệu/kho/cơ sở và chú ý các dòng dưới ngưỡng. Dùng báo cáo để rà tổng thể; khi cần giải thích một con số, chuyển sang Kho & Tồn kho → Sổ cái để xem từng bút toán.",
+      "Xem số lượng theo nguyên liệu, kho và cơ sở; chú ý các dòng dưới mức cảnh báo. Khi cần kiểm tra nguyên nhân của một con số, chuyển sang Kho & quản lý tồn kho → Lịch sử nhập xuất để xem từng giao dịch.",
     allPermissions: ["report.stock"],
   },
   {
@@ -1021,7 +1021,7 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "reports-tab-fulfillment",
     title: "Báo cáo tỷ lệ hoàn tất đơn",
     content:
-      "So sánh lượng được duyệt với lượng đã nhận để tìm tuyến/kho/NCC thường giao thiếu. Tỷ lệ thấp cần được đối chiếu với đơn PARTIAL, phần đã đóng và sai lệch giao nhận trước khi đánh giá hiệu suất.",
+      "So sánh lượng được duyệt với lượng đã nhận để tìm nguồn hoặc kho thường giao thiếu. Với tỷ lệ thấp, cần xem các đơn mới hoàn thành một phần, phần còn lại đã đóng và chênh lệch giao nhận trước khi đánh giá.",
     allPermissions: ["report.fulfillment"],
   },
   {
@@ -1039,9 +1039,9 @@ const FLOW_STEPS: FlowStep[] = [
     route: "/reports",
     marker: "reports-tab-variance",
     activateMarker: "reports-tab-variance",
-    title: "Báo cáo đối soát iPOS",
+    title: "Báo cáo so sánh tiêu hao iPOS",
     content:
-      "Expected là tiêu hao theo doanh số và BOM; Actual là biến động/kiểm kê thực tế; Variance là phần chênh. Trạng thái dữ liệu chưa đủ thường do thiếu ánh xạ, BOM, doanh số commit hoặc phiếu kiểm kê — sửa dữ liệu nguồn rồi Tính lại.",
+      "Mức dự kiến được tính từ dữ liệu bán hàng và định mức; mức thực tế lấy từ biến động kho và kiểm kê; chênh lệch là hiệu số giữa hai mức. Nếu dữ liệu chưa đủ, hãy kiểm tra liên kết món, định mức, dữ liệu bán đã chốt và phiếu kiểm kê rồi tính lại.",
     allPermissions: ["report.variance"],
   },
   {
@@ -1051,15 +1051,15 @@ const FLOW_STEPS: FlowStep[] = [
     activateMarker: "reports-tab-payment",
     title: "Báo cáo đối soát thanh toán",
     content:
-      "So sánh giá trị đã đối soát với số đã thanh toán theo đơn nhà cung cấp. Muốn cập nhật, mở đơn ở Đơn thực hiện → Đối soát thanh toán; không nhập vượt giá trị đã đối soát và kiểm tra trạng thái PARTIAL/PAID sau khi lưu.",
+      "So sánh giá trị đã đối soát với số đã thanh toán theo từng đơn nhà cung cấp. Muốn cập nhật, mở đơn ở Đơn cấp hàng → Đối soát thanh toán; không nhập vượt giá trị đã đối soát và kiểm tra trạng thái thanh toán sau khi lưu.",
     allPermissions: ["report.payment"],
   },
   {
     id: "system",
     route: "/system",
-    title: "Bước 11 — Kiểm tra hệ thống và Audit Trail",
+    title: "Bước 11 — Kiểm tra hệ thống và lịch sử thay đổi",
     content:
-      "Sức khỏe API cho biết backend/database có sẵn sàng. Audit Trail ghi ai đã thay đổi gì, lúc nào và trên tài nguyên nào; dùng Request ID để lần theo một giao dịch cụ thể.",
+      "Tình trạng hệ thống cho biết máy chủ và cơ sở dữ liệu có sẵn sàng hay không. Nhật ký thay đổi ghi ai đã thay đổi dữ liệu gì và vào lúc nào; dùng mã truy vết để tìm một giao dịch cụ thể.",
   },
   {
     id: "system-health",
@@ -1067,24 +1067,24 @@ const FLOW_STEPS: FlowStep[] = [
     marker: "system-health",
     title: "Phân biệt lỗi hệ thống và lỗi dữ liệu",
     content:
-      "API Backend và PostgreSQL phải ở trạng thái sẵn sàng; thẻ Phiên xác thực cho biết tài khoản đang dùng. Nếu API/DB lỗi, bấm Làm mới và báo kỹ thuật kèm thời điểm. Nếu hệ thống khỏe nhưng thao tác thiếu dữ liệu, kiểm tra quyền, phạm vi cơ sở và Audit Trail.",
+      "Máy chủ DICA và cơ sở dữ liệu PostgreSQL cần ở trạng thái sẵn sàng; thẻ tài khoản cho biết ai đang đăng nhập. Nếu kết nối lỗi, bấm Làm mới và báo kỹ thuật kèm thời điểm. Nếu hệ thống hoạt động nhưng thiếu dữ liệu, hãy kiểm tra quyền, phạm vi cơ sở và nhật ký thay đổi.",
   },
   {
     id: "audit-filters",
     route: "/system",
     marker: "audit-filters",
-    title: "Tra cứu Audit Trail chính xác",
+    title: "Tra cứu lịch sử thay đổi",
     content:
-      "Kết hợp Hành động + Loại tài nguyên + Người thực hiện + khoảng ngày. Nếu đang điều tra một lỗi cụ thể, dán mã tài nguyên hoặc Request ID vào ô cuối để thu hẹp nhanh nhất.",
+      "Kết hợp hành động, loại dữ liệu, người thực hiện và khoảng ngày. Nếu đang kiểm tra một lỗi cụ thể, dán mã dữ liệu hoặc mã truy vết vào ô cuối để thu hẹp kết quả.",
     allPermissions: ["audit.read"],
   },
   {
     id: "guide-finish",
     route: "/guide",
     marker: "admin-tour-restart",
-    title: "Hoàn tất tour vận hành",
+    title: "Hoàn tất hướng dẫn vận hành",
     content:
-      "Trang Hướng dẫn giữ lại toàn bộ thứ tự thiết lập và flow hằng ngày. Khi cần xem lại, bấm Bắt đầu hướng dẫn; tour sẽ tiếp tục tự chuyển trang và chỉ hiển thị các bước tài khoản của bạn có quyền dùng.",
+      "Trang Hướng dẫn lưu lại toàn bộ thứ tự thiết lập và quy trình hằng ngày. Khi cần xem lại, bấm Bắt đầu hướng dẫn; hệ thống sẽ tự chuyển trang và chỉ hiển thị những bước tài khoản của bạn có quyền dùng.",
   },
 ]
 
@@ -1232,7 +1232,7 @@ export function AdminTourProvider({ children }: { children: React.ReactNode }) {
         target: '[data-tour="navigation-entry"]',
         title: "Điều hướng trong DICA",
         content:
-          "Tên màn hình hiện tại luôn nằm ở đây. Trên điện thoại, nhấn nút menu để mở các nhóm nghiệp vụ; tour sẽ tự chuyển trang khi bạn bấm Tiếp theo.",
+          "Tên màn hình hiện tại luôn nằm ở đây. Trên điện thoại, nhấn nút menu để mở các nhóm nghiệp vụ; hướng dẫn sẽ tự chuyển trang khi bạn bấm Tiếp theo.",
         position: "bottom-start",
         disableInteraction: true,
       },

@@ -44,7 +44,7 @@ const SETUP_STEPS = [
     description:
       "Xác định bộ phận được yêu cầu mặt hàng nào và hàng sẽ lấy từ kho hay nhà cung cấp.",
     href: "/sourcing",
-    action: "Mở Định tuyến nguồn",
+    action: "Mở Nguồn hàng & quyền yêu cầu",
     icon: PackageCheck,
   },
   {
@@ -66,7 +66,7 @@ const DAILY_FLOW = [
     icon: ClipboardList,
   },
   {
-    label: "Đơn thực hiện",
+    label: "Đơn cấp hàng",
     detail:
       "Sau khi duyệt, kiểm tra đơn được tách theo nguồn kho nội bộ hoặc nhà cung cấp.",
     href: "/orders",
@@ -75,14 +75,14 @@ const DAILY_FLOW = [
   {
     label: "Xuất và nhận hàng",
     detail:
-      "Kho ghi nhận xuất; nơi nhận kiểm đếm, nhập hàng và tạo sai lệch nếu số lượng không khớp.",
+      "Kho xác nhận xuất; nơi nhận kiểm đếm, nhập hàng và tạo chênh lệch nếu số lượng không khớp.",
     href: "/delivery",
     icon: Truck,
   },
   {
     label: "Kiểm soát tồn kho",
     detail:
-      "Theo dõi tồn, sổ kho, kiểm kê, điều chỉnh và báo hỏng. Không sửa số tồn trực tiếp.",
+      "Theo dõi tồn, lịch sử nhập xuất, kiểm kê, điều chỉnh và báo hỏng. Không sửa số tồn trực tiếp.",
     href: "/inventory",
     icon: Warehouse,
   },
@@ -94,7 +94,7 @@ export default function AdminGuidePage() {
       <div className="space-y-6">
         <PageHeader
           title="Hướng dẫn quản trị DICA"
-          description="Tour thao tác đầy đủ đi qua từng trang, tab, form cấu hình và vòng đời chứng từ trên web."
+          description="Hướng dẫn thao tác qua từng trang, thẻ nội dung, biểu mẫu cấu hình và các bước xử lý chứng từ."
           icon={BookOpenCheck}
           actions={
             <Button
@@ -118,8 +118,8 @@ export default function AdminGuidePage() {
                 Bắt đầu theo đúng thứ tự bên dưới
               </p>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Tour tự chuyển trang, mở đúng tab và mở form mẫu để giải thích
-                từng trường; tour không tự bấm Lưu hay tạo dữ liệu. Cơ cấu tổ
+                Hướng dẫn tự chuyển trang, mở đúng mục và biểu mẫu để giải thích
+                từng trường; hệ thống không tự bấm Lưu hay tạo dữ liệu. Cơ cấu tổ
                 chức và danh mục phải có trước khi tạo tài khoản vận hành. Sau
                 khi hoàn tất, hãy dùng một tài khoản thử để kiểm tra đúng menu
                 và đúng dữ liệu được phép xem.
@@ -176,7 +176,7 @@ export default function AdminGuidePage() {
               Quy trình vận hành hằng ngày
             </h2>
             <p className="text-xs text-muted-foreground">
-              Luồng chuẩn: Yêu cầu → Phê duyệt → Đơn thực hiện → Xuất hàng →
+              Quy trình chuẩn: Yêu cầu → Phê duyệt → Đơn cấp hàng → Xuất hàng →
               Nhận hàng → Đối soát.
             </p>
           </div>
@@ -252,7 +252,7 @@ export default function AdminGuidePage() {
             <CardContent className="text-xs leading-relaxed text-muted-foreground">
               <p>• Xử lý các yêu cầu và điều chuyển đang chờ duyệt.</p>
               <p>• Kiểm tra các phiếu xuất/nhận còn ở bản nháp.</p>
-              <p>• Giải quyết sai lệch nhận hàng và cảnh báo tồn thấp.</p>
+              <p>• Giải quyết chênh lệch nhận hàng và cảnh báo tồn thấp.</p>
               <p>• Đối chiếu báo hỏng, kiểm kê, hao hụt và thanh toán.</p>
               <p>• Xem Nhật ký hệ thống khi cần truy vết thao tác.</p>
             </CardContent>
