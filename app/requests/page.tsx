@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import Link from "next/link";
+import * as React from "react"
+import Link from "next/link"
 import {
   Ban,
   CheckCircle2,
@@ -12,99 +12,143 @@ import {
   RotateCcw,
   Send,
   XCircle,
-} from "lucide-react";
-import { AdminLayout } from "@/components/layout/admin-layout";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { DateTimePicker } from "@/components/shared/date-time-picker";
-import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
-import { ConfirmDialog, Field, FormDialog, OptionSelect, SearchInput } from "@/components/shared/form";
-import { FacilitySelect } from "@/components/shared/entity-select";
-import { DetailSheet, InfoGrid, MiniTable, Section } from "@/components/shared/detail-sheet";
-import { LinesEditor, cleanQty, newLine, validateLines, type LineDraft } from "@/components/shared/lines-editor";
-import { useAllQuery, useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
-import { useDepartments } from "@/hooks/use-lookups";
-import { useListState } from "@/hooks/use-list-state";
-import { useUrlParam } from "@/hooks/use-system";
-import { api } from "@/lib/api/client";
-import type { ItemEligibility, SupplyRequest } from "@/lib/api/types";
-import { APPROVAL_DECISION_LABELS, SOURCE_TYPE_LABELS, STATUS_LABELS, labelOf } from "@/constants/labels";
-import { useFacilityFilter } from "@/stores/use-app-store";
-import { useCan } from "@/stores/use-auth-store";
-import { formatDate, formatDateTime } from "@/lib/formatters";
-import { formatQty } from "@/lib/num";
-import { toast } from "sonner";
+} from "lucide-react"
+import { AdminLayout } from "@/components/layout/admin-layout"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { DateTimePicker } from "@/components/shared/date-time-picker"
+import { PageHeader } from "@/components/shared/page-header"
+import { StatusBadge } from "@/components/shared/status-badge"
+import {
+  Cell2,
+  Code,
+  DataTable,
+  type Column,
+} from "@/components/shared/data-table"
+import {
+  ConfirmDialog,
+  Field,
+  FormDialog,
+  OptionSelect,
+  SearchInput,
+} from "@/components/shared/form"
+import { FacilitySelect } from "@/components/shared/entity-select"
+import {
+  DetailSheet,
+  InfoGrid,
+  MiniTable,
+  Section,
+} from "@/components/shared/detail-sheet"
+import {
+  LinesEditor,
+  cleanQty,
+  newLine,
+  validateLines,
+  type LineDraft,
+} from "@/components/shared/lines-editor"
+import {
+  useAllQuery,
+  useApiMutation,
+  useApiQuery,
+  usePagedQuery,
+} from "@/hooks/use-api"
+import { useDepartments } from "@/hooks/use-lookups"
+import { useListState } from "@/hooks/use-list-state"
+import { useUrlParam } from "@/hooks/use-system"
+import { api } from "@/lib/api/client"
+import type { ItemEligibility, SupplyRequest } from "@/lib/api/types"
+import {
+  APPROVAL_DECISION_LABELS,
+  SOURCE_TYPE_LABELS,
+  STATUS_LABELS,
+  labelOf,
+} from "@/constants/labels"
+import { useFacilityFilter } from "@/stores/use-app-store"
+import { useCan } from "@/stores/use-auth-store"
+import { formatDate, formatDateTime } from "@/lib/formatters"
+import { formatQty } from "@/lib/num"
+import { toast } from "sonner"
 
-const REQUEST_STATUSES = ["DRAFT", "SUBMITTED", "APPROVED", "REJECTED", "CANCELLED"] as const;
-const INVALIDATE = ["/requests", "/orders"];
+const REQUEST_STATUSES = [
+  "DRAFT",
+  "SUBMITTED",
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+] as const
+const INVALIDATE = ["/requests", "/orders"]
 
 function tomorrow() {
-  const d = new Date(Date.now() + 24 * 3600 * 1000);
-  return d.toISOString().slice(0, 10);
+  const d = new Date(Date.now() + 24 * 3600 * 1000)
+  return d.toISOString().slice(0, 10)
 }
 
 // ---------------------------------------------------------------------------
 // Editor (create / edit draft / revise rejected)
 // ---------------------------------------------------------------------------
 
-type EditorMode = { kind: "create" } | { kind: "edit" | "revise"; request: SupplyRequest };
+type EditorMode =
+  { kind: "create" } | { kind: "edit" | "revise"; request: SupplyRequest }
 
 function RequestEditor({
   mode,
   onOpenChange,
   onSaved,
 }: {
-  mode: EditorMode | null;
-  onOpenChange: (open: boolean) => void;
-  onSaved: (id: string) => void;
+  mode: EditorMode | null
+  onOpenChange: (open: boolean) => void
+  onSaved: (id: string) => void
 }) {
-  const open = mode !== null;
-  const globalFacility = useFacilityFilter();
-  const canEligibility = useCan("eligibility.read");
-  const [facilityId, setFacilityId] = React.useState("");
-  const [departmentId, setDepartmentId] = React.useState("");
-  const [requiredDate, setRequiredDate] = React.useState(tomorrow());
-  const [note, setNote] = React.useState("");
-  const [lines, setLines] = React.useState<LineDraft[]>([]);
-
-  React.useEffect(() => {
-    if (!mode) return;
-    if (mode.kind === "create") {
-      setFacilityId(globalFacility ?? "");
-      setDepartmentId("");
-      setRequiredDate(tomorrow());
-      setNote("");
-      setLines([newLine()]);
-    } else {
-      const r = mode.request;
-      setFacilityId(r.facilityId);
-      setDepartmentId(r.departmentId);
-      setRequiredDate(r.requiredDate.slice(0, 10));
-      setNote(r.note ?? "");
-      setLines(
-        (r.lines ?? []).map((l) =>
-          newLine({ ingredient_id: l.ingredientId, unit_id: l.requestedUnitId, quantity: String(Number(l.requestedQuantity)) })
+  const open = mode !== null
+  const globalFacility = useFacilityFilter()
+  const canEligibility = useCan("eligibility.read")
+  const request = mode && mode.kind !== "create" ? mode.request : null
+  const [facilityId, setFacilityId] = React.useState(
+    request?.facilityId ?? globalFacility ?? ""
+  )
+  const [departmentId, setDepartmentId] = React.useState(
+    request?.departmentId ?? ""
+  )
+  const [requiredDate, setRequiredDate] = React.useState(
+    request?.requiredDate.slice(0, 10) ?? tomorrow()
+  )
+  const [note, setNote] = React.useState(request?.note ?? "")
+  const [lines, setLines] = React.useState<LineDraft[]>(() =>
+    request
+      ? (request.lines ?? []).map((line) =>
+          newLine({
+            ingredient_id: line.ingredientId,
+            unit_id: line.requestedUnitId,
+            quantity: String(Number(line.requestedQuantity)),
+          })
         )
-      );
-    }
-  }, [mode, globalFacility]);
+      : [newLine()]
+  )
 
-  const { data: departments = [] } = useDepartments(facilityId || undefined);
+  const { data: departments = [] } = useDepartments(facilityId || undefined)
   const departmentOptions = departments
     .filter((d) => d.active && d.stockLocationId)
-    .map((d) => ({ value: d.id, label: d.name, hint: d.stockLocation?.code ?? d.code }));
+    .map((d) => ({
+      value: d.id,
+      label: d.name,
+      hint: d.stockLocation?.code ?? d.code,
+    }))
 
   const eligibility = useAllQuery<ItemEligibility>(
     "/item-eligibility",
     { facility_id: facilityId, department_id: departmentId },
-    { enabled: open && canEligibility && Boolean(facilityId && departmentId), staleTime: 30_000 }
-  );
+    {
+      enabled: open && canEligibility && Boolean(facilityId && departmentId),
+      staleTime: 30_000,
+    }
+  )
   const allowed = React.useMemo(() => {
-    if (!canEligibility || !facilityId || !departmentId || !eligibility.data) return null;
-    return new Set(eligibility.data.filter((e) => e.active).map((e) => e.ingredientId));
-  }, [canEligibility, facilityId, departmentId, eligibility.data]);
+    if (!canEligibility || !facilityId || !departmentId || !eligibility.data)
+      return null
+    return new Set(
+      eligibility.data.filter((e) => e.active).map((e) => e.ingredientId)
+    )
+  }, [canEligibility, facilityId, departmentId, eligibility.data])
 
   const save = useApiMutation<void, SupplyRequest>({
     mutationFn: () => {
@@ -113,35 +157,44 @@ function RequestEditor({
         department_id: departmentId,
         required_date: requiredDate,
         ...(note.trim() ? { note: note.trim() } : {}),
-        lines: lines.map((l) => ({ ingredient_id: l.ingredient_id, unit_id: l.unit_id, quantity: cleanQty(l.quantity) })),
-      };
-      if (!mode || mode.kind === "create") return api.post<SupplyRequest>("/requests", body);
-      const payload = { ...body, expected_version: mode.request.version };
+        lines: lines.map((l) => ({
+          ingredient_id: l.ingredient_id,
+          unit_id: l.unit_id,
+          quantity: cleanQty(l.quantity),
+        })),
+      }
+      if (!mode || mode.kind === "create")
+        return api.post<SupplyRequest>("/requests", body)
+      const payload = { ...body, expected_version: mode.request.version }
       return mode.kind === "edit"
         ? api.put<SupplyRequest>(`/requests/${mode.request.id}`, payload)
-        : api.post<SupplyRequest>(`/requests/${mode.request.id}/revise`, payload);
+        : api.post<SupplyRequest>(
+            `/requests/${mode.request.id}/revise`,
+            payload
+          )
     },
     invalidate: INVALIDATE,
     onSuccess: (data) => {
-      onOpenChange(false);
-      onSaved(data.id);
+      onOpenChange(false)
+      onSaved(data.id)
     },
-  });
+  })
 
   const submit = () => {
-    if (!facilityId || !departmentId) return toast.error("Vui lòng chọn cơ sở và bộ phận nhận hàng.");
-    if (!requiredDate) return toast.error("Vui lòng chọn ngày cần hàng.");
-    const err = validateLines(lines, { withUnit: true });
-    if (err) return toast.error(err);
-    save.mutate();
-  };
+    if (!facilityId || !departmentId)
+      return toast.error("Vui lòng chọn cơ sở và bộ phận nhận hàng.")
+    if (!requiredDate) return toast.error("Vui lòng chọn ngày cần hàng.")
+    const err = validateLines(lines, { withUnit: true })
+    if (err) return toast.error(err)
+    save.mutate()
+  }
 
   const title =
     mode?.kind === "edit"
       ? `Sửa bản nháp ${mode.request.code}`
       : mode?.kind === "revise"
         ? `Chỉnh sửa & gửi lại ${mode.request.code}`
-        : "Tạo yêu cầu hàng";
+        : "Tạo yêu cầu hàng"
 
   return (
     <FormDialog
@@ -160,13 +213,17 @@ function RequestEditor({
           <FacilitySelect
             value={facilityId}
             onChange={(v) => {
-              setFacilityId(v);
-              setDepartmentId("");
+              setFacilityId(v)
+              setDepartmentId("")
             }}
             activeOnly
           />
         </Field>
-        <Field label="Bộ phận nhận" required hint="Chỉ hiện bộ phận đã gán kho nhận.">
+        <Field
+          label="Bộ phận nhận"
+          required
+          hint="Chỉ hiện bộ phận đã gán kho nhận."
+        >
           <OptionSelect
             value={departmentId}
             onChange={setDepartmentId}
@@ -176,11 +233,20 @@ function RequestEditor({
           />
         </Field>
         <Field label="Ngày cần hàng" required>
-          <DateTimePicker value={requiredDate} onChange={setRequiredDate} clearable={false} />
+          <DateTimePicker
+            value={requiredDate}
+            onChange={setRequiredDate}
+            clearable={false}
+          />
         </Field>
       </div>
       <Field label="Ghi chú">
-        <Textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-16 text-xs" maxLength={1000} />
+        <Textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="min-h-16 text-xs"
+          maxLength={1000}
+        />
       </Field>
       <Field
         label="Danh sách hàng yêu cầu"
@@ -193,29 +259,34 @@ function RequestEditor({
             : "Đơn vị khác đơn vị cơ sở cần có quy đổi đang hiệu lực."
         }
       >
-        <LinesEditor lines={lines} onChange={setLines} withUnit allowedIngredientIds={allowed} />
+        <LinesEditor
+          lines={lines}
+          onChange={setLines}
+          withUnit
+          allowedIngredientIds={allowed}
+        />
       </Field>
     </FormDialog>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
 // Detail
 // ---------------------------------------------------------------------------
 
-type ActionKind = "submit" | "approve" | "reject" | "cancel" | "refresh";
+type ActionKind = "submit" | "approve" | "reject" | "cancel" | "refresh"
 
 function RequestDetail({
   id,
   onOpenChange,
   onEdit,
 }: {
-  id: string | null;
-  onOpenChange: (open: boolean) => void;
-  onEdit: (mode: EditorMode) => void;
+  id: string | null
+  onOpenChange: (open: boolean) => void
+  onEdit: (mode: EditorMode) => void
 }) {
-  const query = useApiQuery<SupplyRequest>(id ? `/requests/${id}` : null);
-  const r = query.data;
+  const query = useApiQuery<SupplyRequest>(id ? `/requests/${id}` : null)
+  const r = query.data
   const can = {
     update: useCan("request.update_draft"),
     submit: useCan("request.submit"),
@@ -223,75 +294,146 @@ function RequestDetail({
     reject: useCan("request.reject"),
     cancel: useCan("request.cancel"),
     revise: useCan("request.revise"),
-  };
-  const [action, setAction] = React.useState<ActionKind | null>(null);
+  }
+  const [action, setAction] = React.useState<ActionKind | null>(null)
 
   const run = useApiMutation<{ kind: ActionKind; note: string }>({
     mutationFn: ({ kind, note }) => {
-      if (!r) throw new Error("Chưa tải xong yêu cầu.");
-      const body = { expected_version: r.version, ...(note ? { note } : {}) };
-      const path = kind === "refresh" ? "refresh-routing" : kind;
+      if (!r) throw new Error("Chưa tải xong yêu cầu.")
+      const body = { expected_version: r.version, ...(note ? { note } : {}) }
+      const path = kind === "refresh" ? "refresh-routing" : kind
       return api.post(
         `/requests/${r.id}/${path}`,
         body,
         kind === "approve"
           ? { idempotencyKey: `web:request:${r.id}:v${r.version}` }
           : undefined
-      );
+      )
     },
     invalidate: INVALIDATE,
     onSuccess: () => setAction(null),
-  });
+  })
 
-  const status = r?.status;
+  const status = r?.status
   const footer = r && (
     <>
       {status === "DRAFT" && can.update && (
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => onEdit({ kind: "edit", request: r })}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => onEdit({ kind: "edit", request: r })}
+        >
           <FilePen className="size-3.5" /> Sửa nháp
         </Button>
       )}
       {(status === "DRAFT" || status === "SUBMITTED") && can.update && (
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setAction("refresh")}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => setAction("refresh")}
+        >
           <RefreshCw className="size-3.5" /> Cập nhật nguồn cấp
         </Button>
       )}
       {status === "REJECTED" && can.revise && (
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => onEdit({ kind: "revise", request: r })}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => onEdit({ kind: "revise", request: r })}
+        >
           <RotateCcw className="size-3.5" /> Chỉnh sửa lại
         </Button>
       )}
-      {(status === "DRAFT" || status === "SUBMITTED" || status === "REJECTED") && can.cancel && (
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive" onClick={() => setAction("cancel")}>
-          <Ban className="size-3.5" /> Hủy
-        </Button>
-      )}
+      {(status === "DRAFT" ||
+        status === "SUBMITTED" ||
+        status === "REJECTED") &&
+        can.cancel && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs text-destructive"
+            onClick={() => setAction("cancel")}
+          >
+            <Ban className="size-3.5" /> Hủy
+          </Button>
+        )}
       {status === "SUBMITTED" && can.reject && (
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setAction("reject")}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => setAction("reject")}
+        >
           <XCircle className="size-3.5" /> Từ chối
         </Button>
       )}
       {status === "DRAFT" && can.submit && (
-        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setAction("submit")}>
+        <Button
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => setAction("submit")}
+        >
           <Send className="size-3.5" /> Gửi duyệt
         </Button>
       )}
       {status === "SUBMITTED" && can.approve && (
-        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setAction("approve")}>
+        <Button
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => setAction("approve")}
+        >
           <CheckCircle2 className="size-3.5" /> Duyệt & tạo đơn
         </Button>
       )}
     </>
-  );
+  )
 
-  const confirmCopy: Record<ActionKind, { title: string; description: string; label: string; reason?: { label: string; required?: boolean } }> = {
-    submit: { title: "Gửi duyệt yêu cầu?", description: "Hệ thống sẽ xác định nguồn cấp cho từng mặt hàng theo cấu hình hiện tại.", label: "Gửi duyệt", reason: { label: "Ghi chú (không bắt buộc)" } },
-    approve: { title: "Duyệt yêu cầu?", description: "Sau khi duyệt, hệ thống sẽ tạo đơn cấp hàng từ kho hoặc nhà cung cấp cho các mặt hàng.", label: "Duyệt", reason: { label: "Ghi chú duyệt (không bắt buộc)" } },
-    reject: { title: "Từ chối yêu cầu?", description: "Người tạo có thể chỉnh sửa và gửi lại.", label: "Từ chối", reason: { label: "Lý do từ chối", required: true } },
-    cancel: { title: "Hủy yêu cầu?", description: "Yêu cầu bị hủy sẽ không thể khôi phục.", label: "Hủy yêu cầu", reason: { label: "Lý do hủy", required: true } },
-    refresh: { title: "Cập nhật nguồn cấp?", description: "Tính lại quy đổi và nguồn cấp của các dòng theo cấu hình mới nhất.", label: "Cập nhật" },
-  };
-  const copy = action ? confirmCopy[action] : null;
+  const confirmCopy: Record<
+    ActionKind,
+    {
+      title: string
+      description: string
+      label: string
+      reason?: { label: string; required?: boolean }
+    }
+  > = {
+    submit: {
+      title: "Gửi duyệt yêu cầu?",
+      description:
+        "Hệ thống sẽ xác định nguồn cấp cho từng mặt hàng theo cấu hình hiện tại.",
+      label: "Gửi duyệt",
+      reason: { label: "Ghi chú (không bắt buộc)" },
+    },
+    approve: {
+      title: "Duyệt yêu cầu?",
+      description:
+        "Sau khi duyệt, hệ thống sẽ tạo đơn cấp hàng từ kho hoặc nhà cung cấp cho các mặt hàng.",
+      label: "Duyệt",
+      reason: { label: "Ghi chú duyệt (không bắt buộc)" },
+    },
+    reject: {
+      title: "Từ chối yêu cầu?",
+      description: "Người tạo có thể chỉnh sửa và gửi lại.",
+      label: "Từ chối",
+      reason: { label: "Lý do từ chối", required: true },
+    },
+    cancel: {
+      title: "Hủy yêu cầu?",
+      description: "Yêu cầu bị hủy sẽ không thể khôi phục.",
+      label: "Hủy yêu cầu",
+      reason: { label: "Lý do hủy", required: true },
+    },
+    refresh: {
+      title: "Cập nhật nguồn cấp?",
+      description:
+        "Tính lại quy đổi và nguồn cấp của các dòng theo cấu hình mới nhất.",
+      label: "Cập nhật",
+    },
+  }
+  const copy = action ? confirmCopy[action] : null
 
   return (
     <DetailSheet
@@ -299,7 +441,11 @@ function RequestDetail({
       onOpenChange={onOpenChange}
       title={r ? r.code : "Chi tiết yêu cầu"}
       badge={r && <StatusBadge status={r.status} />}
-      description={r ? `${r.facility?.name ?? ""} · ${r.department?.name ?? ""}` : undefined}
+      description={
+        r
+          ? `${r.facility?.name ?? ""} · ${r.department?.name ?? ""}`
+          : undefined
+      }
       loading={query.isLoading}
       error={query.error}
       footer={footer}
@@ -317,12 +463,20 @@ function RequestDetail({
               { label: "Người tạo", value: r.createdBy?.displayName },
               { label: "Phiên bản", value: `v${r.version}` },
               { label: "Tạo lúc", value: formatDateTime(r.createdAt) },
-              { label: "Gửi duyệt", value: r.submittedAt ? formatDateTime(r.submittedAt) : "—" },
-              { label: "Quyết định", value: r.decidedAt ? formatDateTime(r.decidedAt) : "—" },
+              {
+                label: "Gửi duyệt",
+                value: r.submittedAt ? formatDateTime(r.submittedAt) : "—",
+              },
+              {
+                label: "Quyết định",
+                value: r.decidedAt ? formatDateTime(r.decidedAt) : "—",
+              },
             ]}
           />
           {r.note && (
-            <p className="rounded-xl border border-border/70 bg-muted/20 p-3 text-xs text-muted-foreground">{r.note}</p>
+            <p className="rounded-xl border border-border/70 bg-muted/20 p-3 text-xs text-muted-foreground">
+              {r.note}
+            </p>
           )}
           <Section title={`Hàng yêu cầu (${r.lines?.length ?? 0})`}>
             <MiniTable
@@ -333,16 +487,27 @@ function RequestDetail({
                 { label: "Nguồn cấp" },
               ]}
               rows={(r.lines ?? []).map((l) => [
-                <Cell2 key="i" title={l.ingredientNameSnapshot} sub={l.ingredient?.code} />,
+                <Cell2
+                  key="i"
+                  title={l.ingredientNameSnapshot}
+                  sub={l.ingredient?.code}
+                />,
                 formatQty(l.requestedQuantity, l.unitCodeSnapshot),
                 formatQty(l.baseQuantity, l.ingredient?.baseUnit?.code),
                 l.sourceTypeSnapshot ? (
                   <span key="s">
                     {labelOf(SOURCE_TYPE_LABELS, l.sourceTypeSnapshot)}
-                    {l.sourceRuleRevision ? <span className="text-muted-foreground"> · phiên bản {l.sourceRuleRevision}</span> : null}
+                    {l.sourceRuleRevision ? (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · phiên bản {l.sourceRuleRevision}
+                      </span>
+                    ) : null}
                   </span>
                 ) : (
-                  <span key="s" className="text-muted-foreground">Chưa xác định nguồn cấp</span>
+                  <span key="s" className="text-muted-foreground">
+                    Chưa xác định nguồn cấp
+                  </span>
                 ),
               ])}
             />
@@ -350,13 +515,23 @@ function RequestDetail({
           {(r.orders?.length ?? 0) > 0 && (
             <Section title="Đơn cấp hàng đã tạo">
               <MiniTable
-                headers={[{ label: "Mã đơn" }, { label: "Loại" }, { label: "Số dòng", className: "text-right" }, { label: "Trạng thái" }, { label: "" }]}
+                headers={[
+                  { label: "Mã đơn" },
+                  { label: "Loại" },
+                  { label: "Số dòng", className: "text-right" },
+                  { label: "Trạng thái" },
+                  { label: "" },
+                ]}
                 rows={(r.orders ?? []).map((o) => [
                   <Code key="c">{o.code}</Code>,
                   labelOf(SOURCE_TYPE_LABELS, o.sourceType),
                   o.lines?.length ?? 0,
                   <StatusBadge key="s" status={o.status} />,
-                  <Link key="l" href={`/orders?id=${o.id}`} className="inline-flex items-center gap-1 text-xs font-medium underline-offset-2 hover:underline">
+                  <Link
+                    key="l"
+                    href={`/orders?id=${o.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-medium underline-offset-2 hover:underline"
+                  >
                     Mở <ExternalLink className="size-3" />
                   </Link>,
                 ])}
@@ -366,7 +541,12 @@ function RequestDetail({
           {(r.approvals?.length ?? 0) > 0 && (
             <Section title="Lịch sử phê duyệt">
               <MiniTable
-                headers={[{ label: "Thời điểm" }, { label: "Quyết định" }, { label: "Chính sách" }, { label: "Ghi chú" }]}
+                headers={[
+                  { label: "Thời điểm" },
+                  { label: "Quyết định" },
+                  { label: "Chính sách" },
+                  { label: "Ghi chú" },
+                ]}
                 rows={(r.approvals ?? []).map((a) => [
                   formatDateTime(a.createdAt),
                   labelOf(APPROVAL_DECISION_LABELS, a.decision),
@@ -388,11 +568,13 @@ function RequestDetail({
           destructive={action === "cancel" || action === "reject"}
           {...(copy.reason ? { reason: copy.reason } : {})}
           loading={run.isPending}
-          onConfirm={(note) => action && run.mutate({ kind: action, note: note ?? "" })}
+          onConfirm={(note) =>
+            action && run.mutate({ kind: action, note: note ?? "" })
+          }
         />
       )}
     </DetailSheet>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -400,36 +582,69 @@ function RequestDetail({
 // ---------------------------------------------------------------------------
 
 export default function RequestsPage() {
-  const facilityId = useFacilityFilter();
-  const canCreate = useCan("request.create");
-  const list = useListState({ status: "" });
-  const query = usePagedQuery<SupplyRequest>("/requests", { ...list.params, facility_id: facilityId });
-  const [detailId, setDetailId] = React.useState<string | null>(null);
-  const [editor, setEditor] = React.useState<EditorMode | null>(null);
-  const [urlId, clearUrlId] = useUrlParam("id");
-  const [action, clearAction] = useUrlParam("action");
-
-  React.useEffect(() => {
-    if (urlId) {
-      setDetailId(urlId);
-      clearUrlId();
-    }
-  }, [urlId, clearUrlId]);
-  React.useEffect(() => {
-    if (action === "create") {
-      if (canCreate) setEditor({ kind: "create" });
-      clearAction();
-    }
-  }, [action, canCreate, clearAction]);
+  const facilityId = useFacilityFilter()
+  const canCreate = useCan("request.create")
+  const list = useListState({ status: "" })
+  const query = usePagedQuery<SupplyRequest>("/requests", {
+    ...list.params,
+    facility_id: facilityId,
+  })
+  const [selectedDetailId, setSelectedDetailId] = React.useState<string | null>(
+    null
+  )
+  const [editor, setEditor] = React.useState<EditorMode | null>(null)
+  const [urlId, clearUrlId] = useUrlParam("id")
+  const [action, clearAction] = useUrlParam("action")
+  const detailId = selectedDetailId ?? urlId
+  const editorMode =
+    editor ??
+    (action === "create" && canCreate ? { kind: "create" as const } : null)
+  const closeDetail = () => {
+    setSelectedDetailId(null)
+    if (urlId) clearUrlId()
+  }
+  const closeEditor = () => {
+    setEditor(null)
+    if (action) clearAction()
+  }
 
   const columns: Column<SupplyRequest>[] = [
     { key: "code", header: "Mã yêu cầu", cell: (r) => <Code>{r.code}</Code> },
-    { key: "where", header: "Cơ sở / Bộ phận", cell: (r) => <Cell2 title={r.facility?.name ?? "—"} sub={r.department?.name} /> },
-    { key: "date", header: "Ngày cần", cell: (r) => formatDate(r.requiredDate) },
-    { key: "lines", header: "Dòng", cell: (r) => r._count?.lines ?? "—", className: "text-right", headClassName: "text-right" },
-    { key: "by", header: "Người tạo", cell: (r) => <Cell2 title={r.createdBy?.displayName ?? "—"} sub={formatDateTime(r.createdAt)} /> },
-    { key: "status", header: "Trạng thái", cell: (r) => <StatusBadge status={r.status} /> },
-  ];
+    {
+      key: "where",
+      header: "Cơ sở / Bộ phận",
+      cell: (r) => (
+        <Cell2 title={r.facility?.name ?? "—"} sub={r.department?.name} />
+      ),
+    },
+    {
+      key: "date",
+      header: "Ngày cần",
+      cell: (r) => formatDate(r.requiredDate),
+    },
+    {
+      key: "lines",
+      header: "Dòng",
+      cell: (r) => r._count?.lines ?? "—",
+      className: "text-right",
+      headClassName: "text-right",
+    },
+    {
+      key: "by",
+      header: "Người tạo",
+      cell: (r) => (
+        <Cell2
+          title={r.createdBy?.displayName ?? "—"}
+          sub={formatDateTime(r.createdAt)}
+        />
+      ),
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      cell: (r) => <StatusBadge status={r.status} />,
+    },
+  ]
 
   return (
     <AdminLayout permission="request.read">
@@ -439,7 +654,12 @@ export default function RequestsPage() {
           description="Bộ phận lập yêu cầu, gửi duyệt; khi duyệt hệ thống tự tạo đơn xuất kho hoặc đặt nhà cung cấp."
           actions={
             canCreate && (
-              <Button data-tour="requests-create" size="sm" className="gap-1.5 text-xs" onClick={() => setEditor({ kind: "create" })}>
+              <Button
+                data-tour="requests-create"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setEditor({ kind: "create" })}
+              >
                 <Plus className="size-3.5" /> Tạo yêu cầu
               </Button>
             )
@@ -454,15 +674,25 @@ export default function RequestsPage() {
           error={query.error}
           meta={query.data?.meta}
           onPageChange={list.setPage}
-          onRowClick={(r) => setDetailId(r.id)}
+          onRowClick={(r) => setSelectedDetailId(r.id)}
           emptyText="Chưa có yêu cầu hàng nào."
           toolbar={
-            <div data-tour="requests-list" className="flex flex-1 flex-col gap-2 sm:flex-row">
-              <SearchInput value={list.search} onChange={list.setSearch} placeholder="Tìm theo mã hoặc ghi chú..." />
+            <div
+              data-tour="requests-list"
+              className="flex flex-1 flex-col gap-2 sm:flex-row"
+            >
+              <SearchInput
+                value={list.search}
+                onChange={list.setSearch}
+                placeholder="Tìm theo mã hoặc ghi chú..."
+              />
               <OptionSelect
                 value={list.filters.status}
                 onChange={(v) => list.setFilter("status", v)}
-                options={REQUEST_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] ?? s }))}
+                options={REQUEST_STATUSES.map((s) => ({
+                  value: s,
+                  label: STATUS_LABELS[s] ?? s,
+                }))}
                 allLabel="Tất cả trạng thái"
                 className="sm:w-48"
               />
@@ -470,8 +700,23 @@ export default function RequestsPage() {
           }
         />
       </div>
-      <RequestDetail id={detailId} onOpenChange={(o) => !o && setDetailId(null)} onEdit={setEditor} />
-      <RequestEditor mode={editor} onOpenChange={(o) => !o && setEditor(null)} onSaved={setDetailId} />
+      <RequestDetail
+        id={detailId}
+        onOpenChange={(open) => !open && closeDetail()}
+        onEdit={setEditor}
+      />
+      {editorMode && (
+        <RequestEditor
+          key={
+            editorMode.kind === "create"
+              ? "create"
+              : `${editorMode.kind}-${editorMode.request.id}`
+          }
+          mode={editorMode}
+          onOpenChange={(open) => !open && closeEditor()}
+          onSaved={setSelectedDetailId}
+        />
+      )}
     </AdminLayout>
-  );
+  )
 }

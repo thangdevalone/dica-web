@@ -1,55 +1,57 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
 import {
-  AlertOctagon,
-  AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
-  BookOpen,
-  Boxes,
   CheckCircle2,
-  ClipboardCheck,
   FileCheck2,
   Flame,
   Plus,
   RefreshCw,
-  RotateCcw,
   Send,
-  SlidersHorizontal,
   Warehouse,
-} from "lucide-react";
-import { AdminLayout } from "@/components/layout/admin-layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
-import { ConfirmDialog, Field, FormDialog, OptionSelect, SearchInput } from "@/components/shared/form";
-import { FacilitySelect, IngredientSelect, StockLocationSelect } from "@/components/shared/entity-select";
-import { DetailSheet, InfoGrid, MiniTable, Section } from "@/components/shared/detail-sheet";
-import { useApiMutation, useApiQuery, usePagedQuery } from "@/hooks/use-api";
-import { useListState } from "@/hooks/use-list-state";
-import { useStockLocations } from "@/hooks/use-lookups";
-import { useUrlParam } from "@/hooks/use-system";
-import { useTabSync } from "@/hooks/use-tab-sync";
-import { api } from "@/lib/api/client";
+} from "lucide-react"
+import { AdminLayout } from "@/components/layout/admin-layout"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
+import { PageHeader } from "@/components/shared/page-header"
+import { StatusBadge } from "@/components/shared/status-badge"
+import {
+  Cell2,
+  Code,
+  DataTable,
+  type Column,
+} from "@/components/shared/data-table"
+import {
+  Field,
+  FormDialog,
+  OptionSelect,
+  SearchInput,
+} from "@/components/shared/form"
+import {
+  FacilitySelect,
+  IngredientSelect,
+  StockLocationSelect,
+} from "@/components/shared/entity-select"
+import { useApiMutation, usePagedQuery } from "@/hooks/use-api"
+import { useListState } from "@/hooks/use-list-state"
+import { useTabSync } from "@/hooks/use-tab-sync"
+import { api } from "@/lib/api/client"
 import type {
   DamageReport,
   InventoryAdjustment,
-  LedgerEntryType,
   StockBalance,
   StockLedgerEntry,
   Stocktake,
-} from "@/lib/api/types";
-import { LEDGER_ENTRY_LABELS, STATUS_LABELS, labelOf } from "@/constants/labels";
-import { useFacilityFilter } from "@/stores/use-app-store";
-import { useCan } from "@/stores/use-auth-store";
-import { formatDate, formatDateTime } from "@/lib/formatters";
-import { formatQty } from "@/lib/num";
-import { toast } from "sonner";
+} from "@/lib/api/types"
+import { LEDGER_ENTRY_LABELS, labelOf } from "@/constants/labels"
+import { useFacilityFilter } from "@/stores/use-app-store"
+import { useCan } from "@/stores/use-auth-store"
+import { formatDate, formatDateTime } from "@/lib/formatters"
+import { formatQty } from "@/lib/num"
 
 const INVALIDATE = [
   "/stock-balances",
@@ -58,7 +60,7 @@ const INVALIDATE = [
   "/stocktakes",
   "/damage-reports",
   "/dashboard/summary",
-];
+]
 
 // ---------------------------------------------------------------------------
 // Create Adjustment Dialog
@@ -69,14 +71,14 @@ function CreateAdjustmentDialog({
   onOpenChange,
   onCreated,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated: () => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onCreated: () => void
 }) {
-  const [stockLocationId, setStockLocationId] = React.useState("");
-  const [ingredientId, setIngredientId] = React.useState("");
-  const [quantity, setQuantity] = React.useState("");
-  const [reason, setReason] = React.useState("");
+  const [stockLocationId, setStockLocationId] = React.useState("")
+  const [ingredientId, setIngredientId] = React.useState("")
+  const [quantity, setQuantity] = React.useState("")
+  const [reason, setReason] = React.useState("")
 
   const create = useApiMutation<void, InventoryAdjustment>({
     mutationFn: () =>
@@ -89,21 +91,21 @@ function CreateAdjustmentDialog({
     invalidate: INVALIDATE,
     successMessage: "Đã tạo phiếu điều chỉnh tồn kho.",
     onSuccess: () => {
-      onOpenChange(false);
-      setStockLocationId("");
-      setIngredientId("");
-      setQuantity("");
-      setReason("");
-      onCreated();
+      onOpenChange(false)
+      setStockLocationId("")
+      setIngredientId("")
+      setQuantity("")
+      setReason("")
+      onCreated()
     },
-  });
+  })
 
   const isValid =
     Boolean(stockLocationId) &&
     Boolean(ingredientId) &&
     /^-?(?:0|[1-9]\d*)(?:\.\d{1,3})?$/.test(quantity.trim()) &&
     Number(quantity.trim()) !== 0 &&
-    reason.trim().length >= 3;
+    reason.trim().length >= 3
 
   return (
     <FormDialog
@@ -149,7 +151,7 @@ function CreateAdjustmentDialog({
         </Field>
       </div>
     </FormDialog>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -161,15 +163,15 @@ function CreateDamageDialog({
   onOpenChange,
   onCreated,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated: () => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onCreated: () => void
 }) {
-  const [stockLocationId, setStockLocationId] = React.useState("");
-  const [reason, setReason] = React.useState("");
-  const [ingredientId, setIngredientId] = React.useState("");
-  const [quantity, setQuantity] = React.useState("");
-  const [lineReason, setLineReason] = React.useState("");
+  const [stockLocationId, setStockLocationId] = React.useState("")
+  const [reason, setReason] = React.useState("")
+  const [ingredientId, setIngredientId] = React.useState("")
+  const [quantity, setQuantity] = React.useState("")
+  const [lineReason, setLineReason] = React.useState("")
 
   const create = useApiMutation<void, DamageReport>({
     mutationFn: () =>
@@ -187,22 +189,22 @@ function CreateDamageDialog({
     invalidate: INVALIDATE,
     successMessage: "Đã tạo biên bản báo hỏng nguyên liệu.",
     onSuccess: () => {
-      onOpenChange(false);
-      setStockLocationId("");
-      setReason("");
-      setIngredientId("");
-      setQuantity("");
-      setLineReason("");
-      onCreated();
+      onOpenChange(false)
+      setStockLocationId("")
+      setReason("")
+      setIngredientId("")
+      setQuantity("")
+      setLineReason("")
+      onCreated()
     },
-  });
+  })
 
   const isValid =
     Boolean(stockLocationId) &&
     reason.trim().length >= 3 &&
     Boolean(ingredientId) &&
     /^(?:0|[1-9]\d*)(?:\.\d{1,3})?$/.test(quantity.trim()) &&
-    Number(quantity.trim()) > 0;
+    Number(quantity.trim()) > 0
 
   return (
     <FormDialog
@@ -232,7 +234,7 @@ function CreateDamageDialog({
             rows={2}
           />
         </Field>
-        <div className="space-y-3 pt-2 border-t border-border/60">
+        <div className="space-y-3 border-t border-border/60 pt-2">
           <Field label="Nguyên liệu hỏng" required>
             <IngredientSelect value={ingredientId} onChange={setIngredientId} />
           </Field>
@@ -256,7 +258,7 @@ function CreateDamageDialog({
         </div>
       </div>
     </FormDialog>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -264,76 +266,67 @@ function CreateDamageDialog({
 // ---------------------------------------------------------------------------
 
 export default function InventoryPage() {
-  const globalFacility = useFacilityFilter();
+  const globalFacility = useFacilityFilter()
 
-
-
-
-
-  const canReadBalances = useCan("stock.read");
-  const canReadLedger = useCan("stock_ledger.read");
-  const canReadAdjustments = useCan("adjustment.read");
-  const canReadStocktakes = useCan("stocktake.read");
-  const canReadDamage = useCan("damage.read");
-  const validTabs = ["balances", "ledger", "adjustments", "stocktakes", "damage"] as const;
-  const defaultTab = canReadBalances
-    ? "balances"
-    : canReadLedger
-      ? "ledger"
-      : canReadAdjustments
-        ? "adjustments"
-        : canReadStocktakes
-          ? "stocktakes"
-          : "damage";
-  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs);
-  const canAdjust = useCan("adjustment.create");
-  const canApproveAdjust = useCan("adjustment.approve");
-  const canPostAdjust = useCan("adjustment.post");
-  const canStocktake = useCan("stocktake.create");
-  const canDamage = useCan("damage.create");
-  const canSubmitDamage = useCan("damage.submit");
-  const canConfirmDamage = useCan("damage.confirm");
-
-  React.useEffect(() => {
-    const permissions = {
-      balances: canReadBalances,
-      ledger: canReadLedger,
-      adjustments: canReadAdjustments,
-      stocktakes: canReadStocktakes,
-      damage: canReadDamage,
-    };
-
-
-
-
-
-
-    if (permissions[activeTab]) return;
-    const allowed = (Object.keys(permissions) as Array<keyof typeof permissions>).find(
-      (tab) => permissions[tab]
-    );
-    if (allowed) setActiveTab(allowed);
-  }, [activeTab, canReadAdjustments, canReadBalances, canReadDamage, canReadLedger, canReadStocktakes, setActiveTab]);
+  const canReadBalances = useCan("stock.read")
+  const canReadLedger = useCan("stock_ledger.read")
+  const canReadAdjustments = useCan("adjustment.read")
+  const canReadStocktakes = useCan("stocktake.read")
+  const canReadDamage = useCan("damage.read")
+  const validTabs = React.useMemo(
+    () =>
+      (
+        ["balances", "ledger", "adjustments", "stocktakes", "damage"] as const
+      ).filter((candidate) =>
+        candidate === "balances"
+          ? canReadBalances
+          : candidate === "ledger"
+            ? canReadLedger
+            : candidate === "adjustments"
+              ? canReadAdjustments
+              : candidate === "stocktakes"
+                ? canReadStocktakes
+                : canReadDamage
+      ),
+    [
+      canReadAdjustments,
+      canReadBalances,
+      canReadDamage,
+      canReadLedger,
+      canReadStocktakes,
+    ]
+  )
+  const defaultTab = validTabs[0] ?? "balances"
+  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs)
+  const canAdjust = useCan("adjustment.create")
+  const canApproveAdjust = useCan("adjustment.approve")
+  const canPostAdjust = useCan("adjustment.post")
+  const canDamage = useCan("damage.create")
+  const canSubmitDamage = useCan("damage.submit")
+  const canConfirmDamage = useCan("damage.confirm")
 
   // State dialogs
-  const [openAdjustDialog, setOpenAdjustDialog] = React.useState(false);
-  const [openDamageDialog, setOpenDamageDialog] = React.useState(false);
+  const [openAdjustDialog, setOpenAdjustDialog] = React.useState(false)
+  const [openDamageDialog, setOpenDamageDialog] = React.useState(false)
 
   // Lists
   const balanceList = useListState({
-    initialFilters: { facility_id: globalFacility ?? "", stock_location_id: "" },
-  });
+    initialFilters: {
+      facility_id: globalFacility ?? "",
+      stock_location_id: "",
+    },
+  })
   const ledgerList = useListState({
     initialFilters: { stock_location_id: "", entry_type: "" },
-  });
-  const adjustList = useListState();
-  const stocktakeList = useListState();
-  const damageList = useListState();
+  })
+  const adjustList = useListState()
+  const stocktakeList = useListState()
+  const damageList = useListState()
 
   React.useEffect(() => {
-    balanceList.setFilter("facility_id", globalFacility ?? "");
+    balanceList.setFilter("facility_id", globalFacility ?? "")
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalFacility]);
+  }, [globalFacility])
 
   // Queries
   const balancesQuery = usePagedQuery<StockBalance>(
@@ -345,8 +338,11 @@ export default function InventoryPage() {
       facility_id: balanceList.filters.facility_id || undefined,
       stock_location_id: balanceList.filters.stock_location_id || undefined,
     },
-    { keepPreviousData: true, enabled: activeTab === "balances" && canReadBalances }
-  );
+    {
+      keepPreviousData: true,
+      enabled: activeTab === "balances" && canReadBalances,
+    }
+  )
 
   const ledgerQuery = usePagedQuery<StockLedgerEntry>(
     "/stock-ledger",
@@ -357,35 +353,49 @@ export default function InventoryPage() {
       entry_type: ledgerList.filters.entry_type || undefined,
     },
     { keepPreviousData: true, enabled: activeTab === "ledger" && canReadLedger }
-  );
+  )
 
   const adjustmentsQuery = usePagedQuery<InventoryAdjustment>(
     "/inventory-adjustments",
     { page: adjustList.page, page_size: adjustList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "adjustments" && canReadAdjustments }
-  );
+    {
+      keepPreviousData: true,
+      enabled: activeTab === "adjustments" && canReadAdjustments,
+    }
+  )
 
   const stocktakesQuery = usePagedQuery<Stocktake>(
     "/stocktakes",
     { page: stocktakeList.page, page_size: stocktakeList.pageSize },
-    { keepPreviousData: true, enabled: activeTab === "stocktakes" && canReadStocktakes }
-  );
+    {
+      keepPreviousData: true,
+      enabled: activeTab === "stocktakes" && canReadStocktakes,
+    }
+  )
 
   const damagesQuery = usePagedQuery<DamageReport>(
     "/damage-reports",
     { page: damageList.page, page_size: damageList.pageSize },
     { keepPreviousData: true, enabled: activeTab === "damage" && canReadDamage }
-  );
+  )
 
   // Action mutations for adjustments
-  const approveAdjustMutation = useApiMutation<InventoryAdjustment, { message: string }>({
+  const approveAdjustMutation = useApiMutation<
+    InventoryAdjustment,
+    { message: string }
+  >({
     mutationFn: (adj) =>
-      api.post(`/inventory-adjustments/${adj.id}/approve`, { expected_version: adj.version }),
+      api.post(`/inventory-adjustments/${adj.id}/approve`, {
+        expected_version: adj.version,
+      }),
     invalidate: INVALIDATE,
     successMessage: "Đã phê duyệt phiếu điều chỉnh.",
-  });
+  })
 
-  const postAdjustMutation = useApiMutation<InventoryAdjustment, { message: string }>({
+  const postAdjustMutation = useApiMutation<
+    InventoryAdjustment,
+    { message: string }
+  >({
     mutationFn: (adj) =>
       api.post(
         `/inventory-adjustments/${adj.id}/post`,
@@ -394,7 +404,7 @@ export default function InventoryPage() {
       ),
     invalidate: INVALIDATE,
     successMessage: "Đã áp dụng phiếu điều chỉnh vào số lượng tồn kho.",
-  });
+  })
 
   // Action mutations for damage
   const submitDamageMutation = useApiMutation<DamageReport, DamageReport>({
@@ -404,7 +414,7 @@ export default function InventoryPage() {
       }),
     invalidate: INVALIDATE,
     successMessage: "Đã gửi báo hỏng chờ người có quyền xác nhận.",
-  });
+  })
 
   const confirmDamageMutation = useApiMutation<DamageReport, DamageReport>({
     mutationFn: (d) =>
@@ -413,7 +423,7 @@ export default function InventoryPage() {
       }),
     invalidate: INVALIDATE,
     successMessage: "Đã xác nhận báo hỏng và xuất trừ tồn kho.",
-  });
+  })
 
   // Columns for Balances
   const balanceColumns: Column<StockBalance>[] = [
@@ -441,7 +451,9 @@ export default function InventoryPage() {
       key: "unit",
       header: "Đơn vị",
       width: "80px",
-      render: (b) => <span className="text-xs">{b.ingredient?.baseUnit?.code ?? "—"}</span>,
+      render: (b) => (
+        <span className="text-xs">{b.ingredient?.baseUnit?.code ?? "—"}</span>
+      ),
     },
     {
       key: "quantity",
@@ -449,7 +461,7 @@ export default function InventoryPage() {
       width: "140px",
       align: "right",
       render: (b) => {
-        const q = Number(b.quantity);
+        const q = Number(b.quantity)
         return (
           <span
             className={`font-mono text-xs font-semibold ${
@@ -458,7 +470,7 @@ export default function InventoryPage() {
           >
             {formatQty(b.quantity)}
           </span>
-        );
+        )
       },
     },
     {
@@ -466,10 +478,12 @@ export default function InventoryPage() {
       header: "Cập nhật lúc",
       width: "160px",
       render: (b) => (
-        <span className="text-xs text-muted-foreground">{formatDateTime(b.updatedAt)}</span>
+        <span className="text-xs text-muted-foreground">
+          {formatDateTime(b.updatedAt)}
+        </span>
       ),
     },
-  ];
+  ]
 
   // Columns for Ledger
   const ledgerColumns: Column<StockLedgerEntry>[] = [
@@ -478,7 +492,9 @@ export default function InventoryPage() {
       header: "Thời điểm cập nhật",
       width: "160px",
       render: (l) => (
-        <span className="text-xs text-muted-foreground">{formatDateTime(l.postedAt)}</span>
+        <span className="text-xs text-muted-foreground">
+          {formatDateTime(l.postedAt)}
+        </span>
       ),
     },
     {
@@ -517,18 +533,22 @@ export default function InventoryPage() {
       width: "140px",
       align: "right",
       render: (l) => {
-        const q = Number(l.quantity);
-        const isPos = q > 0;
+        const q = Number(l.quantity)
+        const isPos = q > 0
         return (
           <span
-            className={`font-mono text-xs font-semibold inline-flex items-center gap-0.5 ${
+            className={`inline-flex items-center gap-0.5 font-mono text-xs font-semibold ${
               isPos ? "text-emerald-600" : "text-amber-600"
             }`}
           >
-            {isPos ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
+            {isPos ? (
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            ) : (
+              <ArrowDownRight className="h-3.5 w-3.5" />
+            )}
             {formatQty(l.quantity)}
           </span>
-        );
+        )
       },
     },
     {
@@ -537,7 +557,7 @@ export default function InventoryPage() {
       width: "160px",
       render: (l) => <Code className="text-[11px]">{l.postingKey}</Code>,
     },
-  ];
+  ]
 
   // Columns for Adjustments
   const adjustColumns: Column<InventoryAdjustment>[] = [
@@ -545,7 +565,11 @@ export default function InventoryPage() {
       key: "date",
       header: "Ngày lập",
       width: "120px",
-      render: (a) => <span className="text-xs text-muted-foreground">{formatDate(a.createdAt)}</span>,
+      render: (a) => (
+        <span className="text-xs text-muted-foreground">
+          {formatDate(a.createdAt)}
+        </span>
+      ),
     },
     {
       key: "location",
@@ -573,7 +597,7 @@ export default function InventoryPage() {
       width: "110px",
       align: "right",
       render: (a) => {
-        const q = Number(a.quantity);
+        const q = Number(a.quantity)
         return (
           <span
             className={`font-mono text-xs font-semibold ${
@@ -582,13 +606,15 @@ export default function InventoryPage() {
           >
             {q > 0 ? `+${formatQty(a.quantity)}` : formatQty(a.quantity)}
           </span>
-        );
+        )
       },
     },
     {
       key: "reason",
       header: "Lý do",
-      render: (a) => <span className="text-xs text-foreground">{a.reason}</span>,
+      render: (a) => (
+        <span className="text-xs text-foreground">{a.reason}</span>
+      ),
     },
     {
       key: "status",
@@ -603,12 +629,15 @@ export default function InventoryPage() {
       width: "140px",
       align: "right",
       render: (a) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center justify-end gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           {canApproveAdjust && a.status === "DRAFT" && (
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-xs text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+              className="h-8 border-emerald-300 text-xs text-emerald-600 hover:bg-emerald-50"
               onClick={() => approveAdjustMutation.mutate(a)}
               disabled={approveAdjustMutation.isPending}
             >
@@ -620,7 +649,7 @@ export default function InventoryPage() {
             <Button
               variant="default"
               size="sm"
-              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700"
+              className="h-8 bg-emerald-600 text-xs hover:bg-emerald-700"
               onClick={() => postAdjustMutation.mutate(a)}
               disabled={postAdjustMutation.isPending}
             >
@@ -631,7 +660,7 @@ export default function InventoryPage() {
         </div>
       ),
     },
-  ];
+  ]
 
   // Columns for Stocktakes
   const stocktakeColumns: Column<Stocktake>[] = [
@@ -641,8 +670,12 @@ export default function InventoryPage() {
       width: "130px",
       render: (s) => (
         <div className="flex flex-col">
-          <span className="font-semibold text-xs text-foreground">{formatDate(s.businessDate)}</span>
-          <span className="text-[11px] text-muted-foreground">{formatDateTime(s.cutoffAt)}</span>
+          <span className="text-xs font-semibold text-foreground">
+            {formatDate(s.businessDate)}
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            {formatDateTime(s.cutoffAt)}
+          </span>
         </div>
       ),
     },
@@ -662,7 +695,9 @@ export default function InventoryPage() {
       width: "110px",
       align: "center",
       render: (s) => (
-        <span className="text-xs font-medium">{s._count?.lines ?? s.lines?.length ?? 0}</span>
+        <span className="text-xs font-medium">
+          {s._count?.lines ?? s.lines?.length ?? 0}
+        </span>
       ),
     },
     {
@@ -672,7 +707,7 @@ export default function InventoryPage() {
       align: "center",
       render: (s) => <StatusBadge status={s.status} />,
     },
-  ];
+  ]
 
   // Columns for Damage Reports
   const damageColumns: Column<DamageReport>[] = [
@@ -683,7 +718,9 @@ export default function InventoryPage() {
       render: (d) => (
         <div className="flex flex-col">
           <Code className="font-semibold text-primary">{d.code}</Code>
-          <span className="text-[11px] text-muted-foreground">{formatDate(d.createdAt)}</span>
+          <span className="text-[11px] text-muted-foreground">
+            {formatDate(d.createdAt)}
+          </span>
         </div>
       ),
     },
@@ -700,14 +737,20 @@ export default function InventoryPage() {
     {
       key: "reason",
       header: "Lý do hủy hỏng",
-      render: (d) => <span className="text-xs text-foreground">{d.reason}</span>,
+      render: (d) => (
+        <span className="text-xs text-foreground">{d.reason}</span>
+      ),
     },
     {
       key: "lines",
       header: "Số mặt hàng",
       width: "100px",
       align: "center",
-      render: (d) => <span className="text-xs font-medium">{d._count?.lines ?? d.lines?.length ?? 0}</span>,
+      render: (d) => (
+        <span className="text-xs font-medium">
+          {d._count?.lines ?? d.lines?.length ?? 0}
+        </span>
+      ),
     },
     {
       key: "status",
@@ -722,7 +765,10 @@ export default function InventoryPage() {
       width: "130px",
       align: "right",
       render: (d) => (
-        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center justify-end gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {canSubmitDamage && d.status === "DRAFT" && (
             <Button
               variant="outline"
@@ -739,7 +785,7 @@ export default function InventoryPage() {
             <Button
               variant="default"
               size="sm"
-              className="h-8 text-xs bg-destructive hover:bg-destructive/90"
+              className="h-8 bg-destructive text-xs hover:bg-destructive/90"
               onClick={() => confirmDamageMutation.mutate(d)}
               disabled={confirmDamageMutation.isPending}
             >
@@ -750,7 +796,7 @@ export default function InventoryPage() {
         </div>
       ),
     },
-  ];
+  ]
 
   return (
     <AdminLayout>
@@ -764,24 +810,32 @@ export default function InventoryPage() {
               variant="outline"
               size="sm"
               onClick={() => {
-                if (activeTab === "balances") balancesQuery.refetch();
-                if (activeTab === "ledger") ledgerQuery.refetch();
-                if (activeTab === "adjustments") adjustmentsQuery.refetch();
-                if (activeTab === "stocktakes") stocktakesQuery.refetch();
-                if (activeTab === "damage") damagesQuery.refetch();
+                if (activeTab === "balances") balancesQuery.refetch()
+                if (activeTab === "ledger") ledgerQuery.refetch()
+                if (activeTab === "adjustments") adjustmentsQuery.refetch()
+                if (activeTab === "stocktakes") stocktakesQuery.refetch()
+                if (activeTab === "damage") damagesQuery.refetch()
               }}
             >
               <RefreshCw className="h-4 w-4" />
               Làm mới
             </Button>
             {activeTab === "adjustments" && canAdjust && (
-              <Button data-tour="inventory-create-adjustment" size="sm" onClick={() => setOpenAdjustDialog(true)}>
+              <Button
+                data-tour="inventory-create-adjustment"
+                size="sm"
+                onClick={() => setOpenAdjustDialog(true)}
+              >
                 <Plus className="h-4 w-4" />
                 Lập phiếu điều chỉnh
               </Button>
             )}
             {activeTab === "damage" && canDamage && (
-              <Button data-tour="inventory-create-damage" size="sm" onClick={() => setOpenDamageDialog(true)}>
+              <Button
+                data-tour="inventory-create-damage"
+                size="sm"
+                onClick={() => setOpenDamageDialog(true)}
+              >
                 <Plus className="h-4 w-4" />
                 Lập biên bản báo hỏng
               </Button>
@@ -794,14 +848,16 @@ export default function InventoryPage() {
         <Tabs
           value={activeTab}
           onValueChange={(v) =>
-            setActiveTab(v as "balances" | "ledger" | "adjustments" | "stocktakes" | "damage")
+            setActiveTab(
+              v as
+                "balances" | "ledger" | "adjustments" | "stocktakes" | "damage"
+            )
           }
           className="space-y-4"
         >
-
           {/* Balances Tab */}
           <TabsContent value="balances" className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3 bg-card p-4 rounded-xl border border-border/60 shadow-sm">
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
               <SearchInput
                 placeholder="Tìm tên hoặc mã nguyên liệu..."
                 value={balanceList.search}
@@ -811,8 +867,8 @@ export default function InventoryPage() {
               <FacilitySelect
                 value={balanceList.filters.facility_id}
                 onChange={(v) => {
-                  balanceList.setFilter("facility_id", v);
-                  balanceList.setFilter("stock_location_id", "");
+                  balanceList.setFilter("facility_id", v)
+                  balanceList.setFilter("stock_location_id", "")
                 }}
                 allLabel="Tất cả cơ sở"
                 className="w-56"
@@ -846,7 +902,7 @@ export default function InventoryPage() {
 
           {/* Ledger Tab */}
           <TabsContent value="ledger" className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3 bg-card p-4 rounded-xl border border-border/60 shadow-sm">
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
               <StockLocationSelect
                 value={ledgerList.filters.stock_location_id}
                 onChange={(v) => ledgerList.setFilter("stock_location_id", v)}
@@ -856,7 +912,10 @@ export default function InventoryPage() {
               <OptionSelect
                 value={ledgerList.filters.entry_type}
                 onChange={(v) => ledgerList.setFilter("entry_type", v)}
-                options={Object.entries(LEDGER_ENTRY_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                options={Object.entries(LEDGER_ENTRY_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: v,
+                }))}
                 placeholder="Tất cả nghiệp vụ"
                 allLabel="Tất cả nghiệp vụ"
                 className="w-52"
@@ -940,5 +999,5 @@ export default function InventoryPage() {
         onCreated={() => damagesQuery.refetch()}
       />
     </AdminLayout>
-  );
+  )
 }

@@ -340,7 +340,11 @@ export function SearchInput({
   delay?: number
 }) {
   const [text, setText] = React.useState(value)
-  React.useEffect(() => setText(value), [value])
+  const [lastValue, setLastValue] = React.useState(value)
+  if (value !== lastValue) {
+    setLastValue(value)
+    setText(value)
+  }
   React.useEffect(() => {
     if (text === value) return
     const handle = setTimeout(() => onChange(text), delay)
@@ -486,14 +490,20 @@ export function ConfirmDialog({
   loading?: boolean
 }) {
   const [text, setText] = React.useState("")
-  React.useEffect(() => {
+  const [previousOpen, setPreviousOpen] = React.useState(open)
+  if (open !== previousOpen) {
+    setPreviousOpen(open)
     if (open) setText("")
-  }, [open])
+  }
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setText("")
+    onOpenChange(nextOpen)
+  }
   const isDestructive = destructive ?? variant === "destructive"
   const min = reason?.required ? (reason.minLength ?? 3) : 0
   const invalid = reason ? text.trim().length < min : false
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="gap-4">
         <DialogHeader>
           <DialogTitle className="font-heading text-base font-bold">

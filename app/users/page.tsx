@@ -6,7 +6,6 @@ import {
   Pencil,
   Plus,
   RefreshCw,
-  ShieldCheck,
   Trash2,
   UserCheck,
   UserPlus,
@@ -842,10 +841,6 @@ function AssignGrantDialog({
 // ---------------------------------------------------------------------------
 
 export default function UsersPage() {
-
-
-
-
   const canCreateUserAccount = useCan("user.create")
   const canAssignNewUser = useCan("grant.assign")
   const canCreateUser = canCreateUserAccount && canAssignNewUser
@@ -854,8 +849,18 @@ export default function UsersPage() {
   const canReadRoles = useCan("role.read")
   const canManageRoles = useCan("role.manage")
   const canReadGrants = useCan("grant.read")
-  const validTabs = ["users", "roles", "grants"] as const
-  const defaultTab = canReadUsers ? "users" : canReadRoles ? "roles" : "grants"
+  const validTabs = React.useMemo(
+    () =>
+      (["users", "roles", "grants"] as const).filter((candidate) =>
+        candidate === "users"
+          ? canReadUsers
+          : candidate === "roles"
+            ? canReadRoles
+            : canReadGrants
+      ),
+    [canReadGrants, canReadRoles, canReadUsers]
+  )
+  const defaultTab = validTabs[0] ?? "users"
   const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs)
   const canResetPassword = useCan("user.reset_password")
   const canDeactivateUser = useCan("user.deactivate")
@@ -871,19 +876,6 @@ export default function UsersPage() {
   const [roleTarget, setRoleTarget] = React.useState<Role | null>(null)
   const [openAssignGrant, setOpenAssignGrant] = React.useState(false)
   const [revokeTarget, setRevokeTarget] = React.useState<RoleGrant | null>(null)
-
-  React.useEffect(() => {
-    const permissions = {
-      users: canReadUsers,
-      roles: canReadRoles,
-      grants: canReadGrants,
-    }
-    if (permissions[activeTab]) return
-    const allowed = (
-      Object.keys(permissions) as Array<keyof typeof permissions>
-    ).find((tab) => permissions[tab])
-    if (allowed) setActiveTab(allowed)
-  }, [activeTab, canReadGrants, canReadRoles, canReadUsers])
 
   // Lists
   const usersList = useListState()
@@ -1281,7 +1273,11 @@ export default function UsersPage() {
               Làm mới
             </Button>
             {activeTab === "users" && canCreateUser && (
-              <Button data-tour="users-create-user" size="sm" onClick={() => setOpenCreateUser(true)}>
+              <Button
+                data-tour="users-create-user"
+                size="sm"
+                onClick={() => setOpenCreateUser(true)}
+              >
                 <UserPlus className="h-4 w-4" />
                 Tạo tài khoản
               </Button>
@@ -1300,7 +1296,11 @@ export default function UsersPage() {
               </Button>
             )}
             {activeTab === "grants" && canAssignGrant && (
-              <Button data-tour="users-create-grant" size="sm" onClick={() => setOpenAssignGrant(true)}>
+              <Button
+                data-tour="users-create-grant"
+                size="sm"
+                onClick={() => setOpenAssignGrant(true)}
+              >
                 <Plus className="h-4 w-4" />
                 Gán quyền
               </Button>
@@ -1315,7 +1315,6 @@ export default function UsersPage() {
           onValueChange={(v) => setActiveTab(v as "users" | "roles" | "grants")}
           className="space-y-4"
         >
-
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
             <DataTable

@@ -1,111 +1,125 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
+import { BarChart3, RefreshCw } from "lucide-react"
+import { AdminLayout } from "@/components/layout/admin-layout"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
+import { PageHeader } from "@/components/shared/page-header"
+import { StatusBadge } from "@/components/shared/status-badge"
 import {
-  BarChart3,
-  Boxes,
-  CheckCircle2,
-  CreditCard,
-  DollarSign,
-  FileSpreadsheet,
-  Flame,
-  Percent,
-  RefreshCw,
-  ShoppingCart,
-  TrendingDown,
-} from "lucide-react";
-import { AdminLayout } from "@/components/layout/admin-layout";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/shared/page-header";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
-import { FacilitySelect } from "@/components/shared/entity-select";
-import { usePagedQuery } from "@/hooks/use-api";
-import { useListState } from "@/hooks/use-list-state";
-import { useTabSync } from "@/hooks/use-tab-sync";
+  Cell2,
+  Code,
+  DataTable,
+  type Column,
+} from "@/components/shared/data-table"
+import { FacilitySelect } from "@/components/shared/entity-select"
+import { usePagedQuery } from "@/hooks/use-api"
+import { useListState } from "@/hooks/use-list-state"
+import { useTabSync } from "@/hooks/use-tab-sync"
 import type {
   DamageReport,
   FulfillmentOrder,
   PaymentTracking,
   StockBalance,
   VarianceResult,
-} from "@/lib/api/types";
-import { useFacilityFilter } from "@/stores/use-app-store";
-import { useCan } from "@/stores/use-auth-store";
-import { formatDate, formatDateTime } from "@/lib/formatters";
-import { formatMoney, formatQty } from "@/lib/num";
-import { SOURCE_TYPE_LABELS, labelOf } from "@/constants/labels";
+} from "@/lib/api/types"
+import { useFacilityFilter } from "@/stores/use-app-store"
+import { useCan } from "@/stores/use-auth-store"
+import { formatDate, formatDateTime } from "@/lib/formatters"
+import { formatMoney, formatQty } from "@/lib/num"
+import { SOURCE_TYPE_LABELS, labelOf } from "@/constants/labels"
 
 export default function ReportsPage() {
-  const globalFacility = useFacilityFilter();
+  const globalFacility = useFacilityFilter()
 
-
-
-
-  const canStock = useCan("report.stock");
-  const canFulfillment = useCan("report.fulfillment");
-  const canDamage = useCan("report.damage");
-  const canVariance = useCan("report.variance");
-  const canPayment = useCan("report.payment");
-  const validTabs = ["stock", "fulfillment", "damage", "variance", "payment"] as const;
-  const defaultTab = canStock ? "stock" : canFulfillment ? "fulfillment" : canDamage ? "damage" : canVariance ? "variance" : "payment";
-  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs);
-
-  React.useEffect(() => {
-    const permissions = {
-      stock: canStock,
-      fulfillment: canFulfillment,
-      damage: canDamage,
-      variance: canVariance,
-      payment: canPayment,
-    };
-    if (permissions[activeTab]) return;
-    const allowed = (Object.keys(permissions) as Array<keyof typeof permissions>).find(
-      (tab) => permissions[tab]
-    );
-    if (allowed) setActiveTab(allowed);
-  }, [activeTab, canDamage, canFulfillment, canPayment, canStock, canVariance]);
+  const canStock = useCan("report.stock")
+  const canFulfillment = useCan("report.fulfillment")
+  const canDamage = useCan("report.damage")
+  const canVariance = useCan("report.variance")
+  const canPayment = useCan("report.payment")
+  const validTabs = React.useMemo(
+    () =>
+      (
+        ["stock", "fulfillment", "damage", "variance", "payment"] as const
+      ).filter((candidate) =>
+        candidate === "stock"
+          ? canStock
+          : candidate === "fulfillment"
+            ? canFulfillment
+            : candidate === "damage"
+              ? canDamage
+              : candidate === "variance"
+                ? canVariance
+                : canPayment
+      ),
+    [canDamage, canFulfillment, canPayment, canStock, canVariance]
+  )
+  const defaultTab = validTabs[0] ?? "stock"
+  const [activeTab, setActiveTab] = useTabSync(defaultTab, validTabs)
 
   const list = useListState({
     initialFilters: { facility_id: globalFacility ?? "" },
-  });
+  })
 
   React.useEffect(() => {
-    list.setFilter("facility_id", globalFacility ?? "");
+    list.setFilter("facility_id", globalFacility ?? "")
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalFacility]);
+  }, [globalFacility])
 
   // Queries
   const stockReport = usePagedQuery<StockBalance>(
     "/reports/stock",
-    { page: list.page, page_size: list.pageSize, facility_id: list.filters.facility_id || undefined },
+    {
+      page: list.page,
+      page_size: list.pageSize,
+      facility_id: list.filters.facility_id || undefined,
+    },
     { enabled: activeTab === "stock" && canStock, keepPreviousData: true }
-  );
+  )
 
   const fulfillmentReport = usePagedQuery<FulfillmentOrder>(
     "/reports/fulfillment",
-    { page: list.page, page_size: list.pageSize, facility_id: list.filters.facility_id || undefined },
-    { enabled: activeTab === "fulfillment" && canFulfillment, keepPreviousData: true }
-  );
+    {
+      page: list.page,
+      page_size: list.pageSize,
+      facility_id: list.filters.facility_id || undefined,
+    },
+    {
+      enabled: activeTab === "fulfillment" && canFulfillment,
+      keepPreviousData: true,
+    }
+  )
 
   const damageReport = usePagedQuery<DamageReport>(
     "/reports/damage",
-    { page: list.page, page_size: list.pageSize, facility_id: list.filters.facility_id || undefined },
+    {
+      page: list.page,
+      page_size: list.pageSize,
+      facility_id: list.filters.facility_id || undefined,
+    },
     { enabled: activeTab === "damage" && canDamage, keepPreviousData: true }
-  );
+  )
 
   const varianceReport = usePagedQuery<VarianceResult>(
     "/reports/variance",
-    { page: list.page, page_size: list.pageSize, facility_id: list.filters.facility_id || undefined },
+    {
+      page: list.page,
+      page_size: list.pageSize,
+      facility_id: list.filters.facility_id || undefined,
+    },
     { enabled: activeTab === "variance" && canVariance, keepPreviousData: true }
-  );
+  )
 
   const paymentReport = usePagedQuery<PaymentTracking>(
     "/reports/payment",
-    { page: list.page, page_size: list.pageSize, facility_id: list.filters.facility_id || undefined },
+    {
+      page: list.page,
+      page_size: list.pageSize,
+      facility_id: list.filters.facility_id || undefined,
+    },
     { enabled: activeTab === "payment" && canPayment, keepPreviousData: true }
-  );
+  )
 
   // Columns for Stock Report
   const stockColumns: Column<StockBalance>[] = [
@@ -133,7 +147,9 @@ export default function ReportsPage() {
       key: "unit",
       header: "Đơn vị",
       width: "80px",
-      render: (b) => <span className="text-xs">{b.ingredient?.baseUnit?.code ?? "—"}</span>,
+      render: (b) => (
+        <span className="text-xs">{b.ingredient?.baseUnit?.code ?? "—"}</span>
+      ),
     },
     {
       key: "quantity",
@@ -141,7 +157,9 @@ export default function ReportsPage() {
       width: "140px",
       align: "right",
       render: (b) => (
-        <span className="font-mono text-xs font-semibold">{formatQty(b.quantity)}</span>
+        <span className="font-mono text-xs font-semibold">
+          {formatQty(b.quantity)}
+        </span>
       ),
     },
     {
@@ -149,10 +167,12 @@ export default function ReportsPage() {
       header: "Thời điểm cập nhật",
       width: "160px",
       render: (b) => (
-        <span className="text-xs text-muted-foreground">{formatDateTime(b.updatedAt)}</span>
+        <span className="text-xs text-muted-foreground">
+          {formatDateTime(b.updatedAt)}
+        </span>
       ),
     },
-  ];
+  ]
 
   // Columns for Fulfillment Report
   const fulfillmentColumns: Column<FulfillmentOrder>[] = [
@@ -163,7 +183,9 @@ export default function ReportsPage() {
       render: (o) => (
         <div className="flex flex-col">
           <Code className="font-semibold text-primary">{o.code}</Code>
-          <span className="text-[11px] text-muted-foreground">{formatDate(o.createdAt)}</span>
+          <span className="text-[11px] text-muted-foreground">
+            {formatDate(o.createdAt)}
+          </span>
         </div>
       ),
     },
@@ -172,7 +194,11 @@ export default function ReportsPage() {
       header: "Nguồn cung ứng",
       render: (o) => (
         <Cell2
-          top={o.sourceType === "SUPPLIER" ? o.supplier?.name : o.sourceStockLocation?.name}
+          top={
+            o.sourceType === "SUPPLIER"
+              ? o.supplier?.name
+              : o.sourceStockLocation?.name
+          }
           bottom={labelOf(SOURCE_TYPE_LABELS, o.sourceType)}
         />
       ),
@@ -199,35 +225,188 @@ export default function ReportsPage() {
       header: "Số mặt hàng",
       width: "110px",
       align: "center",
-      render: (o) => <span className="text-xs font-medium">{o.lines?.length ?? 0}</span>,
+      render: (o) => (
+        <span className="text-xs font-medium">{o.lines?.length ?? 0}</span>
+      ),
     },
-  ];
+  ]
 
   const damageColumns: Column<DamageReport>[] = [
-    { key: "code", header: "Mã báo hỏng", render: (row) => <Cell2 top={<Code>{row.code}</Code>} bottom={formatDate(row.createdAt)} /> },
-    { key: "location", header: "Kho / Cơ sở", render: (row) => <Cell2 top={row.stockLocation?.name} bottom={row.stockLocation?.facility?.name} /> },
-    { key: "reason", header: "Lý do", render: (row) => <span className="text-xs">{row.reason}</span> },
-    { key: "lines", header: "Số mặt hàng", width: "110px", align: "center", render: (row) => <span className="text-xs font-medium">{row.lines?.length ?? row._count?.lines ?? 0}</span> },
-    { key: "status", header: "Trạng thái", width: "130px", align: "center", render: (row) => <StatusBadge status={row.status} /> },
-  ];
+    {
+      key: "code",
+      header: "Mã báo hỏng",
+      render: (row) => (
+        <Cell2
+          top={<Code>{row.code}</Code>}
+          bottom={formatDate(row.createdAt)}
+        />
+      ),
+    },
+    {
+      key: "location",
+      header: "Kho / Cơ sở",
+      render: (row) => (
+        <Cell2
+          top={row.stockLocation?.name}
+          bottom={row.stockLocation?.facility?.name}
+        />
+      ),
+    },
+    {
+      key: "reason",
+      header: "Lý do",
+      render: (row) => <span className="text-xs">{row.reason}</span>,
+    },
+    {
+      key: "lines",
+      header: "Số mặt hàng",
+      width: "110px",
+      align: "center",
+      render: (row) => (
+        <span className="text-xs font-medium">
+          {row.lines?.length ?? row._count?.lines ?? 0}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      width: "130px",
+      align: "center",
+      render: (row) => <StatusBadge status={row.status} />,
+    },
+  ]
 
   const varianceColumns: Column<VarianceResult>[] = [
-    { key: "ingredient", header: "Nguyên liệu", render: (row) => <Cell2 top={row.ingredient?.name ?? row.ingredientId} bottom={row.ingredient?.code} /> },
-    { key: "location", header: "Kho / Cơ sở", render: (row) => <Cell2 top={row.stockLocation?.name} bottom={row.stockLocation?.facility?.name} /> },
-    { key: "expected", header: "Tồn lý thuyết", width: "120px", align: "right", render: (row) => <span className="font-mono text-xs">{formatQty(row.expectedClosingSnapshot)}</span> },
-    { key: "actual", header: "Kiểm kê", width: "110px", align: "right", render: (row) => <span className="font-mono text-xs">{formatQty(row.actualClosingSnapshot)}</span> },
-    { key: "variance", header: "Chênh lệch", width: "110px", align: "right", render: (row) => <span className={Number(row.varianceQuantity) < 0 ? "font-mono text-xs font-semibold text-destructive" : "font-mono text-xs font-semibold text-blue-600"}>{formatQty(row.varianceQuantity)}</span> },
-    { key: "data", header: "Dữ liệu", width: "130px", align: "center", render: (row) => <StatusBadge status={row.dataStatus} /> },
-  ];
+    {
+      key: "ingredient",
+      header: "Nguyên liệu",
+      render: (row) => (
+        <Cell2
+          top={row.ingredient?.name ?? row.ingredientId}
+          bottom={row.ingredient?.code}
+        />
+      ),
+    },
+    {
+      key: "location",
+      header: "Kho / Cơ sở",
+      render: (row) => (
+        <Cell2
+          top={row.stockLocation?.name}
+          bottom={row.stockLocation?.facility?.name}
+        />
+      ),
+    },
+    {
+      key: "expected",
+      header: "Tồn lý thuyết",
+      width: "120px",
+      align: "right",
+      render: (row) => (
+        <span className="font-mono text-xs">
+          {formatQty(row.expectedClosingSnapshot)}
+        </span>
+      ),
+    },
+    {
+      key: "actual",
+      header: "Kiểm kê",
+      width: "110px",
+      align: "right",
+      render: (row) => (
+        <span className="font-mono text-xs">
+          {formatQty(row.actualClosingSnapshot)}
+        </span>
+      ),
+    },
+    {
+      key: "variance",
+      header: "Chênh lệch",
+      width: "110px",
+      align: "right",
+      render: (row) => (
+        <span
+          className={
+            Number(row.varianceQuantity) < 0
+              ? "font-mono text-xs font-semibold text-destructive"
+              : "font-mono text-xs font-semibold text-blue-600"
+          }
+        >
+          {formatQty(row.varianceQuantity)}
+        </span>
+      ),
+    },
+    {
+      key: "data",
+      header: "Dữ liệu",
+      width: "130px",
+      align: "center",
+      render: (row) => <StatusBadge status={row.dataStatus} />,
+    },
+  ]
 
   const paymentColumns: Column<PaymentTracking>[] = [
-    { key: "order", header: "Đơn / Nhà cung cấp", render: (row) => <Cell2 top={<Code>{row.order?.code ?? row.orderId}</Code>} bottom={row.order?.supplier?.name} /> },
-    { key: "destination", header: "Kho / Cơ sở", render: (row) => <Cell2 top={row.order?.destinationStockLocation?.name} bottom={row.order?.destinationStockLocation?.facility?.name} /> },
-    { key: "reconciled", header: "Đối soát", width: "130px", align: "right", render: (row) => <span className="font-mono text-xs">{formatMoney(row.reconciledValue)}</span> },
-    { key: "paid", header: "Đã thanh toán", width: "140px", align: "right", render: (row) => <span className="font-mono text-xs font-semibold">{formatMoney(row.paidValue)}</span> },
-    { key: "status", header: "Trạng thái", width: "120px", align: "center", render: (row) => <StatusBadge status={row.status} /> },
-    { key: "updated", header: "Cập nhật", width: "150px", render: (row) => <span className="text-xs text-muted-foreground">{formatDateTime(row.updatedAt)}</span> },
-  ];
+    {
+      key: "order",
+      header: "Đơn / Nhà cung cấp",
+      render: (row) => (
+        <Cell2
+          top={<Code>{row.order?.code ?? row.orderId}</Code>}
+          bottom={row.order?.supplier?.name}
+        />
+      ),
+    },
+    {
+      key: "destination",
+      header: "Kho / Cơ sở",
+      render: (row) => (
+        <Cell2
+          top={row.order?.destinationStockLocation?.name}
+          bottom={row.order?.destinationStockLocation?.facility?.name}
+        />
+      ),
+    },
+    {
+      key: "reconciled",
+      header: "Đối soát",
+      width: "130px",
+      align: "right",
+      render: (row) => (
+        <span className="font-mono text-xs">
+          {formatMoney(row.reconciledValue)}
+        </span>
+      ),
+    },
+    {
+      key: "paid",
+      header: "Đã thanh toán",
+      width: "140px",
+      align: "right",
+      render: (row) => (
+        <span className="font-mono text-xs font-semibold">
+          {formatMoney(row.paidValue)}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      width: "120px",
+      align: "center",
+      render: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      key: "updated",
+      header: "Cập nhật",
+      width: "150px",
+      render: (row) => (
+        <span className="text-xs text-muted-foreground">
+          {formatDateTime(row.updatedAt)}
+        </span>
+      ),
+    },
+  ]
 
   return (
     <AdminLayout>
@@ -240,11 +419,11 @@ export default function ReportsPage() {
             variant="outline"
             size="sm"
             onClick={() => {
-              if (activeTab === "stock") stockReport.refetch();
-              if (activeTab === "fulfillment") fulfillmentReport.refetch();
-              if (activeTab === "damage") damageReport.refetch();
-              if (activeTab === "variance") varianceReport.refetch();
-              if (activeTab === "payment") paymentReport.refetch();
+              if (activeTab === "stock") stockReport.refetch()
+              if (activeTab === "fulfillment") fulfillmentReport.refetch()
+              if (activeTab === "damage") damageReport.refetch()
+              if (activeTab === "variance") varianceReport.refetch()
+              if (activeTab === "payment") paymentReport.refetch()
             }}
           >
             <RefreshCw className="h-4 w-4" />
@@ -254,7 +433,10 @@ export default function ReportsPage() {
       />
 
       <div className="space-y-3 sm:space-y-4">
-        <div data-tour="reports-filters" className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card p-3 shadow-sm sm:gap-3 sm:p-4">
+        <div
+          data-tour="reports-filters"
+          className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card p-3 shadow-sm sm:gap-3 sm:p-4"
+        >
           <FacilitySelect
             value={list.filters.facility_id}
             onChange={(v) => list.setFilter("facility_id", v)}
@@ -271,12 +453,12 @@ export default function ReportsPage() {
         <Tabs
           value={activeTab}
           onValueChange={(v) =>
-            setActiveTab(v as "stock" | "fulfillment" | "damage" | "variance" | "payment")
+            setActiveTab(
+              v as "stock" | "fulfillment" | "damage" | "variance" | "payment"
+            )
           }
           className="space-y-4"
         >
-
-
           <TabsContent value="stock" className="space-y-4">
             <DataTable
               columns={stockColumns}
@@ -306,18 +488,48 @@ export default function ReportsPage() {
           </TabsContent>
 
           <TabsContent value="damage" className="space-y-4">
-            <DataTable columns={damageColumns} data={damageReport.data?.items ?? []} total={damageReport.data?.meta?.total} page={list.page} pageSize={list.pageSize} onPageChange={list.setPage} onPageSizeChange={list.setPageSize} loading={damageReport.isLoading} emptyMessage="Không có báo cáo hàng hỏng." />
+            <DataTable
+              columns={damageColumns}
+              data={damageReport.data?.items ?? []}
+              total={damageReport.data?.meta?.total}
+              page={list.page}
+              pageSize={list.pageSize}
+              onPageChange={list.setPage}
+              onPageSizeChange={list.setPageSize}
+              loading={damageReport.isLoading}
+              emptyMessage="Không có báo cáo hàng hỏng."
+            />
           </TabsContent>
 
           <TabsContent value="variance" className="space-y-4">
-            <DataTable columns={varianceColumns} data={varianceReport.data?.items ?? []} total={varianceReport.data?.meta?.total} page={list.page} pageSize={list.pageSize} onPageChange={list.setPage} onPageSizeChange={list.setPageSize} loading={varianceReport.isLoading} emptyMessage="Không có dữ liệu chênh lệch iPOS." />
+            <DataTable
+              columns={varianceColumns}
+              data={varianceReport.data?.items ?? []}
+              total={varianceReport.data?.meta?.total}
+              page={list.page}
+              pageSize={list.pageSize}
+              onPageChange={list.setPage}
+              onPageSizeChange={list.setPageSize}
+              loading={varianceReport.isLoading}
+              emptyMessage="Không có dữ liệu chênh lệch iPOS."
+            />
           </TabsContent>
 
           <TabsContent value="payment" className="space-y-4">
-            <DataTable columns={paymentColumns} data={paymentReport.data?.items ?? []} total={paymentReport.data?.meta?.total} page={list.page} pageSize={list.pageSize} onPageChange={list.setPage} onPageSizeChange={list.setPageSize} loading={paymentReport.isLoading} emptyMessage="Không có dữ liệu thanh toán." />
+            <DataTable
+              columns={paymentColumns}
+              data={paymentReport.data?.items ?? []}
+              total={paymentReport.data?.meta?.total}
+              page={list.page}
+              pageSize={list.pageSize}
+              onPageChange={list.setPage}
+              onPageSizeChange={list.setPageSize}
+              loading={paymentReport.isLoading}
+              emptyMessage="Không có dữ liệu thanh toán."
+            />
           </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
-  );
+  )
 }
