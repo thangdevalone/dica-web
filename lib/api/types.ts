@@ -211,6 +211,7 @@ export interface SupplierIngredient {
   ingredientId: string;
   supplierSku: string | null;
   referencePrice: Decimal | null;
+  isPreferred: boolean;
   active: boolean;
   supplier?: Supplier;
   ingredient?: Ingredient;
@@ -227,9 +228,23 @@ export interface ItemEligibility {
   ingredientId: string;
   maxQuantityPerRequest: Decimal | null;
   active: boolean;
+  grantType?: "INGREDIENT" | "GROUP";
+  groupEligibilityId?: string | null;
   facility?: Facility;
   department?: Department;
   ingredient?: Ingredient;
+}
+
+export interface GroupEligibility {
+  id: string;
+  facilityId: string;
+  departmentId: string;
+  ingredientGroupId: string;
+  maxQuantityPerRequest: Decimal | null;
+  active: boolean;
+  facility?: Facility;
+  department?: Department;
+  ingredientGroup?: IngredientGroup;
 }
 
 export interface SourceRule {

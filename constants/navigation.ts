@@ -234,7 +234,7 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         href: "/sourcing",
-        label: "Nguồn hàng & quyền yêu cầu",
+        label: "Nguồn hàng & hàng được xin",
         icon: GitBranch,
         permission: ["eligibility.read", "source_rule.read"],
         children: [
@@ -246,9 +246,16 @@ export const NAV_SECTIONS: NavSection[] = [
             permission: "source_rule.read",
           },
           {
+            href: "/sourcing?tab=group-eligibility",
+            tabKey: "group-eligibility",
+            label: "Nhóm hàng được phép xin",
+            icon: ListChecks,
+            permission: "eligibility.read",
+          },
+          {
             href: "/sourcing?tab=eligibility",
             tabKey: "eligibility",
-            label: "Hàng được phép yêu cầu",
+            label: "Ngoại lệ từng mặt hàng",
             icon: ListChecks,
             permission: "eligibility.read",
           },

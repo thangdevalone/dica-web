@@ -6,6 +6,7 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/shared/date-time-picker";
 import { PageHeader } from "@/components/shared/page-header";
@@ -490,7 +491,7 @@ function SuppliersTab() {
         : api.post("/suppliers", {
             code: form.code.trim().toUpperCase(),
             name: form.name.trim(),
-            ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
+            phone: form.phone.trim(),
             ...(form.email.trim() ? { email: form.email.trim() } : {}),
           }),
     invalidate: ["/suppliers"],
@@ -537,12 +538,13 @@ function SuppliersTab() {
             title={editing ? `Sửa nhà cung cấp ${editing.code}` : "Thêm nhà cung cấp"}
             onSubmit={() => save.mutate()}
             submitting={save.isPending}
+            submitDisabled={!form.code.trim() || !form.name.trim() || !form.phone.trim()}
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Mã nhà cung cấp" required>
                 <Input value={form.code} disabled={Boolean(editing)} onChange={(e) => setForm({ ...form, code: e.target.value })} className="h-9 text-xs uppercase" />
               </Field>
-              <Field label="Điện thoại">
+              <Field label="Điện thoại" required>
                 <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="h-9 text-xs" />
               </Field>
             </div>
@@ -571,7 +573,7 @@ function SupplierLinksTab() {
   });
   const [editing, setEditing] = React.useState<SupplierIngredient | null>(null);
   const [open, setOpen] = React.useState(false);
-  const [form, setForm] = React.useState({ supplier_id: "", ingredient_id: "", supplier_sku: "", reference_price: "" });
+  const [form, setForm] = React.useState({ supplier_id: "", ingredient_id: "", supplier_sku: "", reference_price: "", is_preferred: false });
   React.useEffect(() => {
     if (open)
       setForm({
@@ -579,6 +581,7 @@ function SupplierLinksTab() {
         ingredient_id: editing?.ingredientId ?? "",
         supplier_sku: editing?.supplierSku ?? "",
         reference_price: editing?.referencePrice ?? "",
+        is_preferred: editing?.isPreferred ?? false,
       });
   }, [open, editing, supplierId]);
   const save = useApiMutation({
@@ -587,12 +590,14 @@ function SupplierLinksTab() {
         ? api.patch(`/supplier-ingredients/${editing.id}`, {
             supplier_sku: form.supplier_sku.trim(),
             reference_price: form.reference_price.trim() ? form.reference_price.trim() : null,
+            is_preferred: form.is_preferred,
           })
         : api.post("/supplier-ingredients", {
             supplier_id: form.supplier_id,
             ingredient_id: form.ingredient_id,
             ...(form.supplier_sku.trim() ? { supplier_sku: form.supplier_sku.trim() } : {}),
             ...(form.reference_price.trim() ? { reference_price: form.reference_price.trim() } : {}),
+            is_preferred: form.is_preferred,
           }),
     invalidate: ["/supplier-ingredients"],
     onSuccess: () => setOpen(false),
@@ -605,6 +610,7 @@ function SupplierLinksTab() {
     { key: "supplier", header: "Nhà cung cấp", cell: (l) => <Cell2 title={l.supplier?.name ?? "—"} sub={l.supplier?.code} /> },
     { key: "ingredient", header: "Nguyên liệu", cell: (l) => <Cell2 title={l.ingredient?.name ?? "—"} sub={l.ingredient?.code} /> },
     { key: "sku", header: "Mã hàng của nhà cung cấp", cell: (l) => (l.supplierSku ? <Code>{l.supplierSku}</Code> : "—") },
+    { key: "preferred", header: "Ưu tiên", cell: (l) => l.isPreferred ? <Badge>Ưu tiên</Badge> : "—" },
     {
       key: "price",
       header: "Giá tham chiếu",
@@ -668,6 +674,12 @@ function SupplierLinksTab() {
                 <Input value={form.reference_price} onChange={(e) => setForm({ ...form, reference_price: e.target.value })} inputMode="decimal" className="h-9 text-xs" />
               </Field>
             </div>
+            <Field label="Nhà cung cấp ưu tiên" hint="Khi bật, nhà cung cấp đang được ưu tiên của nguyên liệu này sẽ tự động được bỏ đánh dấu.">
+              <div className="flex h-9 items-center gap-3">
+                <Switch checked={form.is_preferred} onCheckedChange={(is_preferred) => setForm({ ...form, is_preferred })} />
+                <span className="text-xs text-muted-foreground">{form.is_preferred ? "Đang được ưu tiên" : "Không ưu tiên"}</span>
+              </div>
+            </Field>
           </FormDialog>
         </>
       }
