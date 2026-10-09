@@ -133,7 +133,6 @@ const ALL_NAV_SECTIONS: NavSection[] = [
         href: "/guide",
         label: "Hướng dẫn quản trị",
         icon: BookOpenCheck,
-        permission: "role.read",
       },
     ],
   },
