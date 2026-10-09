@@ -53,6 +53,11 @@ import type {
 import { SCOPE_TYPE_LABELS, labelOf } from "@/constants/labels"
 import { useAuthStore, useCan } from "@/stores/use-auth-store"
 import { formatDate, formatDateTime } from "@/lib/formatters"
+import {
+  canManageRole,
+  canManageUser,
+  isOrganizationAdmin,
+} from "@/lib/access-management"
 
 const INVALIDATE = ["/users", "/roles", "/grants", "/dashboard/summary"]
 
@@ -165,11 +170,11 @@ function ManageRoleDialog({
     role?.permissions?.map((item) => item.permissionCode) ?? []
   )
   const [search, setSearch] = React.useState("")
-  const actorPermissions = useAuthStore((state) => state.permissions)
   const actorGrants = useAuthStore((state) => state.grants)
-  const isAdminOwner = actorGrants.some(
-    (grant) => grant.roleCode === "ADMIN_OWNER"
-  )
+  const isAdminOwner = isOrganizationAdmin(actorGrants)
+  const organizationPermissions = actorGrants
+    .filter((grant) => grant.scopeType === "ORGANIZATION")
+    .flatMap((grant) => grant.permissions)
   const permissionsQuery = usePagedQuery<Permission>(
     "/permissions",
     { page: 1, page_size: 100 },
@@ -197,7 +202,8 @@ function ManageRoleDialog({
   })
 
   const permissions = (permissionsQuery.data?.items ?? []).filter(
-    (permission) => isAdminOwner || actorPermissions.includes(permission.code)
+    (permission) =>
+      isAdminOwner || organizationPermissions.includes(permission.code)
   )
   const normalizedSearch = search.trim().toLowerCase()
   const visiblePermissions = permissions.filter((permission) => {
@@ -379,6 +385,7 @@ function CreateUserDialog({
   const [facilityId, setFacilityId] = React.useState("")
   const [stockLocationId, setStockLocationId] = React.useState("")
   const [departmentId, setDepartmentId] = React.useState("")
+  const actorGrants = useAuthStore((state) => state.grants)
 
   const rolesQuery = usePagedQuery<Role>(
     "/roles",
@@ -389,6 +396,7 @@ function CreateUserDialog({
     .filter(
       (role) =>
         role.active &&
+        canManageRole(actorGrants, role) &&
         (kind === "SUPPLIER"
           ? role.code === "SUPPLIER"
           : role.code !== "SUPPLIER")
@@ -433,6 +441,10 @@ function CreateUserDialog({
     username.trim().length >= 3 &&
     password.trim().length >= 8 &&
     Boolean(roleId) &&
+    roleOptions.some((option) => option.value === roleId) &&
+    ((rolesQuery.data?.items ?? []).find((role) => role.id === roleId)?.code !==
+      "ADMIN_OWNER" ||
+      scopeType === "ORGANIZATION") &&
     (kind === "INTERNAL" || Boolean(supplierId)) &&
     (kind === "SUPPLIER" ||
       scopeType === "ORGANIZATION" ||
@@ -656,6 +668,7 @@ function AssignGrantDialog({
   const [facilityId, setFacilityId] = React.useState("")
   const [stockLocationId, setStockLocationId] = React.useState("")
   const [departmentId, setDepartmentId] = React.useState("")
+  const actorGrants = useAuthStore((state) => state.grants)
 
   const usersQuery = usePagedQuery<User>(
     "/users",
@@ -674,6 +687,7 @@ function AssignGrantDialog({
     .filter(
       (role) =>
         role.active &&
+        canManageRole(actorGrants, role) &&
         (selectedUser?.kind === "SUPPLIER"
           ? role.code === "SUPPLIER"
           : role.code !== "SUPPLIER")
@@ -707,6 +721,10 @@ function AssignGrantDialog({
   const isValid =
     Boolean(userId) &&
     Boolean(roleId) &&
+    roleOptions.some((option) => option.value === roleId) &&
+    ((rolesQuery.data?.items ?? []).find((role) => role.id === roleId)?.code !==
+      "ADMIN_OWNER" ||
+      scopeType === "ORGANIZATION") &&
     (scopeType === "ORGANIZATION" ||
       scopeType === "OWN" ||
       scopeType === "SUPPLIER" ||
@@ -746,11 +764,14 @@ function AssignGrantDialog({
               setStockLocationId("")
               setDepartmentId("")
             }}
-            options={(usersQuery.data?.items ?? []).map((u) => ({
-              value: u.id,
-              label: `${u.displayName} (@${u.username})`,
-              hint: u.kind === "INTERNAL" ? "Nhân viên nội bộ" : "Nhà cung cấp",
-            }))}
+            options={(usersQuery.data?.items ?? [])
+              .filter((user) => canManageUser(actorGrants, user))
+              .map((u) => ({
+                value: u.id,
+                label: `${u.displayName} (@${u.username})`,
+                hint:
+                  u.kind === "INTERNAL" ? "Nhân viên nội bộ" : "Nhà cung cấp",
+              }))}
             placeholder="Chọn tài khoản..."
           />
         </Field>
@@ -845,6 +866,8 @@ function AssignGrantDialog({
 // ---------------------------------------------------------------------------
 
 export default function UsersPage() {
+  const actorGrants = useAuthStore((state) => state.grants)
+  const actorId = useAuthStore((state) => state.user?.id)
   const canCreateUserAccount = useCan("user.create")
   const canAssignNewUser = useCan("grant.assign")
   const canCreateUser = canCreateUserAccount && canAssignNewUser
@@ -1023,7 +1046,7 @@ export default function UsersPage() {
           className="flex items-center justify-end gap-1"
           onClick={(e) => e.stopPropagation()}
         >
-          {canUpdateUser && (
+          {canUpdateUser && canManageUser(actorGrants, u) && (
             <Button
               variant="ghost"
               size="sm"
@@ -1037,7 +1060,7 @@ export default function UsersPage() {
               <Pencil className="h-4 w-4" />
             </Button>
           )}
-          {canResetPassword && (
+          {canResetPassword && canManageUser(actorGrants, u) && (
             <Button
               variant="ghost"
               size="sm"
@@ -1048,27 +1071,28 @@ export default function UsersPage() {
               <KeyRound className="h-4 w-4" />
             </Button>
           )}
-          {((u.active && canDeactivateUser) ||
-            (!u.active && canUpdateUser)) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 ${
-                u.active
-                  ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  : "text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-              }`}
-              title={u.active ? "Khóa tài khoản" : "Kích hoạt tài khoản"}
-              onClick={() => toggleUserStatusMutation.mutate(u)}
-              disabled={toggleUserStatusMutation.isPending}
-            >
-              {u.active ? (
-                <UserX className="h-4 w-4" />
-              ) : (
-                <UserCheck className="h-4 w-4" />
-              )}
-            </Button>
-          )}
+          {canManageUser(actorGrants, u) &&
+            ((u.active && canDeactivateUser && u.id !== actorId) ||
+              (!u.active && canUpdateUser)) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 ${
+                  u.active
+                    ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    : "text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                }`}
+                title={u.active ? "Khóa tài khoản" : "Kích hoạt tài khoản"}
+                onClick={() => toggleUserStatusMutation.mutate(u)}
+                disabled={toggleUserStatusMutation.isPending}
+              >
+                {u.active ? (
+                  <UserX className="h-4 w-4" />
+                ) : (
+                  <UserCheck className="h-4 w-4" />
+                )}
+              </Button>
+            )}
         </div>
       ),
     },
@@ -1139,7 +1163,7 @@ export default function UsersPage() {
           className="flex items-center justify-end gap-1"
           onClick={(event) => event.stopPropagation()}
         >
-          {canManageRoles && (
+          {canManageRoles && canManageRole(actorGrants, r) && (
             <>
               <Button
                 variant="ghost"
@@ -1240,7 +1264,7 @@ export default function UsersPage() {
           className="flex items-center justify-end"
           onClick={(e) => e.stopPropagation()}
         >
-          {canRevokeGrant && (
+          {canRevokeGrant && g.role && canManageRole(actorGrants, g.role) && (
             <Button
               variant="ghost"
               size="sm"

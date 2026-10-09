@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -11,6 +10,7 @@ import { toast } from "sonner"
 import { api, errorMessage, listAll, listPage } from "@/lib/api/client"
 import type { ApiResult, Paged, QueryParams } from "@/lib/api/types"
 import { useAuthStore } from "@/stores/use-auth-store"
+import { loadProfile } from "@/lib/api/auth"
 
 interface QueryOpts {
   enabled?: boolean
@@ -62,7 +62,10 @@ export function usePagedQuery<T>(
     queryKey: [path, "page", params ?? {}, sessionEpoch],
     queryFn: () => listPage<T>(path as string, params),
     enabled: ready && Boolean(path) && (opts?.enabled ?? true),
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey.at(-1) === sessionEpoch
+        ? previousData
+        : undefined,
     ...(opts?.staleTime !== undefined ? { staleTime: opts.staleTime } : {}),
     ...(opts?.refetchInterval !== undefined
       ? { refetchInterval: opts.refetchInterval }
@@ -122,6 +125,8 @@ export function useApiMutation<TVars = void, TData = unknown>(
   return useMutation({
     mutationFn: opts.mutationFn,
     onSuccess: async (res, vars) => {
+      if (opts.invalidate?.some((path) => ["/roles", "/grants"].includes(path)))
+        await loadProfile().catch(() => undefined)
       if (opts.successMessage !== false) {
         const message =
           typeof opts.successMessage === "function"

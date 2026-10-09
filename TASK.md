@@ -13,6 +13,7 @@ Cập nhật: 09/10/2026. Web dành cho cấu hình; nghiệp vụ tạo/duyệt
 - [x] Bỏ modern-tour và dependency; hướng dẫn thay bằng 6 bước cấu hình, link theo quyền và tiêu chí hoàn thành.
 - [x] Viết lại README đơn giản, có sơ đồ Mermaid và hướng dẫn local/deploy.
 - [x] Lint/typecheck/build đạt; kiểm tra hướng dẫn desktop và 19 link route/tab.
+- [x] RBAC: lọc vai trò/tài khoản/thao tác quản trị theo quyền cấp tổ chức; ADMIN được cấp ở scope tổ chức; đồng bộ hồ sơ khi quay lại tab, mỗi 30 giây và khi API từ chối quyền; xóa cache khi tài khoản hoặc quyền/scope thay đổi. Có test quyền và CI chạy test.
 
 Các mục trên xác nhận code và kiểm tra local, chưa thay thế nghiệm thu trên production.
 

@@ -1,16 +1,17 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
 import {
   QueryCache,
   QueryClient,
   QueryClientProvider,
-} from "@tanstack/react-query";
-import { toast } from "sonner";
-import { errorMessage } from "@/lib/api/client";
+} from "@tanstack/react-query"
+import { toast } from "sonner"
+import { errorMessage } from "@/lib/api/client"
+import { useAuthStore } from "@/stores/use-auth-store"
 
 interface QueryProviderProps {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 export function QueryProvider({ children }: QueryProviderProps) {
@@ -22,7 +23,7 @@ export function QueryProvider({ children }: QueryProviderProps) {
             toast.error(errorMessage(error), {
               id: `query-error:${query.queryHash}`,
               description: "Không thể tải dữ liệu. Vui lòng thử lại.",
-            });
+            })
           },
         }),
         defaultOptions: {
@@ -34,9 +35,20 @@ export function QueryProvider({ children }: QueryProviderProps) {
           },
         },
       })
-  );
+  )
+
+  React.useEffect(
+    () =>
+      useAuthStore.subscribe((state, previous) => {
+        if (state.sessionEpoch !== previous.sessionEpoch) {
+          void queryClient.cancelQueries()
+          queryClient.clear()
+        }
+      }),
+    [queryClient]
+  )
 
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
+  )
 }

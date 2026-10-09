@@ -109,6 +109,11 @@ http.interceptors.response.use(
       (AxiosRequestConfig & { _retried?: boolean }) | undefined
     const status = error.response?.status
     const isAuthCall = original?.url?.includes("/auth/")
+    if (status === 403 && !original?.url?.startsWith("/me")) {
+      // Reload current grants without retrying the rejected mutation.
+      const { loadProfile } = await import("./auth")
+      await loadProfile().catch(() => undefined)
+    }
     if (status === 401 && original && !original._retried && !isAuthCall) {
       original._retried = true
       refreshing ??= refreshAccessToken().finally(() => {

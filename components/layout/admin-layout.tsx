@@ -832,16 +832,32 @@ export function AdminLayout({
   React.useEffect(() => {
     if (!hasHydrated || !accessToken) return
     let cancelled = false
-    loadProfile()
-      .then(() => !cancelled && setProfileError(null))
-      .catch((error) => {
-        if (cancelled) return
-        const message = errorMessage(error)
-        setProfileError(message)
-        toast.error(message, { id: "profile-load-error" })
-      })
+    const refresh = () =>
+      loadProfile()
+        .then(() => !cancelled && setProfileError(null))
+        .catch((error) => {
+          if (cancelled) return
+          const message = errorMessage(error)
+          setProfileError(message)
+          toast.error(message, { id: "profile-load-error" })
+        })
+    void refresh()
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh()
+    }, 30_000)
+    const onFocus = () => {
+      void refresh()
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refresh()
+    }
+    window.addEventListener("focus", onFocus)
+    document.addEventListener("visibilitychange", onVisibility)
     return () => {
       cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener("focus", onFocus)
+      document.removeEventListener("visibilitychange", onVisibility)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasHydrated, Boolean(accessToken)])

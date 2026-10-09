@@ -1,26 +1,31 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { MeProfile, PermissionGrant } from "@/lib/api/types";
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+import type { MeProfile, PermissionGrant } from "@/lib/api/types"
+import { authorizationKey } from "@/lib/access-management"
 
 interface AuthState {
-  accessToken: string | null;
-  refreshToken: string | null;
-  organizationCode: string | null;
-  user: MeProfile | null;
-  permissions: string[];
-  grants: PermissionGrant[];
+  accessToken: string | null
+  refreshToken: string | null
+  organizationCode: string | null
+  user: MeProfile | null
+  permissions: string[]
+  grants: PermissionGrant[]
   /** Tách cache dữ liệu mỗi khi bắt đầu hoặc kết thúc một phiên đăng nhập. */
-  sessionEpoch: number;
-  hasHydrated: boolean;
+  sessionEpoch: number
+  hasHydrated: boolean
   setSession: (session: {
-    accessToken: string;
-    refreshToken: string;
-    organizationCode?: string;
-  }) => void;
-  setTokens: (accessToken: string, refreshToken: string) => void;
-  setProfile: (user: MeProfile, permissions: string[], grants: PermissionGrant[]) => void;
-  clear: () => void;
-  setHasHydrated: (value: boolean) => void;
+    accessToken: string
+    refreshToken: string
+    organizationCode?: string
+  }) => void
+  setTokens: (accessToken: string, refreshToken: string) => void
+  setProfile: (
+    user: MeProfile,
+    permissions: string[],
+    grants: PermissionGrant[]
+  ) => void
+  clear: () => void
+  setHasHydrated: (value: boolean) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -41,8 +46,21 @@ export const useAuthStore = create<AuthState>()(
           organizationCode: organizationCode ?? state.organizationCode,
           sessionEpoch: state.sessionEpoch + 1,
         })),
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-      setProfile: (user, permissions, grants) => set({ user, permissions, grants }),
+      setTokens: (accessToken, refreshToken) =>
+        set({ accessToken, refreshToken }),
+      setProfile: (user, permissions, grants) =>
+        set((state) => ({
+          user,
+          permissions,
+          grants,
+          sessionEpoch:
+            state.sessionEpoch +
+            (state.user?.id !== user.id ||
+            state.user?.organization_id !== user.organization_id ||
+            authorizationKey(state.grants) !== authorizationKey(grants)
+              ? 1
+              : 0),
+        })),
       clear: () =>
         set((state) => ({
           accessToken: null,
@@ -65,24 +83,24 @@ export const useAuthStore = create<AuthState>()(
         grants: state.grants,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
+        state?.setHasHydrated(true)
       },
     }
   )
-);
+)
 
 /** True when the current session holds the given permission code. */
 export function useCan(permission: string | string[] | undefined): boolean {
-  const permissions = useAuthStore((state) => state.permissions);
-  if (!permission) return true;
-  const required = Array.isArray(permission) ? permission : [permission];
-  return required.some((code) => permissions.includes(code));
+  const permissions = useAuthStore((state) => state.permissions)
+  if (!permission) return true
+  const required = Array.isArray(permission) ? permission : [permission]
+  return required.some((code) => permissions.includes(code))
 }
 
 export function useUser() {
-  return useAuthStore((state) => state.user);
+  return useAuthStore((state) => state.user)
 }
 
 export function hasPermission(permission: string): boolean {
-  return useAuthStore.getState().permissions.includes(permission);
+  return useAuthStore.getState().permissions.includes(permission)
 }
