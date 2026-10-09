@@ -10,7 +10,6 @@ import {
   ClipboardList,
   KeyRound,
   PackageCheck,
-  PlayCircle,
   ShieldCheck,
   Truck,
   Users,
@@ -18,7 +17,6 @@ import {
 } from "lucide-react"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { PageHeader } from "@/components/shared/page-header"
-import { START_ADMIN_TOUR_EVENT } from "@/components/shared/admin-guided-tour"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -61,29 +59,29 @@ const DAILY_FLOW = [
   {
     label: "Yêu cầu cấp hàng",
     detail:
-      "Bộ phận lập yêu cầu, gửi duyệt; người có quyền phê duyệt hoặc yêu cầu sửa lại.",
-    href: "/requests",
+      "Bộ phận lập yêu cầu, gửi duyệt; người có quyền duyệt hoặc từ chối trên mobile. Phiếu bị từ chối phải tạo mới.",
+    href: "/workflow-policy",
     icon: ClipboardList,
   },
   {
     label: "Đơn cấp hàng",
     detail:
       "Sau khi duyệt, kiểm tra đơn được tách theo nguồn kho nội bộ hoặc nhà cung cấp.",
-    href: "/orders",
+    href: "/workflow-policy",
     icon: PackageCheck,
   },
   {
     label: "Xuất và nhận hàng",
     detail:
       "Kho xác nhận xuất; nơi nhận kiểm đếm, nhập hàng và tạo chênh lệch nếu số lượng không khớp.",
-    href: "/delivery",
+    href: "/workflow-policy",
     icon: Truck,
   },
   {
     label: "Kiểm soát tồn kho",
     detail:
       "Theo dõi tồn, lịch sử nhập xuất, kiểm kê, điều chỉnh và báo hỏng. Không sửa số tồn trực tiếp.",
-    href: "/inventory",
+    href: "/workflow-policy",
     icon: Warehouse,
   },
 ] as const
@@ -94,20 +92,8 @@ export default function AdminGuidePage() {
       <div className="space-y-6">
         <PageHeader
           title="Hướng dẫn quản trị DICA"
-          description="Hướng dẫn thao tác qua từng trang, thẻ nội dung, biểu mẫu cấu hình và các bước xử lý chứng từ."
+          description="Hướng dẫn cấu hình Web. Các thao tác vận hành và phê duyệt được thực hiện trên app mobile."
           icon={BookOpenCheck}
-          actions={
-            <Button
-              data-tour="admin-tour-restart"
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => window.dispatchEvent(new Event(START_ADMIN_TOUR_EVENT))}
-            >
-              <PlayCircle className="size-4" />
-              Bắt đầu hướng dẫn
-            </Button>
-          }
         />
 
         <Card className="border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/20">
@@ -118,11 +104,9 @@ export default function AdminGuidePage() {
                 Bắt đầu theo đúng thứ tự bên dưới
               </p>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Hướng dẫn tự chuyển trang, mở đúng mục và biểu mẫu để giải thích
-                từng trường; hệ thống không tự bấm Lưu hay tạo dữ liệu. Cơ cấu tổ
-                chức và danh mục phải có trước khi tạo tài khoản vận hành. Sau
-                khi hoàn tất, hãy dùng một tài khoản thử để kiểm tra đúng menu
-                và đúng dữ liệu được phép xem.
+                Cơ cấu tổ chức và danh mục phải có trước khi tạo tài khoản vận
+                hành. Sau khi hoàn tất, hãy dùng một tài khoản thử để kiểm tra
+                đúng menu và đúng dữ liệu được phép xem.
               </p>
             </div>
           </CardContent>
@@ -173,7 +157,7 @@ export default function AdminGuidePage() {
         <section className="space-y-3">
           <div>
             <h2 className="font-heading text-lg font-bold">
-              Quy trình vận hành hằng ngày
+              Quy trình vận hành trên app mobile
             </h2>
             <p className="text-xs text-muted-foreground">
               Quy trình chuẩn: Yêu cầu → Phê duyệt → Đơn cấp hàng → Xuất hàng →
@@ -184,7 +168,7 @@ export default function AdminGuidePage() {
             {DAILY_FLOW.map((step, index) => {
               const Icon = step.icon
               return (
-                <Card key={step.href} size="sm" className="relative">
+                <Card key={step.label} size="sm" className="relative">
                   <CardContent>
                     <div className="flex items-center gap-2">
                       <span className="flex size-7 items-center justify-center rounded-full bg-foreground text-xs font-bold text-background">
@@ -203,7 +187,7 @@ export default function AdminGuidePage() {
                       className="justify-start px-0 text-xs"
                     >
                       <Link href={step.href}>
-                        Đi đến màn hình <ArrowRight className="size-3.5" />
+                        Xem chính sách <ArrowRight className="size-3.5" />
                       </Link>
                     </Button>
                   </CardContent>

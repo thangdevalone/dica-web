@@ -96,7 +96,6 @@ function FacilityDialog({
   })
   return (
     <FormDialog
-      tourId={facility ? undefined : "organization-facility-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={facility ? `Sửa cơ sở ${facility.code}` : "Thêm cơ sở mới"}
@@ -186,7 +185,6 @@ function FacilitiesTab() {
           </Button>
           {canManage && (
             <Button
-              data-tour="organization-create-facility"
               size="sm"
               className="h-9 gap-1.5 text-xs"
               onClick={() => {
@@ -351,7 +349,6 @@ function LocationDialog({
   })
   return (
     <FormDialog
-      tourId={location ? undefined : "organization-location-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={location ? `Sửa kho ${location.code}` : "Thêm điểm lưu kho"}
@@ -500,7 +497,6 @@ function LocationsTab() {
           />
           {canManage && (
             <Button
-              data-tour="organization-create-location"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => {
@@ -569,7 +565,6 @@ function DepartmentDialog({
   })
   return (
     <FormDialog
-      tourId={department ? undefined : "organization-department-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={department ? `Sửa bộ phận ${department.code}` : "Thêm bộ phận"}
@@ -746,7 +741,6 @@ function DepartmentsTab() {
           />
           {canManage && (
             <Button
-              data-tour="organization-create-department"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => {

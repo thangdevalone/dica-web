@@ -146,7 +146,6 @@ function IngredientDialog({
   })
   return (
     <FormDialog
-      tourId={ingredient ? undefined : "catalog-ingredient-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={
@@ -274,7 +273,6 @@ function IngredientsTab({ autoCreate }: { autoCreate: boolean }) {
           />
           {canManage && (
             <Button
-              data-tour="catalog-create-ingredient"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => {
@@ -382,7 +380,6 @@ function GroupsTab() {
           />
           {canManage && (
             <Button
-              data-tour="catalog-create-group"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => openEditor(null)}
@@ -391,7 +388,6 @@ function GroupsTab() {
             </Button>
           )}
           <FormDialog
-            tourId={editing ? undefined : "catalog-group-form"}
             open={open}
             onOpenChange={setOpen}
             title={
@@ -515,7 +511,6 @@ function UnitsTab() {
           />
           {canManage && (
             <Button
-              data-tour="catalog-create-unit"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => openEditor(null)}
@@ -524,7 +519,6 @@ function UnitsTab() {
             </Button>
           )}
           <FormDialog
-            tourId={editing ? undefined : "catalog-unit-form"}
             open={open}
             onOpenChange={setOpen}
             title={editing ? `Sửa đơn vị ${editing.code}` : "Thêm đơn vị tính"}
@@ -661,7 +655,6 @@ function ConversionsTab() {
           />
           {canManage && (
             <Button
-              data-tour="catalog-create-conversion"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={openEditor}
@@ -670,7 +663,6 @@ function ConversionsTab() {
             </Button>
           )}
           <FormDialog
-            tourId="catalog-conversion-form"
             open={open}
             onOpenChange={setOpen}
             title="Thêm quy đổi đơn vị"
@@ -832,7 +824,6 @@ function SuppliersTab() {
           />
           {canManage && (
             <Button
-              data-tour="catalog-create-supplier"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => openEditor(null)}
@@ -841,7 +832,6 @@ function SuppliersTab() {
             </Button>
           )}
           <FormDialog
-            tourId={editing ? undefined : "catalog-supplier-form"}
             open={open}
             onOpenChange={setOpen}
             title={
@@ -1035,7 +1025,6 @@ function SupplierLinksTab() {
           </div>
           {canManage && (
             <Button
-              data-tour="catalog-create-supplier-link"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={() => openEditor(null)}
@@ -1044,7 +1033,6 @@ function SupplierLinksTab() {
             </Button>
           )}
           <FormDialog
-            tourId={editing ? undefined : "catalog-supplier-link-form"}
             open={open}
             onOpenChange={setOpen}
             title={

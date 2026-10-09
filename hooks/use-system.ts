@@ -6,12 +6,11 @@ import { useApiQuery } from "@/hooks/use-api"
 import { api } from "@/lib/api/client"
 import type { DashboardSummary } from "@/lib/api/types"
 import { useFacilityFilter } from "@/stores/use-app-store"
-import { useCan } from "@/stores/use-auth-store"
 
 /** Tổng hợp dashboard từ `/dashboard/summary` theo bộ lọc cơ sở toàn cục. */
 export function useDashboardSummary(days = 14) {
   const facilityId = useFacilityFilter()
-  const can = useCan("dashboard.read")
+  const can = false
   return useApiQuery<DashboardSummary>(
     "/dashboard/summary",
     { days, facility_id: facilityId },

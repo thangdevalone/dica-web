@@ -197,7 +197,6 @@ function EligibilityTab() {
           </div>
           {canManage && (
             <Button
-              data-tour="sourcing-create-eligibility"
               size="sm"
               className="h-8 gap-1.5 text-xs"
               onClick={openEditor}
@@ -206,7 +205,6 @@ function EligibilityTab() {
             </Button>
           )}
           <FormDialog
-            tourId="sourcing-eligibility-form"
             open={open}
             onOpenChange={setOpen}
             title="Thêm hàng bộ phận được phép xin"
@@ -602,7 +600,6 @@ function RuleDialog({
       : form.supplier_id)
   return (
     <FormDialog
-      tourId={rule ? undefined : "sourcing-rule-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={rule ? "Đổi nguồn cấp" : "Cấu hình nguồn cấp"}
@@ -818,7 +815,6 @@ function BulkDialog({
   }
   return (
     <FormDialog
-      tourId="sourcing-bulk-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Cập nhật nguồn cấp hàng loạt"
@@ -973,7 +969,6 @@ function RulesTab() {
             <div className="flex gap-2">
               {canBulk && (
                 <Button
-                  data-tour="sourcing-bulk"
                   size="sm"
                   variant="outline"
                   className="h-8 gap-1.5 text-xs"
@@ -984,7 +979,6 @@ function RulesTab() {
               )}
               {canManage && (
                 <Button
-                  data-tour="sourcing-create-rule"
                   size="sm"
                   className="h-8 gap-1.5 text-xs"
                   onClick={() => {

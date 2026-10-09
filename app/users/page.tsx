@@ -88,6 +88,12 @@ const PERMISSION_RESOURCE_LABELS: Record<string, string> = {
   ipos_mapping: "Liên kết món iPOS",
   sales_import: "Dữ liệu bán hàng",
   payment_tracking: "Thanh toán",
+  price: "Giá và đơn giá",
+  price_rule: "Giá chuẩn",
+  price_alert: "Cảnh báo sai giá",
+  workflow_policy: "Chính sách nghiệp vụ",
+  system: "Quản trị dữ liệu",
+  return: "Hoàn hàng",
   report: "Báo cáo",
   audit: "Nhật ký",
   attachment: "Tệp đính kèm",
@@ -131,6 +137,7 @@ const PERMISSION_ACTION_LABELS: Record<string, string> = {
   damage: "Báo hỏng",
   variance: "Hao hụt",
   payment: "Thanh toán",
+  purge: "Xóa vĩnh viễn dữ liệu và lịch sử",
 }
 
 function permissionParts(code: string) {
@@ -217,7 +224,6 @@ function ManageRoleDialog({
 
   return (
     <FormDialog
-      tourId={role ? undefined : "users-role-form"}
       open={open}
       onOpenChange={onOpenChange}
       title={role ? `Cập nhật vai trò ${role.name}` : "Tạo vai trò tùy chỉnh"}
@@ -441,7 +447,6 @@ function CreateUserDialog({
 
   return (
     <FormDialog
-      tourId="users-user-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo tài khoản người dùng"
@@ -715,7 +720,6 @@ function AssignGrantDialog({
 
   return (
     <FormDialog
-      tourId="users-grant-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Phân quyền tài khoản"
@@ -1273,18 +1277,13 @@ export default function UsersPage() {
               Làm mới
             </Button>
             {activeTab === "users" && canCreateUser && (
-              <Button
-                data-tour="users-create-user"
-                size="sm"
-                onClick={() => setOpenCreateUser(true)}
-              >
+              <Button size="sm" onClick={() => setOpenCreateUser(true)}>
                 <UserPlus className="h-4 w-4" />
                 Tạo tài khoản
               </Button>
             )}
             {activeTab === "roles" && canManageRoles && (
               <Button
-                data-tour="users-create-role"
                 size="sm"
                 onClick={() => {
                   setRoleTarget(null)
@@ -1296,11 +1295,7 @@ export default function UsersPage() {
               </Button>
             )}
             {activeTab === "grants" && canAssignGrant && (
-              <Button
-                data-tour="users-create-grant"
-                size="sm"
-                onClick={() => setOpenAssignGrant(true)}
-              >
+              <Button size="sm" onClick={() => setOpenAssignGrant(true)}>
                 <Plus className="h-4 w-4" />
                 Gán quyền
               </Button>

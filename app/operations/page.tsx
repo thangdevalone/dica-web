@@ -102,7 +102,6 @@ function CreateMappingDialog({
 
   return (
     <FormDialog
-      tourId="operations-mapping-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo liên kết món ăn iPOS"
@@ -188,7 +187,6 @@ function CreateAlertRuleDialog({
 
   return (
     <FormDialog
-      tourId="operations-alert-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Thêm quy tắc cảnh báo tồn kho"
@@ -286,7 +284,6 @@ function CreateRecipeDialog({
     lines.every((line) => line.ingredientId && Number(line.quantity) > 0)
   return (
     <FormDialog
-      tourId="operations-recipe-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo phiên bản định mức"
@@ -441,7 +438,6 @@ function CreateSalesImportDialog({
   })
   return (
     <FormDialog
-      tourId="operations-sales-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tạo đợt nhập bán hàng"
@@ -514,7 +510,6 @@ function RecalculateVarianceDialog({
   })
   return (
     <FormDialog
-      tourId="operations-recalculate-form"
       open={open}
       onOpenChange={onOpenChange}
       title="Tính lại chênh lệch"
@@ -552,8 +547,8 @@ export default function OperationsPage() {
   const canManageAlerts = useCan("alert_rule.manage")
   const canReadMappings = useCan("ipos_mapping.read")
   const canReadRecipes = useCan("recipe.read")
-  const canReadSales = useCan("sales_import.read")
-  const canReadVariance = useCan("variance.read")
+  const canReadSales = false
+  const canReadVariance = false
   const canRecalculateVariance = useCan("variance.recalculate")
   const validTabs = React.useMemo(
     () =>
@@ -1012,8 +1007,8 @@ export default function OperationsPage() {
   return (
     <AdminLayout>
       <PageHeader
-        title="iPOS, định mức & tiêu hao"
-        description="Nhập dữ liệu bán hàng từ iPOS, tính lượng nguyên liệu dự kiến sử dụng và phát hiện chênh lệch."
+        title="Cấu hình iPOS & định mức"
+        description="Thiết lập liên kết món, định mức nguyên liệu và ngưỡng cảnh báo. Xem dữ liệu bán hàng và hao hụt trên ứng dụng DICA."
         icon={Utensils}
         actions={
           <div className="flex items-center gap-2">
@@ -1032,51 +1027,31 @@ export default function OperationsPage() {
               Làm mới
             </Button>
             {activeTab === "mappings" && canManageMapping && (
-              <Button
-                data-tour="operations-create-mapping"
-                size="sm"
-                onClick={() => setOpenMappingDialog(true)}
-              >
+              <Button size="sm" onClick={() => setOpenMappingDialog(true)}>
                 <Plus className="h-4 w-4" />
                 Thêm món iPOS
               </Button>
             )}
             {activeTab === "recipes" && canManageRecipe && (
-              <Button
-                data-tour="operations-create-recipe"
-                size="sm"
-                onClick={() => setOpenRecipeDialog(true)}
-              >
+              <Button size="sm" onClick={() => setOpenRecipeDialog(true)}>
                 <Plus className="h-4 w-4" />
                 Thêm định mức
               </Button>
             )}
             {activeTab === "sales" && canManageSales && (
-              <Button
-                data-tour="operations-create-sales-import"
-                size="sm"
-                onClick={() => setOpenSalesDialog(true)}
-              >
+              <Button size="sm" onClick={() => setOpenSalesDialog(true)}>
                 <UploadCloud className="h-4 w-4" />
                 Nhập dữ liệu bán
               </Button>
             )}
             {activeTab === "variance" && canRecalculateVariance && (
-              <Button
-                data-tour="operations-recalculate"
-                size="sm"
-                onClick={() => setOpenRecalculateDialog(true)}
-              >
+              <Button size="sm" onClick={() => setOpenRecalculateDialog(true)}>
                 <RefreshCw className="h-4 w-4" />
                 Tính lại
               </Button>
             )}
             {activeTab === "alerts" && canManageAlerts && (
-              <Button
-                data-tour="operations-create-alert"
-                size="sm"
-                onClick={() => setOpenAlertDialog(true)}
-              >
+              <Button size="sm" onClick={() => setOpenAlertDialog(true)}>
                 <Plus className="h-4 w-4" />
                 Thêm ngưỡng cảnh báo
               </Button>
@@ -1140,11 +1115,7 @@ export default function OperationsPage() {
           </TabsContent>
 
           {/* Sales Imports Tab */}
-          <TabsContent
-            data-tour="operations-sales-list"
-            value="sales"
-            className="space-y-4"
-          >
+          <TabsContent value="sales" className="space-y-4">
             {adapterQuery.data && (
               <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 p-3 text-xs">
                 <span>

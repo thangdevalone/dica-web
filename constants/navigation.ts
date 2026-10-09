@@ -71,16 +71,14 @@ export interface NavSection {
   items: NavItem[]
 }
 
-export const NAV_SECTIONS: NavSection[] = [
+const ALL_NAV_SECTIONS: NavSection[] = [
   {
     title: "TỔNG QUAN",
     items: [
       {
         href: "/",
-        label: "Tổng quan vận hành",
+        label: "Cấu hình DICA",
         icon: LayoutDashboard,
-        badge: "Trực tiếp",
-        permission: "dashboard.read",
       },
       {
         href: "/reports",
@@ -480,3 +478,57 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
 ]
+
+const CONFIG_ROUTES = new Set([
+  "/",
+  "/organization",
+  "/catalog",
+  "/sourcing",
+  "/operations",
+  "/users",
+  "/system",
+  "/profile",
+  "/guide",
+])
+export const NAV_SECTIONS: NavSection[] = ALL_NAV_SECTIONS.map((section) => ({
+  ...section,
+  items: section.items
+    .filter((item) => CONFIG_ROUTES.has(item.href))
+    .map((item) => ({
+      ...item,
+      ...(item.href === "/operations"
+        ? {
+            permission: [
+              "ipos_mapping.read",
+              "recipe.read",
+              "alert_rule.manage",
+            ],
+          }
+        : {}),
+      children: item.children?.filter(
+        (child) => !["sales", "variance"].includes(child.tabKey)
+      ),
+    })),
+})).filter((section) => section.items.length > 0)
+NAV_SECTIONS.push({
+  title: "CHÍNH SÁCH",
+  items: [
+    {
+      href: "/workflow-policy",
+      label: "Chính sách nghiệp vụ",
+      icon: SlidersHorizontal,
+      permission: ["workflow_policy.manage", "price_rule.manage"],
+    },
+  ],
+})
+NAV_SECTIONS.push({
+  title: "QUẢN TRỊ DỮ LIỆU",
+  items: [
+    {
+      href: "/permanent-delete",
+      label: "Xóa dữ liệu vĩnh viễn",
+      icon: Shield,
+      permission: "system.purge",
+    },
+  ],
+})

@@ -1,16 +1,18 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/sonner";
-import { QueryProvider } from "@/components/providers/query-provider";
-import { AdminTourProvider } from "@/components/shared/admin-guided-tour";
-import { cn } from "@/lib/utils";
+import type { Metadata, Viewport } from "next"
+import { Geist, Geist_Mono, Inter } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/sonner"
+import { QueryProvider } from "@/components/providers/query-provider"
+import { cn } from "@/lib/utils"
 
-const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" });
-const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-sans" });
-const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" })
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-sans",
+})
+const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
   title: "DICA Admin — Hệ Thống Quản Trị Chuỗi Cung Ứng & Tồn Kho F&B",
@@ -33,19 +35,20 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "DICA Admin",
   },
-};
+}
 
 export const viewport: Viewport = {
   themeColor: "#70b843",
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html
+      data-scroll-behavior="smooth"
       lang="vi"
       suppressHydrationWarning
       className={cn(
@@ -60,12 +63,12 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>
             <TooltipProvider delayDuration={150}>
-              <AdminTourProvider>{children}</AdminTourProvider>
+              {children}
               <Toaster richColors position="top-right" />
             </TooltipProvider>
           </ThemeProvider>
         </QueryProvider>
       </body>
     </html>
-  );
+  )
 }

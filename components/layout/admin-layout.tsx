@@ -22,9 +22,7 @@ import {
   Loader2,
   ShieldX,
   BellRing,
-  BookOpenCheck,
 } from "lucide-react"
-import { START_ADMIN_TOUR_EVENT } from "@/components/shared/admin-guided-tour"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -52,6 +50,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
@@ -183,7 +188,7 @@ function NavigationList({ pathname, onNavigate }: NavigationListProps) {
   }
 
   return (
-    <nav className="space-y-6" data-tour="navigation">
+    <nav className="space-y-6">
       {NAV_SECTIONS.map((section) => {
         const items = section.items.filter((item) => canSee(item, permissions))
         if (items.length === 0) return null
@@ -271,7 +276,6 @@ function NavigationList({ pathname, onNavigate }: NavigationListProps) {
                     <button
                       type="button"
                       onClick={(e) => toggleExpand(item.href, e)}
-                      data-tour={`sidebar-parent-${item.href}`}
                       className={cn(
                         "group relative flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-all duration-150 select-none",
                         isCurrentRoute
@@ -339,8 +343,6 @@ function NavigationList({ pathname, onNavigate }: NavigationListProps) {
                                 onClick={(e) =>
                                   handleChildClick(item.href, child, e)
                                 }
-                                data-tour={`sidebar-sub-${child.tabKey}`}
-                                data-tour-tab={child.tabKey}
                                 data-state={
                                   isActiveChild ? "active" : "inactive"
                                 }
@@ -454,15 +456,8 @@ function UserFooter({ onLogout }: { onLogout?: () => void } = {}) {
   )
 }
 
-const NOTIFICATION_ROUTES: Record<string, string> = {
-  SupplyRequest: "/requests",
-  FulfillmentOrder: "/orders",
-  Transfer: "/transfers",
-  DamageReport: "/inventory?tab=damage",
-}
-
 function NotificationsPopover() {
-  const router = useRouter()
+  const [selected, setSelected] = React.useState<Notification | null>(null)
   const canRead = useAuthStore((state) =>
     state.permissions.includes("notification.read_own")
   )
@@ -492,101 +487,120 @@ function NotificationsPopover() {
   if (!canRead) return null
 
   const open = (n: Notification) => {
+    setSelected(n)
     if (n.status === "UNREAD" && canMark) markOne.mutate(n.id)
-    const base = NOTIFICATION_ROUTES[n.resourceType]
-    if (base) {
-      const sep = base.includes("?") ? "&" : "?"
-      router.push(`${base}${sep}id=${n.resourceId}`)
-    }
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative size-9 text-muted-foreground hover:text-foreground"
-          aria-label="Thông báo"
-          data-tour="notifications"
-        >
-          <Bell className="size-4" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-bold text-background shadow-xs">
-              {unreadCount > 99 ? "99+" : unreadCount}
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative size-9 text-muted-foreground hover:text-foreground"
+            aria-label="Thông báo"
+          >
+            <Bell className="size-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-bold text-background shadow-xs">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-80 p-0">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <span className="font-heading text-sm font-semibold">
+              Thông báo
             </span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <span className="font-heading text-sm font-semibold">Thông báo</span>
-          {unreadCount > 0 && canMark && (
-            <button
-              onClick={() => markAll.mutate()}
-              disabled={markAll.isPending}
-              className="text-xs font-medium text-foreground hover:underline disabled:opacity-50"
-            >
-              Đọc tất cả
-            </button>
-          )}
-        </div>
-        <ScrollArea className="max-h-80">
-          <div className="divide-y divide-border/60">
-            {latest.isLoading ? (
-              <div className="flex items-center justify-center gap-2 p-4 text-xs text-muted-foreground">
-                <Loader2 className="size-3.5 animate-spin" /> Đang tải...
-              </div>
-            ) : latest.error ? (
-              <div className="p-4 text-center text-xs text-destructive">
-                {errorMessage(latest.error)}
-              </div>
-            ) : (latest.data?.items.length ?? 0) === 0 ? (
-              <div className="p-4 text-center text-xs text-muted-foreground">
-                Không có thông báo.
-              </div>
-            ) : (
-              latest.data?.items.map((n) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  className={cn(
-                    "flex w-full items-start gap-3 p-3 text-left transition-colors hover:bg-muted/50",
-                    n.status === "UNREAD" && "bg-muted/50"
-                  )}
-                  onClick={() => open(n)}
-                >
-                  <BellRing
-                    className={cn(
-                      "mt-0.5 size-4 shrink-0",
-                      n.status === "UNREAD"
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  />
-                  <div className="flex-1 space-y-1">
-                    <p
-                      className={cn(
-                        "text-xs leading-tight text-foreground",
-                        n.status === "UNREAD" && "font-semibold"
-                      )}
-                    >
-                      {n.title}
-                    </p>
-                    <p className="text-[11px] leading-relaxed text-muted-foreground">
-                      {n.message}
-                    </p>
-                    <p className="font-mono text-[10px] text-muted-foreground/80">
-                      {formatDateTime(n.createdAt)}
-                    </p>
-                  </div>
-                </button>
-              ))
+            {unreadCount > 0 && canMark && (
+              <button
+                onClick={() => markAll.mutate()}
+                disabled={markAll.isPending}
+                className="text-xs font-medium text-foreground hover:underline disabled:opacity-50"
+              >
+                Đọc tất cả
+              </button>
             )}
           </div>
-        </ScrollArea>
-      </PopoverContent>
-    </Popover>
+          <ScrollArea className="max-h-80">
+            <div className="divide-y divide-border/60">
+              {latest.isLoading ? (
+                <div className="flex items-center justify-center gap-2 p-4 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" /> Đang tải...
+                </div>
+              ) : latest.error ? (
+                <div className="p-4 text-center text-xs text-destructive">
+                  {errorMessage(latest.error)}
+                </div>
+              ) : (latest.data?.items.length ?? 0) === 0 ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  Không có thông báo.
+                </div>
+              ) : (
+                latest.data?.items.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    className={cn(
+                      "flex w-full items-start gap-3 p-3 text-left transition-colors hover:bg-muted/50",
+                      n.status === "UNREAD" && "bg-muted/50"
+                    )}
+                    onClick={() => open(n)}
+                  >
+                    <BellRing
+                      className={cn(
+                        "mt-0.5 size-4 shrink-0",
+                        n.status === "UNREAD"
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                      )}
+                    />
+                    <div className="flex-1 space-y-1">
+                      <p
+                        className={cn(
+                          "text-xs leading-tight text-foreground",
+                          n.status === "UNREAD" && "font-semibold"
+                        )}
+                      >
+                        {n.title}
+                      </p>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        {n.message}
+                      </p>
+                      <p className="font-mono text-[10px] text-muted-foreground/80">
+                        {formatDateTime(n.createdAt)}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
+      <Dialog
+        open={selected !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setSelected(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selected?.title}</DialogTitle>
+            <DialogDescription>
+              {selected && formatDateTime(selected.createdAt)}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm whitespace-pre-wrap">{selected?.message}</p>
+          <p className="text-sm text-muted-foreground">
+            Mở ứng dụng DICA để xem chứng từ và xử lý nghiệp vụ theo quyền được
+            cấp.
+          </p>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -608,7 +622,6 @@ function HealthPopover() {
           variant="outline"
           size="sm"
           className="h-9 gap-1.5 rounded-xl border-border bg-card/90 px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-accent sm:px-3"
-          data-tour="health"
         >
           <span
             className={cn(
@@ -711,7 +724,6 @@ function FacilityScopeMenu() {
           className="size-9 gap-2 p-0 text-xs font-medium sm:h-9 sm:w-auto sm:max-w-[190px] sm:px-3"
           aria-label={`Phạm vi cơ sở: ${current}`}
           title={current}
-          data-tour="facility"
         >
           <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="hidden truncate sm:inline">{current}</span>
@@ -953,10 +965,7 @@ export function AdminLayout({
       {/* 3. Main Column */}
       <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-2 sm:h-16 sm:px-4 lg:px-6">
-          <div
-            className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3"
-            data-tour="navigation-entry"
-          >
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -979,20 +988,7 @@ export function AdminLayout({
             {permissions.includes("facility.read") && <FacilityScopeMenu />}
             <HealthPopover />
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                window.dispatchEvent(new Event(START_ADMIN_TOUR_EVENT))
-              }
-              className="h-9 shrink-0 gap-1.5 rounded-xl border-border bg-card/90 px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-accent sm:px-3"
-              title="Bắt đầu hướng dẫn sử dụng hệ thống"
-            >
-              <BookOpenCheck className="size-3.5 text-primary" />
-              <span className="hidden lg:inline">Bắt đầu hướng dẫn</span>
-            </Button>
-
-            <div className="shrink-0" data-tour="quick-search">
+            <div className="shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -1063,11 +1059,7 @@ export function AdminLayout({
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-4 lg:p-6">
-          <div
-            className="mx-auto max-w-7xl space-y-4 sm:space-y-6"
-            data-tour="page-content"
-            data-tour-page={pathname}
-          >
+          <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
             {allowed ? (
               children
             ) : (
@@ -1136,17 +1128,6 @@ export function AdminLayout({
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Thao tác nhanh">
-            {permissions.includes("request.create") && (
-              <CommandItem
-                onSelect={() => {
-                  setOpenCommand(false)
-                  router.push("/requests?action=create")
-                }}
-              >
-                <Sparkles className="mr-2 size-4 text-foreground" />
-                <span>Tạo yêu cầu cấp hàng mới</span>
-              </CommandItem>
-            )}
             {permissions.includes("ingredient.manage") && (
               <CommandItem
                 onSelect={() => {

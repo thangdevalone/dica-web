@@ -1,17 +1,31 @@
-"use client";
+"use client"
 
-import { AdminLayout } from "@/components/layout/admin-layout";
-import { Cell2, Code, DataTable, type Column } from "@/components/shared/data-table";
-import { DateTimePicker } from "@/components/shared/date-time-picker";
-import { DetailSheet, InfoGrid, Section } from "@/components/shared/detail-sheet";
-import { Field, OptionSelect, SearchInput, type Option } from "@/components/shared/form";
-import { PageHeader } from "@/components/shared/page-header";
-import { Button } from "@/components/ui/button";
-import { useApiQuery, usePagedQuery } from "@/hooks/use-api";
-import { useListState } from "@/hooks/use-list-state";
-import type { AuditEvent } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/formatters";
-import { useCan, useUser } from "@/stores/use-auth-store";
+import { AdminLayout } from "@/components/layout/admin-layout"
+import {
+  Cell2,
+  Code,
+  DataTable,
+  type Column,
+} from "@/components/shared/data-table"
+import { DateTimePicker } from "@/components/shared/date-time-picker"
+import {
+  DetailSheet,
+  InfoGrid,
+  Section,
+} from "@/components/shared/detail-sheet"
+import {
+  Field,
+  OptionSelect,
+  SearchInput,
+  type Option,
+} from "@/components/shared/form"
+import { PageHeader } from "@/components/shared/page-header"
+import { Button } from "@/components/ui/button"
+import { useApiQuery, usePagedQuery } from "@/hooks/use-api"
+import { useListState } from "@/hooks/use-list-state"
+import type { AuditEvent } from "@/lib/api/types"
+import { formatDateTime } from "@/lib/formatters"
+import { useCan, useUser } from "@/stores/use-auth-store"
 import {
   CheckCircle2,
   Database,
@@ -21,21 +35,21 @@ import {
   Sliders,
   Terminal,
   X,
-  XCircle
-} from "lucide-react";
-import * as React from "react";
+  XCircle,
+} from "lucide-react"
+import * as React from "react"
 
 interface HealthResponse {
-  status: string;
-  database: string;
+  status: string
+  database: string
 }
 
 interface AuditFilters extends Record<string, string> {
-  action: string;
-  resource_type: string;
-  actor: string;
-  created_from: string;
-  created_to: string;
+  action: string
+  resource_type: string
+  actor: string
+  created_from: string
+  created_to: string
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -67,12 +81,16 @@ const ACTION_LABELS: Record<string, string> = {
   "user.reset_password": "Quản trị đặt lại mật khẩu",
   "user.username.change": "Đổi tên đăng nhập",
   "variance.recalculate": "Tính lại chênh lệch tiêu hao",
-};
+}
 
 const ACTION_OPTIONS: Option[] = [
   { value: "config.", label: "Mọi thay đổi cấu hình", hint: "config.*" },
-  ...Object.entries(ACTION_LABELS).map(([value, label]) => ({ value, label, hint: value })),
-];
+  ...Object.entries(ACTION_LABELS).map(([value, label]) => ({
+    value,
+    label,
+    hint: value,
+  })),
+]
 
 const RESOURCE_LABELS: Record<string, string> = {
   DamageReport: "Báo hỏng",
@@ -94,39 +112,39 @@ const RESOURCE_LABELS: Record<string, string> = {
   ORGANIZATION_CONFIG: "Cấu hình tổ chức",
   RECIPE_CONFIG: "Cấu hình công thức",
   SOURCING_CONFIG: "Cấu hình nguồn cung",
-};
+}
 
-const RESOURCE_OPTIONS: Option[] = Object.entries(RESOURCE_LABELS).map(([value, label]) => ({
-  value,
-  label,
-  hint: value,
-}));
+const RESOURCE_OPTIONS: Option[] = Object.entries(RESOURCE_LABELS).map(
+  ([value, label]) => ({
+    value,
+    label,
+    hint: value,
+  })
+)
 
 function actionLabel(action: string) {
-  if (ACTION_LABELS[action]) return ACTION_LABELS[action];
-  if (action.startsWith("config.")) return "Thay đổi cấu hình";
-  return action;
+  if (ACTION_LABELS[action]) return ACTION_LABELS[action]
+  if (action.startsWith("config.")) return "Thay đổi cấu hình"
+  return action
 }
 
 function startOfLocalDay(value: string) {
-  return value ? new Date(`${value}T00:00:00.000`).toISOString() : undefined;
+  return value ? new Date(`${value}T00:00:00.000`).toISOString() : undefined
 }
 
 function endOfLocalDay(value: string) {
-  return value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined;
+  return value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined
 }
 
 export default function SystemPage() {
-  const user = useUser();
-  const canReadAudit = useCan("audit.read");
-  const [detailEvent, setDetailEvent] = React.useState<AuditEvent | null>(null);
+  const user = useUser()
+  const canReadAudit = useCan("audit.read")
+  const [detailEvent, setDetailEvent] = React.useState<AuditEvent | null>(null)
 
   // Health Query
-  const healthQuery = useApiQuery<HealthResponse>(
-    "/health/ready",
-    undefined,
-    { refetchInterval: 30_000 }
-  );
+  const healthQuery = useApiQuery<HealthResponse>("/health/ready", undefined, {
+    refetchInterval: 30_000,
+  })
 
   // Audit List
   const auditList = useListState<AuditFilters>({
@@ -135,7 +153,7 @@ export default function SystemPage() {
     actor: "",
     created_from: "",
     created_to: "",
-  });
+  })
   const auditQuery = usePagedQuery<AuditEvent>(
     "/audit-events",
     {
@@ -149,7 +167,7 @@ export default function SystemPage() {
       created_to: endOfLocalDay(auditList.filters.created_to),
     },
     { enabled: canReadAudit, keepPreviousData: true }
-  );
+  )
 
   const auditColumns: Column<AuditEvent>[] = [
     {
@@ -157,7 +175,9 @@ export default function SystemPage() {
       header: "Thời gian",
       width: "160px",
       render: (a) => (
-        <span className="text-xs text-muted-foreground">{formatDateTime(a.createdAt)}</span>
+        <span className="text-xs text-muted-foreground">
+          {formatDateTime(a.createdAt)}
+        </span>
       ),
     },
     {
@@ -174,7 +194,9 @@ export default function SystemPage() {
     {
       key: "action",
       header: "Hành động",
-      render: (a) => <Cell2 top={actionLabel(a.action)} bottom={<Code>{a.action}</Code>} />,
+      render: (a) => (
+        <Cell2 top={actionLabel(a.action)} bottom={<Code>{a.action}</Code>} />
+      ),
     },
     {
       key: "resource",
@@ -182,7 +204,11 @@ export default function SystemPage() {
       render: (a) => (
         <Cell2
           top={RESOURCE_LABELS[a.resourceType] ?? a.resourceType}
-          bottom={<><Code>{a.resourceType}</Code> · {a.resourceId}</>}
+          bottom={
+            <>
+              <Code>{a.resourceType}</Code> · {a.resourceId}
+            </>
+          }
         />
       ),
     },
@@ -203,7 +229,7 @@ export default function SystemPage() {
         </Button>
       ),
     },
-  ];
+  ]
 
   return (
     <AdminLayout>
@@ -216,8 +242,8 @@ export default function SystemPage() {
             variant="outline"
             size="sm"
             onClick={() => {
-              healthQuery.refetch();
-              if (canReadAudit) auditQuery.refetch();
+              healthQuery.refetch()
+              if (canReadAudit) auditQuery.refetch()
             }}
           >
             <RefreshCw className="h-4 w-4" />
@@ -228,10 +254,10 @@ export default function SystemPage() {
 
       <div className="space-y-4 sm:space-y-6">
         {/* Health status banner */}
-        <div data-tour="system-health" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl bg-card border border-border/70 shadow-sm flex items-center gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
             <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              className={`flex h-12 w-12 items-center justify-center rounded-xl ${
                 healthQuery.isSuccess
                   ? "bg-emerald-500/10 text-emerald-600"
                   : "bg-destructive/10 text-destructive"
@@ -244,23 +270,27 @@ export default function SystemPage() {
               )}
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">Kết nối máy chủ DICA</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Kết nối máy chủ DICA
+              </div>
               <div className="text-base font-bold text-foreground">
                 {healthQuery.isLoading
                   ? "Đang kiểm tra..."
                   : healthQuery.isSuccess
-                  ? "Hoạt động bình thường"
-                  : "Mất kết nối máy chủ"}
+                    ? "Hoạt động bình thường"
+                    : "Mất kết nối máy chủ"}
               </div>
-              <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                Địa chỉ: {process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"}
+              <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                Địa chỉ:{" "}
+                {process.env.NEXT_PUBLIC_API_URL ||
+                  "http://localhost:3001/api/v1"}
               </div>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-card border border-border/70 shadow-sm flex items-center gap-4">
+          <div className="flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
             <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              className={`flex h-12 w-12 items-center justify-center rounded-xl ${
                 healthQuery.data?.database === "connected"
                   ? "bg-blue-500/10 text-blue-600"
                   : "bg-amber-500/10 text-amber-600"
@@ -269,26 +299,32 @@ export default function SystemPage() {
               <Database className="h-6 w-6" />
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">Cơ sở dữ liệu PostgreSQL</div>
-              <div className="text-base font-bold text-foreground">
-                {healthQuery.data?.database === "connected" ? "Đã kết nối" : "Chưa sẵn sàng"}
+              <div className="text-xs font-medium text-muted-foreground">
+                Cơ sở dữ liệu PostgreSQL
               </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">
+              <div className="text-base font-bold text-foreground">
+                {healthQuery.data?.database === "connected"
+                  ? "Đã kết nối"
+                  : "Chưa sẵn sàng"}
+              </div>
+              <div className="mt-0.5 text-[11px] text-muted-foreground">
                 Prisma 7 • Transaction Safe
               </div>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-card border border-border/70 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <div className="flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">Tài khoản đang đăng nhập</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                Tài khoản đang đăng nhập
+              </div>
               <div className="text-base font-bold text-foreground">
                 {user ? user.display_name : "Chưa đăng nhập"}
               </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">
+              <div className="mt-0.5 text-[11px] text-muted-foreground">
                 {user ? `@${user.username} • ${user.kind}` : "—"}
               </div>
             </div>
@@ -299,16 +335,22 @@ export default function SystemPage() {
         <div className="space-y-4 overflow-hidden rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
                 <Terminal className="h-5 w-5 text-primary" />
                 Lịch sử thay đổi trong hệ thống
               </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Ghi nhận tự động mọi thay đổi cấu hình, định tuyến và phân quyền trong toàn tổ chức.
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Ghi nhận tự động mọi thay đổi cấu hình, định tuyến và phân quyền
+                trong toàn tổ chức.
               </p>
             </div>
             {auditList.hasActiveFilters && (
-              <Button type="button" variant="ghost" size="sm" onClick={auditList.reset}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={auditList.reset}
+              >
                 <X className="size-3.5" />
                 Xóa bộ lọc
               </Button>
@@ -316,7 +358,7 @@ export default function SystemPage() {
           </div>
 
           {canReadAudit && (
-            <div data-tour="audit-filters" className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 <Field label="Hành động">
                   <OptionSelect
@@ -332,7 +374,9 @@ export default function SystemPage() {
                 <Field label="Loại dữ liệu">
                   <OptionSelect
                     value={auditList.filters.resource_type}
-                    onChange={(value) => auditList.setFilter("resource_type", value)}
+                    onChange={(value) =>
+                      auditList.setFilter("resource_type", value)
+                    }
                     options={RESOURCE_OPTIONS}
                     allLabel="Tất cả loại dữ liệu"
                     placeholder="Chọn loại dữ liệu"
@@ -340,7 +384,10 @@ export default function SystemPage() {
                     searchPlaceholder="Tìm loại dữ liệu..."
                   />
                 </Field>
-                <Field label="Người thực hiện" hint="Tìm theo họ tên hoặc tên đăng nhập.">
+                <Field
+                  label="Người thực hiện"
+                  hint="Tìm theo họ tên hoặc tên đăng nhập."
+                >
                   <SearchInput
                     value={auditList.filters.actor}
                     onChange={(value) => auditList.setFilter("actor", value)}
@@ -352,7 +399,9 @@ export default function SystemPage() {
                   <DateTimePicker
                     mode="date"
                     value={auditList.filters.created_from}
-                    onChange={(value) => auditList.setFilter("created_from", value)}
+                    onChange={(value) =>
+                      auditList.setFilter("created_from", value)
+                    }
                     max={auditList.filters.created_to || undefined}
                     placeholder="Chọn ngày bắt đầu"
                   />
@@ -361,7 +410,9 @@ export default function SystemPage() {
                   <DateTimePicker
                     mode="date"
                     value={auditList.filters.created_to}
-                    onChange={(value) => auditList.setFilter("created_to", value)}
+                    onChange={(value) =>
+                      auditList.setFilter("created_to", value)
+                    }
                     min={auditList.filters.created_from || undefined}
                     placeholder="Chọn ngày kết thúc"
                   />
@@ -386,12 +437,21 @@ export default function SystemPage() {
           )}
 
           {!canReadAudit ? (
-            <div className="p-8 text-center text-xs text-muted-foreground border border-dashed rounded-xl">
-              Tài khoản chưa được cấp quyền xem lịch sử thay đổi ở phạm vi toàn tổ chức.
+            <div className="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground">
+              Tài khoản chưa được cấp quyền xem lịch sử thay đổi ở phạm vi toàn
+              tổ chức.
             </div>
           ) : (
             <DataTable
               columns={auditColumns}
+              rowClassName={(row) =>
+                row.afterData &&
+                typeof row.afterData === "object" &&
+                "highlight" in row.afterData &&
+                row.afterData.highlight === "RED"
+                  ? "bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-200"
+                  : undefined
+              }
               data={auditQuery.data?.items ?? []}
               total={auditQuery.data?.meta?.total}
               page={auditList.page}
@@ -410,7 +470,7 @@ export default function SystemPage() {
       <DetailSheet
         open={Boolean(detailEvent)}
         onOpenChange={(open) => {
-          if (!open) setDetailEvent(null);
+          if (!open) setDetailEvent(null)
         }}
         title="Chi tiết thay đổi"
         description={detailEvent ? formatDateTime(detailEvent.createdAt) : ""}
@@ -439,32 +499,48 @@ export default function SystemPage() {
                     label: "Loại dữ liệu",
                     value: (
                       <span className="inline-flex flex-wrap items-center gap-1.5">
-                        <span>{RESOURCE_LABELS[detailEvent.resourceType] ?? detailEvent.resourceType}</span>
+                        <span>
+                          {RESOURCE_LABELS[detailEvent.resourceType] ??
+                            detailEvent.resourceType}
+                        </span>
                         <Code>{detailEvent.resourceType}</Code>
                       </span>
                     ),
                   },
-                  { label: "Mã dữ liệu", value: <Code>{detailEvent.resourceId}</Code> },
-                  { label: "Mã truy vết", value: <Code>{detailEvent.requestId}</Code> },
-                  { label: "Thời điểm ghi nhận", value: formatDateTime(detailEvent.createdAt) },
+                  {
+                    label: "Mã dữ liệu",
+                    value: <Code>{detailEvent.resourceId}</Code>,
+                  },
+                  {
+                    label: "Mã truy vết",
+                    value: <Code>{detailEvent.requestId}</Code>,
+                  },
+                  {
+                    label: "Thời điểm ghi nhận",
+                    value: formatDateTime(detailEvent.createdAt),
+                  },
                 ]}
               />
             </Section>
 
             <Section title="Dữ liệu trước khi thay đổi">
-              <div className="rounded-lg bg-muted/60 p-3 font-mono text-xs overflow-x-auto max-h-60 border border-border/50">
-                <pre>{JSON.stringify(detailEvent.beforeData ?? {}, null, 2)}</pre>
+              <div className="max-h-60 overflow-x-auto rounded-lg border border-border/50 bg-muted/60 p-3 font-mono text-xs">
+                <pre>
+                  {JSON.stringify(detailEvent.beforeData ?? {}, null, 2)}
+                </pre>
               </div>
             </Section>
 
             <Section title="Dữ liệu sau khi thay đổi">
-              <div className="rounded-lg bg-muted/60 p-3 font-mono text-xs overflow-x-auto max-h-60 border border-border/50">
-                <pre>{JSON.stringify(detailEvent.afterData ?? {}, null, 2)}</pre>
+              <div className="max-h-60 overflow-x-auto rounded-lg border border-border/50 bg-muted/60 p-3 font-mono text-xs">
+                <pre>
+                  {JSON.stringify(detailEvent.afterData ?? {}, null, 2)}
+                </pre>
               </div>
             </Section>
           </div>
         )}
       </DetailSheet>
     </AdminLayout>
-  );
+  )
 }
